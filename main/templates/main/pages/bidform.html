@@ -1,0 +1,160 @@
+{% extends 'main/layout/sidebar_layout.html' %}
+{% load static %}
+
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/pages/bidform.css' %}">
+{% endblock %}
+
+{% block sidebar_menu %}
+<li class="active"><a href="{% url 'bidform' %}">입찰표 작성</a></li>
+<li><a href="#">보증금반환현황조회</a></li>
+<li><a href="#">즐겨찾기목록</a></li>
+<li><a href="{% url 'auto_bid' %}">자동입찰설정</a></li>
+<li><a href="{% url 'mypage' %}">마이페이지</a></li>
+{% endblock %}
+
+{% block sidebar_content %}
+<h2>입찰표 작성</h2>
+<br>
+<hr style="width: 1000px;">
+
+<form class="bidform-section" id="bidForm" method="POST" action="{% url 'bid_submit' %}">
+  {% csrf_token %}
+  <h4 class="section-title">기본 정보 <span style="font-size: 16px;">(<a href="{% url 'mypage' %}">마이페이지</a>에서 수정 가능)</span>
+  </h4>
+  <table class="mypage-table">
+    <tr>
+      <th>입찰자 성명</th>
+      <td class="readonly">민수빈</td>
+      <th>연락처</th>
+      <td class="readonly">010-1234-5678</td>
+    </tr>
+    <tr>
+      <th>주민등록번호</th>
+      <td class="readonly">020606-*******</td>
+      <th>법인번호</th>
+      <td class="readonly">0845674725</td>
+    </tr>
+    <tr>
+      <th>주소</th>
+      <td class="readonly" colspan="3">서울시 동대문구 이문동</td>
+    </tr>
+
+  </table>
+  <br>
+  <br>
+
+  <h4 class="section-title">입찰 정보 입력</h4>
+
+  <div class="search-row">
+    <div class="search-group">
+      <label for="region">시/도</label>
+      <select id="region" name="region" class="input-select region">
+        <option value="all">전체</option>
+        <option value="seoul">서울특별시</option>
+        <option value="gyeonggi">경기도</option>
+      </select>
+    </div>
+    <div class="search-group">
+      <label for="court">법원</label>
+      <select id="court" name="court" class="input-select court">
+        <option>서울중앙지방법원</option>
+        <option>서울동부지방법원</option>
+        <option>서울남부지방법원</option>
+        <option>서울서부지방법원</option>
+        <option>수원지방법원</option>
+      </select>
+    </div>
+
+    <br>
+
+    <div class="search-group break-size">
+      <label for="year">사건번호</label>
+      <div class="case-number-row">
+        <input type="number" id="year-input" placeholder="년도 입력" class="input-field" min="2000" max="2025"
+          maxlength="4">
+        <span class="case-type">타경</span>
+        <input type="text" placeholder="번호 입력" class="input-field">
+        <button class="btn-search" type="button">검색</button>
+      </div>
+    </div>
+  </div>
+  <div class="search-group">
+    <label for="deposit">보증금</label>
+    <div class="input-wrapper">
+      <input type="number" id="deposit" name="deposit" class="input-field deposit" required /><span
+        class="case-type">원</span>
+    </div>
+  </div>
+  <br>
+  <div class="search-group">
+    <label for="bidAmount1">입찰가 입력</label>
+    <div class="input-wrapper">
+    <input type="number" id="bidAmount1" name="bidAmount1" class="input-field price" min="1" required /><span
+    class="case-type">원</span>
+  </div>
+
+    <label for="bidAmount2">입찰가 확인</label>
+    <div class="input-wrapper">
+    <input type="number" id="bidAmount2" name="bidAmount2" class="input-field price" min="1" required /><span
+    class="case-type">원</span>
+    </div>
+  </div>
+  <br>
+  <div class="search-group">
+    <label for="password">비밀번호 입력</label>
+    <input type="password" id="password" name="password" class="input-field user" placeholder="**********" required />
+    <label for="password">비밀번호 확인</label>
+    <input type="password" id="password" name="password" class="input-field user" placeholder="**********" required />
+  </div>
+  <br>
+
+  <button type="submit" class="btn-primary" style="margin-top: 16px;">입찰표 제출</button>
+</form>
+
+<script>
+  const courtSelect = document.getElementById("court");
+  const regionSelect = document.getElementById("region");
+
+  const courtOptions = {
+    all: [
+      "서울중앙지방법원",
+      "서울동부지방법원",
+      "서울남부지방법원",
+      "서울서부지방법원",
+      "수원지방법원"
+    ],
+    seoul: [
+      "서울중앙지방법원",
+      "서울동부지방법원",
+      "서울남부지방법원",
+      "서울서부지방법원"
+    ],
+    gyeonggi: [
+      "수원지방법원"
+    ]
+  };
+
+  function updateCourtOptions(region) {
+    courtSelect.innerHTML = ""; // 기존 옵션 제거
+
+    courtOptions[region].forEach(court => {
+      const option = document.createElement("option");
+      option.value = court;
+      option.textContent = court;
+      courtSelect.appendChild(option);
+    });
+  }
+
+  // 초기 로드 시 전체 법원 표시
+  updateCourtOptions("all");
+
+  // 시/도 변경 시 법원 목록 갱신
+  regionSelect.addEventListener("change", function () {
+    const selectedRegion = this.value;
+    updateCourtOptions(selectedRegion);
+  });
+</script>
+
+{% endblock %}
