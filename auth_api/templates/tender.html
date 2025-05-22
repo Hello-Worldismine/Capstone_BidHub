@@ -1,0 +1,103 @@
+{% extends 'layout.html' %}
+{% load static %}
+
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/tender.css' %}">
+{% endblock %}
+
+{% block content %}
+  <div class="container">
+    <div class="left-section">
+      <!-- 메인 이미지 + 좌우 화살표 -->
+      <div class="main-image-container">
+        <button class="arrow left" onclick="prevImage()">&#10094;</button>
+        <img id="mainImage" src="{% static 'img/ex/01.png' %}" alt="메인 이미지" />
+        <button class="arrow right" onclick="nextImage()">&#10095;</button>
+        <div id="image-counter">1 / 5</div>
+      </div>
+
+      <!-- 썸네일 리스트 -->
+      <div class="thumbnail-row">
+        <img src="{% static 'img/ex/01.png' %}" class="thumb" onclick="setMainImage(0)" />
+        <img src="{% static 'img/ex/02.png' %}" class="thumb" onclick="setMainImage(1)" />
+        <img src="{% static 'img/ex/03.png' %}" class="thumb" onclick="setMainImage(2)" />
+        <img src="{% static 'img/ex/04.png' %}" class="thumb" onclick="setMainImage(3)" />
+        <img src="{% static 'img/ex/05.png' %}" class="thumb" onclick="setMainImage(4)" />
+      </div>
+    </div>
+
+    <div class="right-section">
+      <h2>부평산곡푸르지오아파트</h2>
+      <p class="meta">59.91㎡ (전용 18평)</p>
+      <p class="meta">인천광역시 부평구 안남로 269, 101동 11층1101호</p>
+      <p class="case-title"><a href="#" target="_blank" rel="noopener noreferrer">사건번호: 2024타경523368</a></p>
+
+      <div class="price">501,000,000원</div>
+
+      <div class="info">
+        <p><strong>입찰 보증금 : 50,100,000원</strong></p>
+        <p><strong>유찰 횟수: 0회 (최초 경매)</strong></p>
+        <p><strong>매각기일:</strong> 2025.03.27</p>
+        <p><strong>남은 시간:</strong> <span class="countdown">D-3</span></p>
+      </div>
+
+      <form class="bid-form">
+        <label for="bid-price">입찰 금액 입력</label>
+        <input type="text" id="bid-price" placeholder="최저매각가격 : 510,000,000원" />
+
+        <label for="password">비밀번호 입력</label>
+        <input type="password" id="password" placeholder="********" />
+
+        <button type="submit" class="submit-btn">입찰하기</button>
+        <div class="actions">
+          <button type="button">입찰 내역 보기</button>
+          <button type="button">관심 목록 추가</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+<script src="{% static 'js/tender.js'}"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const imagePaths = [
+      "{% static 'img/ex/01.png' %}",
+      "{% static 'img/ex/02.png' %}",
+      "{% static 'img/ex/03.png' %}",
+      "{% static 'img/ex/04.png' %}",
+      "{% static 'img/ex/05.jpg' %}"
+    ];
+
+    let currentIndex = 0;
+    const mainImage = document.getElementById("mainImage");
+    const imageCounter = document.getElementById("image-counter");
+
+    function updateImage() {
+      mainImage.src = imagePaths[currentIndex];
+      imageCounter.textContent = `${currentIndex + 1} / ${imagePaths.length}`;
+    }
+
+    function setMainImage(index) {
+      currentIndex = index;
+      updateImage();
+    }
+
+    function prevImage() {
+      currentIndex = (currentIndex - 1 + imagePaths.length) % imagePaths.length;
+      updateImage();
+    }
+
+    function nextImage() {
+      currentIndex = (currentIndex + 1) % imagePaths.length;
+      updateImage();
+    }
+
+    updateImage();
+
+    window.setMainImage = setMainImage;
+    window.prevImage = prevImage;
+    window.nextImage = nextImage;
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,142 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BidHub</title>
+
+  {% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/layout.css' %}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  {% endblock %}
+</head>
+
+<body>
+
+  <!-- Header -->
+  <header class="header">
+    <nav class="navbar">
+      <div class="nav-left">
+        <a href="{% url 'index' %}" class="logo">
+          <img src="{% static 'img/bidhub-logo.png' %}" alt="BidHub 로고" />
+        </a>        
+        <ul class="menu">
+          <li class="menu-item">
+            <a href="#">경매검색</a>
+            <ul class="submenu">
+              <li><a href="#">오늘의경매</a></li>
+              <li><a href="#">주간경매공고</a></li>
+              <li><a href="#">빠른검색</a></li>
+              <li><a href="#">조건검색</a></li>
+            </ul>
+          </li>
+          <li class="menu-item">
+            <a href="#">매각결과</a>
+            <ul class="submenu">
+              <li><a href="#">매각결과조회</a></li>
+              <li><a href="#">지역별매각결과</a></li>
+            </ul>
+          </li>
+          <li class="menu-item">
+            <a href="#">입찰준비</a>
+            <ul class="submenu">
+              <li><a href="#">입찰표작성</a></li>
+              <li><a href="{% url 'charge' %}">예치금충전</a></li>
+            </ul>
+          </li>
+          <li class="menu-item">
+            <a href="#">고객지원</a>
+            <ul class="submenu">
+              <li><a href="#">챗봇상담</a></li>
+              <li><a href="#">실시간고객지원</a></li>
+            </ul>
+          </li>
+          <li class="menu-item">
+            <a href="#">나의경매</a>
+            <ul class="submenu">
+              <li><a href="#">나의입찰내역</a></li>
+              <li><a href="#">보증금반환현황조회</a></li>
+              <li><a href="#">즐겨찾기목록</a></li>
+              <li><a href="#">입찰기본설정</a></li>
+              <li><a href="{% url 'auto_bid' %}">자동입찰설정</a></li>
+              <li><a href="#">마이페이지 →</a></li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+      <div class="user-actions">
+        <button class="btn signup-btn">회원가입</button>
+        <a href="{% url 'login' %}"><button class="btn login-btn">로그인</button></a>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- 각 페이지의 본문 내용이 들어가는 곳 -->
+    {% block content %}
+    {% endblock %}
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-links">
+      <div class="footer-group">
+        <h4>경매검색</h4>
+        <ul>
+          <li><a href="#">오늘의경매</a></li>
+          <li><a href="#">주간경매공고</a></li>
+          <li><a href="#">빠른검색</a></li>
+          <li><a href="#">조건검색</a></li>
+        </ul>
+      </div>
+      <div class="footer-group">
+        <h4>매각결과</h4>
+        <ul>
+          <li><a href="#">매각결과조회</a></li>
+          <li><a href="#">지역별매각결과</a></li>
+        </ul>
+      </div>
+      <div class="footer-group">
+        <h4>입찰준비</h4>
+        <ul>
+          <li><a href="#">입찰표작성</a></li>
+          <li><a href="#">예치금충전</a></li>
+        </ul>
+      </div>
+      <div class="footer-group">
+        <h4>고객지원</h4>
+        <ul>
+          <li><a href="#">챗봇상담</a></li>
+          <li><a href="#">실시간고객지원</a></li>
+        </ul>
+      </div>
+      <div class="footer-group">
+        <h4>나의경매</h4>
+        <ul>
+          <li><a href="#">나의입찰내역</a></li>
+          <li><a href="#">보증금반환현황조회</a></li>
+          <li><a href="#">즐겨찾기목록</a></li>
+          <li><a href="#">입찰기본설정</a></li>
+          <li><a href="#">자동입찰설정</a></li>
+          <li><a href="#">마이페이지 →</a></li>
+        </ul>
+      </div>
+    </div>
+    <hr>
+    <div class="footer-bottom">
+      <p>© 2025 dgu ice</p>
+      <p><a href="#">Terms of Service</a></p>
+      <p><a href="#">Privacy Policy</a></p>
+      <p>TEAM 5</p>
+    </div>
+  </footer>
+
+  <script src="{% static 'js/main.js' %}"></script>
+  <script src="{% static 'js/charge.js' %}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+
+</html>

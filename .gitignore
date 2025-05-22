@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual Environment
+venv/
+ENV/
+env/
+.venv/
+
+# Django 관련
+*.log
+db.sqlite3
+*.sqlite3
+
+# VSCode
+.vscode/
+
+# OS 별
+.DS_Store
+Thumbs.db
+
+# Git
+*.swp

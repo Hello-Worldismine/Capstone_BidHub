@@ -1,0 +1,74 @@
+{% extends 'layout.html' %}
+{% load static %}
+
+
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/index.css' %}">
+{% endblock %}
+
+{% block content %}
+
+  <!-- 빠른입찰 -->
+  <section class="bid">
+    <img src="{% static 'img/building.jpg' %}" alt="building" class="building-image">
+    <h1>실시간 입찰 서비스</h1>
+    <form class="bid-form">
+      <div class="bid-row">
+        <label class="fixed-label">사건번호</label>
+        <input type="number" id="year-input" placeholder="년도 입력" class="input-field" min="2000" max="2025"
+          maxlength="4">
+
+        <label class="fixed-label">타경</label>
+        <input type="text" placeholder="번호 입력" class="input-field">
+      </div>
+      <button type="button" class="btn-primary" onclick="location.href='/tender'">입찰하기 →</button>
+    </form>
+  </section>
+
+  <!-- 기일경매목록 -->
+  <section class="auction-list">
+    <h2>기일경매목록</h2>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>사건번호</th>
+          <th>최저입찰가</th>
+          <th>입찰횟수</th>
+          <th>마감시간</th>
+          <th>즐겨찾기</th>
+          <th>입찰하기</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- 서버 데이터 삽입 예정 -->
+      </tbody>
+    </table>
+
+    <h2>즐겨찾기목록</h2>
+    <table class="table" id="favorites-table">
+      <thead>
+        <tr>
+          <th>사건번호</th>
+          <th>최저입찰가</th>
+          <th>마감일자</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>2024 타경 12345</td>
+          <td>15,000,000</td>
+          <td>2025.04.01</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 사이드바 -->
+  <aside class="sidebar">
+    <ul class="sidebar-menu">
+      <li><button class="btn-secondary">실시간 문의</button></li>
+      <li><button class="btn-secondary">나의입찰정보</button></li>
+    </ul>
+  </aside>
+{% endblock %}
