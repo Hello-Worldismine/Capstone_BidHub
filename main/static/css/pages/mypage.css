@@ -1,0 +1,165 @@
+  /* 메인 콘텐츠 */
+  .main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 40px 32px;
+    box-sizing: border-box;
+  }
+  
+  .page-container {
+    display: flex;
+    flex-grow: 1;
+    width: 100%;
+  }
+  
+  .sidebar {
+    width: 180px;
+    margin-right: 40px;
+  }
+  
+  .side-menu {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .side-menu li {
+    margin-bottom: 12px;
+  }
+  
+  .side-menu a {
+    display: block;
+    padding: 12px 16px;
+    border-radius: 8px;
+    background-color: #f1f3f5;
+    color: #333;
+    text-decoration: none;
+  }
+  
+  .side-menu li.active a {
+    background-color: #cfd4da;
+    font-weight: bold;
+  }
+  
+  .page-content {
+    flex: 1;
+  }
+  
+  .input-charge {
+    padding: 12px;
+    width: 240px;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    margin-right: 12px;
+  }
+  
+  .btn-primary {
+    padding: 12px 24px;
+    background-color: #3B82F6;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .btn-primary:hover {
+    background-color: #2563eb;
+  }
+  
+  .notice-box {
+    background-color: #f1f3f5;
+    padding: 20px;
+    margin-top: 32px;
+    border-radius: 8px;
+    font-size: 0.95em;
+    line-height: 1.6;
+  }
+  
+  
+
+.mypage-section {
+    background-color: #f9fafb;
+    padding: 24px;
+    border-radius: 12px;
+    margin-bottom: 32px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  
+  .mypage-section h4 {
+    font-size: 1.1rem;
+    margin-bottom: 12px;
+    color: #1f2937;
+  }
+  
+  
+  
+  .input-field {
+    display: block;
+    width: 100%;
+    max-width: 480px;
+    padding: 12px;
+    margin-top: 6px;
+    margin-bottom: 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    box-sizing: border-box;
+  }
+
+  
+  
+  .mypage-section label {
+    font-weight: 500;
+    font-size: 14px;
+    display: block;
+    margin-bottom: 4px;
+    margin-top: 12px;
+  }
+
+  
+
+
+.mypage-section {
+    background-color: #f9fafb;
+    padding: 24px;
+    border-radius: 12px;
+    margin-bottom: 32px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  
+  .mypage-section h4 {
+    font-size: 1.1rem;
+    margin-bottom: 12px;
+    color: #1f2937;
+  }
+  
+  .mypage-section p {
+    margin: 4px 0;
+    font-size: 0.95rem;
+  }
+  
+  .input-field {
+    display: block;
+    width: 100%;
+    max-width: 480px;
+    padding: 12px;
+    margin-top: 6px;
+    margin-bottom: 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    box-sizing: border-box;
+  }
+  
+  .mypage-section label {
+    font-weight: 500;
+    font-size: 14px;
+    display: block;
+    margin-bottom: 4px;
+    margin-top: 12px;
+  }
+  
