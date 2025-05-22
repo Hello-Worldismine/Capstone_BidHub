@@ -1,0 +1,165 @@
+/* CSS for property_detail.html */
+
+.property-detail-container {
+  max-width: 90%; /* Changed from 1440px to 90% for wider screens */
+  margin-left: auto;
+  margin-right: auto;
+  /* padding: 20px; Removed container padding, cards will handle their own */
+  /* background-color: #fff; Combined with card */
+  /* border-radius: 8px; Combined with card */
+  /* box-shadow: 0 2px 10px rgba(0,0,0,0.1); Combined with card */
+}
+
+/* Grid Layout */
+.detail-grid {
+  display: flex; /* Changed from grid to flex */
+  flex-direction: column; /* Stack children vertically */
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.detail-grid-left,
+.detail-grid-right {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Card style for sections */
+.card {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  padding: 20px;
+}
+
+.card h2 {
+  font-size: 1.4em;
+  margin-bottom: 15px;
+  color: #333;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+
+.photo-section,
+.specification-section,
+.map-section,
+.info-table-section {
+  margin-bottom: 0; /* Removed individual margin as gap is handled by grid/flex */
+}
+
+/* Table Styles */
+.detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9em;
+}
+
+.detail-table th,
+.detail-table td {
+  border: 1px solid #e0e0e0;
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.detail-table th {
+  background-color: #f9f9f9;
+  font-weight: 600;
+  /* width: 15%; Removed: Let specific table th styles or browser defaults handle width better */
+}
+
+.detail-table td {
+  background-color: #fff;
+}
+
+/* For tables with 2 pairs of th/td per row in right column */
+.detail-grid-right .detail-table th {
+   width: auto; /* Let browser decide for these tables or set specific widths */
+}
+
+.detail-grid-right .detail-table th:nth-child(odd) {
+  width: 15%;
+}
+.detail-grid-right .detail-table th:nth-child(even) {
+  width: 35%;
+}
+
+.full-width-table th {
+  white-space: nowrap; /* Prevent header text from wrapping too early */
+}
+
+/* Responsive table container */
+.table-responsive {
+  overflow-x: auto;
+  width: 100%;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+}
+
+/* Styles for the map placeholder */
+#naverMapPlaceholder {
+  background-color: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #555;
+  min-height: 300px; /* Adjusted height */
+  border-radius: 6px;
+  width: 100%; /* Ensure it takes full width of its parent card */
+}
+#naverMapPlaceholder p {
+  padding: 0;
+}
+
+/* Specification link button */
+.btn-spec {
+  display: inline-block;
+  padding: 10px 15px;
+  background-color: #007bff;
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+
+.btn-spec:hover {
+  background-color: #0056b3;
+}
+
+/* Photo section adjustments */
+.photo-section .left-section {
+  width: 100%;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1280px) {
+  .property-detail-container {
+    max-width: 95%;
+    padding: 15px;
+  }
+}
+
+@media (max-width: 992px) { /* Tablet and below */
+  .detail-grid {
+    /* grid-template-columns: 1fr; Removed as base style is now single column */
+    /* Children .detail-grid-left and .detail-grid-right will stack due to parent flex-direction: column */
+  }
+  .detail-grid-left,
+  .detail-grid-right {
+     /* Reset grid column specific settings if any, default to flex column */
+  }
+}
+
+@media (max-width: 768px) { /* Mobile */
+  .card h2 {
+    font-size: 1.2em;
+  }
+  .detail-table th,
+  .detail-table td {
+    padding: 8px;
+  }
+  .detail-table th {
+    /* Consider stacking table cells on mobile if content is too cramped */
+  }
+} 

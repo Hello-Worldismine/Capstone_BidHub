@@ -1,0 +1,88 @@
+/* login.css */
+body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background-color: #f8f9fc;
+    color: #333;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+  
+  .login-box {
+    background-color: white;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    max-width: 400px;
+    width: 100%;
+  }
+  
+  .login-box h2 {
+    font-size: 22px;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  
+  .login-form label {
+    display: block;
+    margin-top: 10px;
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  
+  .input-field {
+    width: 100%; /* 이 줄 추가 */
+    padding: 10px 14px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 14px;
+    box-sizing: border-box;
+  }
+  
+  
+  .btn-primary {
+    background-color: #3b82f6;
+    color: white;
+    padding: 12px;
+    width: 100%;
+    border: none;
+    border-radius: 9999px;
+    font-weight: bold;
+    font-size: 14px;
+    margin-top: 20px;
+    cursor: pointer;
+  }
+  
+  .btn-primary:hover {
+    background-color: #2563eb;
+  }
+  
+  .social-login {
+    text-align: center;
+    margin-top: 20px;
+  }
+  
+  .btn-kakao {
+    background-color: #fee500;
+    border: none;
+    color: #3c1e1e;
+    padding: 10px 20px;
+    border-radius: 9999px;
+    font-weight: bold;
+    font-size: 14px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .btn-kakao:hover {
+    background-color: #ffeb3b;
+  }
+  

@@ -1,0 +1,160 @@
+{% extends "account/base.html" %} {# Extend allauth base for consistency #}
+{% load i18n static form_tags %} {# Load necessary tags, including custom form_tags #}
+
+{% block head_title %}{% trans "Signup" %}{% endblock %}
+
+{% block extra_head %}
+{# Add custom CSS if needed #}
+<link rel="stylesheet" href="{% static 'css/login.css' %}"> {# Reusing login CSS for now #}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+{# Basic styling for potential error messages #}
+<style>
+  .alert-danger { color: red; margin-bottom: 1em; }
+  .invalid-feedback { color: red; font-size: 0.8em; }
+  .is-invalid { border-color: red; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="login-container"> {# Reusing login container class #}
+  <div class="login-box"> {# Reusing login box class #}
+    <h1>{% trans "Sign Up" %}</h1>
+
+    <p>{% blocktrans %}Already have an account? Then please <a href="{{ login_url }}">sign in</a>.{% endblocktrans %}</p>
+
+    <form class="signup login-form" id="signup_form" method="post" action="{% url 'account_signup' %}">
+      {% csrf_token %}
+      
+      {# Render the entire form using default rendering first #}
+      {# You can replace this with manual field rendering if needed #}
+      
+      {# Display non-field errors #}
+      {% if form.non_field_errors %}
+          <div class="alert alert-danger" role="alert">
+              {% for error in form.non_field_errors %}
+                  <p>{{ error }}</p>
+              {% endfor %}
+          </div>
+      {% endif %}
+
+      {# Render standard fields (e.g., username, email, passwords) #}
+      {% for field in form %}
+        {% if field.name != 'name' and field.name != 'id_number' and field.name != 'phone' and field.name != 'address' %}
+            <div class="form-group mb-3">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                <input type="{{ field.field.widget.input_type }}" 
+                       name="{{ field.name }}" 
+                       id="{{ field.id_for_label }}" 
+                       class="input-field {% if field.errors %}is-invalid{% endif %}" 
+                       placeholder="{{ field.label }}" 
+                       required 
+                       value="{{ field.value|default:'' }}">
+                {% for error in field.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+                {% if field.help_text %}
+                    <small class="form-text text-muted">{{ field.help_text }}</small>
+                {% endif %}
+            </div>
+        {% endif %}
+      {% endfor %}
+
+      {# Render custom profile fields explicitly #}
+      <h4>{% trans "Bidder Information" %}</h4>
+      
+      {# Field: name #}
+      {% with field=form|getattribute:'name' %}
+          <div class="form-group mb-3">
+              <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+              <input type="text" 
+                     name="{{ field.name }}" 
+                     id="{{ field.id_for_label }}" 
+                     class="input-field {% if field.errors %}is-invalid{% endif %}" 
+                     placeholder="{{ field.label }}" 
+                     {% if field.field.required %}required{% endif %} 
+                     value="{{ field.value|default:'' }}">
+              {% for error in field.errors %}
+                  <div class="invalid-feedback">{{ error }}</div>
+              {% endfor %}
+          </div>
+      {% endwith %}
+
+      {# Field: id_number #}
+      {% with field=form|getattribute:'id_number' %}
+          <div class="form-group mb-3">
+              <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+              <input type="text" 
+                     name="{{ field.name }}" 
+                     id="{{ field.id_for_label }}" 
+                     class="input-field {% if field.errors %}is-invalid{% endif %}" 
+                     placeholder="{{ field.label }}" 
+                     {% if field.field.required %}required{% endif %} 
+                     value="{{ field.value|default:'' }}">
+              {% for error in field.errors %}
+                  <div class="invalid-feedback">{{ error }}</div>
+              {% endfor %}
+          </div>
+      {% endwith %}
+      
+      {# Field: phone #}
+      {% with field=form|getattribute:'phone' %}
+          <div class="form-group mb-3">
+              <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+              <input type="text" 
+                     name="{{ field.name }}" 
+                     id="{{ field.id_for_label }}" 
+                     class="input-field {% if field.errors %}is-invalid{% endif %}" 
+                     placeholder="{{ field.label }}" 
+                     {% if field.field.required %}required{% endif %} 
+                     value="{{ field.value|default:'' }}">
+              {% for error in field.errors %}
+                  <div class="invalid-feedback">{{ error }}</div>
+              {% endfor %}
+          </div>
+      {% endwith %}
+      
+      {# Field: address #}
+      {% with field=form|getattribute:'address' %}
+          <div class="form-group mb-3">
+              <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+              <input type="text" 
+                     name="{{ field.name }}" 
+                     id="{{ field.id_for_label }}" 
+                     class="input-field {% if field.errors %}is-invalid{% endif %}" 
+                     placeholder="{{ field.label }}" 
+                     {% if field.field.required %}required{% endif %} 
+                     value="{{ field.value|default:'' }}">
+              {% for error in field.errors %}
+                  <div class="invalid-feedback">{{ error }}</div>
+              {% endfor %}
+          </div>
+      {% endwith %}
+
+      {% if redirect_field_value %}
+      <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+      {% endif %}
+      <button class="btn-primary" type="submit">{% trans "Sign Up" %} &raquo;</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{# Custom template filter needed to access form field by name #}
+{% comment %}
+Add this to a templatetags file (e.g., main/templatetags/form_tags.py):
+
+from django import template
+register = template.Library()
+
+@register.filter(name='getattribute')
+def getattribute(value, arg):
+    if hasattr(value, str(arg)):
+        return getattr(value, arg)
+    elif hasattr(value, 'get') and value.get(str(arg)):
+        return value.get(str(arg))
+    else:
+        return None # Or raise an error, or return empty string
+
+Make sure to create __init__.py in the templatetags directory
+and load the tag in the template: {% load form_tags %}
+{% endcomment %} 

@@ -1,0 +1,137 @@
+/* 메인 콘텐츠 영역 */
+.main-content {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 60px;
+  position: relative;
+}
+
+/* ===== 빠른입찰 영역 ===== */
+.bid {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.building-image {
+  width: 100%;
+  max-height: 400px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+.bid h1 {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.bid-form {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.input-field {
+  padding: 10px 14px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 14px;
+  width: 150px;
+}
+
+/* ===== 버튼 스타일 ===== */
+.btn-primary {
+  background-color: #3b82f6;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 9999px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.btn-primary:hover {
+  background-color: #2563eb;
+}
+
+.btn-secondary {
+  background-color: #e5e7eb;
+  color: #333;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  font-size: 13px;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background-color: #d1d5db;
+}
+
+/* ===== 기일경매목록 / 즐겨찾기목록 ===== */
+.auction-list h2 {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 30px;
+}
+
+.table th, .table td {
+  padding: 12px 14px;
+  text-align: center;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 14px;
+}
+
+.table th {
+  background-color: #f1f5f9;
+  font-weight: 600;
+}
+
+/* ===== 사이드바 ===== */
+.sidebar {
+  position: fixed;
+  right: 20px;
+  top: 200px;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+
+.sidebar-menu {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ===== 반응형 ===== */
+@media (max-width: 768px) {
+  .bid-form {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .input-field {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .sidebar {
+    display: none;
+  }
+}

@@ -1,0 +1,92 @@
+{% extends 'layout.html' %}
+{% load static %}
+
+{% block content %}
+<main class="main-content">
+  <div class="page-container">
+    <!-- 사이드 메뉴 -->
+    <aside class="sidebar">
+      <ul class="side-menu">
+        <li><a href="{% url 'index' %}">나의입찰내역 (준비중)</a></li>
+        <li><a href="{% url 'index' %}">보증금반환현황조회 (준비중)</a></li>
+        <li><a href="{% url 'index' %}">즐겨찾기목록 (준비중)</a></li>
+        <li><a href="{% url 'index' %}">입찰기본설정 (준비중)</a></li>
+        <li><a href="{% url 'auto_bid' %}">자동입찰설정</a></li>
+        <li class="active"><a href="{% url 'mypage' %}">마이페이지</a></li>
+      </ul>
+    </aside>
+
+    <!-- 마이페이지 본문 -->
+    <section class="page-content">
+      <h2>마이페이지</h2>
+
+      <!-- 로그인 정보 -->
+      <div class="mypage-section">
+        <h4>로그인 정보</h4>
+        <p><strong>아이디:</strong> {{ user.username }}</p>
+        <p><strong>이메일:</strong> {{ user.email }}</p>
+      </div>
+
+      <!-- Metamask 지갑 주소 -->
+      <div class="mypage-section">
+        <h4>Metamask 지갑 주소</h4>
+        <form method="post" action="{% url 'mypage' %}">
+          {% csrf_token %}
+          <input type="text" name="wallet_address" value="{{ profile.wallet_address }}" class="input-field" placeholder="0x1234abcd5678fgh..." />
+          <button class="btn-primary" type="submit" style="margin-top: 10px;">저장</button>
+        </form>
+      </div>
+
+      <!-- 기본 입찰자 정보 -->
+      <div class="mypage-section" id="editableSection">
+        <h4>기본 입찰자 정보</h4>
+
+        <label>이름</label>
+        <p id="nameView">{{ profile.name }}</p>
+        <input type="text" id="nameInput" class="input-field" value="{{ profile.name }}" style="display: none;" />
+
+        <label>주민등록번호 / 법인번호</label>
+        <p id="idView">{{ profile.id_number }}</p>
+        <input type="text" id="idInput" class="input-field" value="{{ profile.id_number }}" style="display: none;" />
+
+        <label>전화번호</label>
+        <p id="phoneView">{{ profile.phone }}</p>
+        <input type="text" id="phoneInput" class="input-field" value="{{ profile.phone }}" style="display: none;" />
+
+        <label>주소</label>
+        <p id="addrView">{{ profile.address }}</p>
+        <input type="text" id="addrInput" class="input-field" value="{{ profile.address }}" style="display: none;" />
+
+        <button class="btn-primary" id="editBtn" style="margin-top: 16px;">정보 수정</button>
+      </div>
+
+    </section>
+  </div>
+</main>
+
+<script>
+  const editBtn = document.getElementById('editBtn');
+  let isEditing = false;
+
+  const fields = ['name', 'id', 'phone', 'addr'];
+
+  editBtn.addEventListener('click', () => {
+    fields.forEach(field => {
+      const input = document.getElementById(field + 'Input');
+      const view = document.getElementById(field + 'View');
+
+      if (!isEditing) {
+        input.style.display = 'block';
+        view.style.display = 'none';
+      } else {
+        view.textContent = input.value;
+        input.style.display = 'none';
+        view.style.display = 'block';
+      }
+    });
+
+    editBtn.textContent = isEditing ? '정보 수정' : '확인';
+    isEditing = !isEditing;
+  });
+</script>
+{% endblock %}

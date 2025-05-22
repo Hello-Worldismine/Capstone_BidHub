@@ -1,0 +1,99 @@
+{% load allauth account socialaccount static i18n %} {# Added socialaccount #} {# Added i18n and allauth tags #}
+
+<!-- login.html (modified for standard allauth form submission) -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% trans "Sign In" %}</title> {# Use translation #}
+  <link rel="stylesheet" href="{% static 'css/login.css' %}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  {# Basic styling for potential error messages #}
+  <style>
+    .alert-danger { color: red; margin-bottom: 1em; }
+    .invalid-feedback { color: red; font-size: 0.8em; }
+    .is-invalid { border-color: red; }
+    .form-check { margin-top: 10px; margin-bottom: 10px;}
+  </style>
+</head>
+
+<body>
+  {% block content %}
+  <div class="login-container">
+    <div class="login-box">
+      <h2>{% trans "Sign In" %}</h2>
+
+      {# Standard form POSTing to allauth's login view #}
+      <form class="login-form" method="POST" action="{% url 'account_login' %}">
+          {% csrf_token %}
+
+          {# Display non-field errors (e.g., incorrect password) #}
+          {% if form.non_field_errors %}
+              <div class="alert alert-danger" role="alert">
+                  {% for error in form.non_field_errors %}
+                      <p>{{ error }}</p>
+                  {% endfor %}
+              </div>
+          {% endif %}
+
+          {# Render form fields using allauth template tags or manually #}
+          {# Manual rendering matching your previous style: #}
+          <label for="id_login">아이디</label> {# Use form field id #}
+          <input type="text"
+                 id="id_login" {# Use form field id #}
+                 name="{{ form.login.name }}"
+                 class="input-field {% if form.login.errors %}is-invalid{% endif %}"
+                 placeholder="아이디 입력"
+                 required
+                 value="{{ form.login.value|default:'' }}">
+          {% for error in form.login.errors %}
+              <div class="invalid-feedback">{{ error }}</div>
+          {% endfor %}
+
+          <label for="id_password">비밀번호</label> {# Use form field id #}
+          <input type="password"
+                 id="id_password" {# Use form field id #}
+                 name="{{ form.password.name }}"
+                 class="input-field {% if form.password.errors %}is-invalid{% endif %}"
+                 placeholder="비밀번호 입력"
+                 required>
+          {% for error in form.password.errors %}
+              <div class="invalid-feedback">{{ error }}</div>
+          {% endfor %}
+
+          {% if form.remember %}
+          <div class="form-check">
+              <input type="checkbox" name="{{ form.remember.name }}" id="id_remember" class="form-check-input"> {# Use form field id #}
+              <label class="form-check-label" for="id_remember">{% trans "Remember Me" %}</label>
+          </div>
+          {% endif %}
+
+          {# Hidden redirect field if needed (allauth usually handles this) #}
+          {% if redirect_field_value %}
+          <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+          {% endif %}
+
+          <button type="submit" class="btn-primary">{% trans "Sign In" %}</button>
+
+          <div class="social-login">
+            {# Link to password reset #}
+            <p><a class="button secondaryAction" href="{% url 'account_reset_password' %}">{% trans "Forgot Password?" %}</a></p>
+            <p>계정이 없으신가요? <a href="{% url 'account_signup' %}">회원가입</a></p>
+            {# Link to Kakao login #}
+            {% get_providers as socialaccount_providers %}
+            {% if socialaccount_providers %}
+                {% provider_login_url "kakao" as kakao_login_url %}
+                <a href="{{ kakao_login_url }}" class="btn-kakao">
+                    <i class="fas fa-comment"></i> {% blocktrans %}Sign in with {{ provider.name }}{% endblocktrans %}
+                </a>
+            {% endif %}
+          </div>
+      </form>
+
+    </div>
+  </div>
+  {# Removed script loading login.js #}
+  {% endblock %}
+</body>
+</html>
