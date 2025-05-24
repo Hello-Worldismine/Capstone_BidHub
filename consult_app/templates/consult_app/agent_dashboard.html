@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>상담 대시보드</title>
+</head>
+<body>
+    <h1>상담 대기 중인 방</h1>
+    <ul id="room-list">
+        {% for room in active_rooms %}
+            <li id="room-{{ room }}">
+                방 ID: {{ room }}
+                <a href="/consult_app/agent/{{ room }}/" target="_blank">[입장]</a>
+                <button onclick="completeChat('{{ room }}')">[상담 완료]</button>
+            </li>
+        {% empty %}
+            <li>현재 상담 대기 방이 없습니다.</li>
+        {% endfor %}
+    </ul>
+    
+    <script>
+        function loadRooms() {
+            fetch("/consult_app/agent/dashboard/rooms/")
+                .then(response => response.json())
+                .then(data => {
+                    const roomList = document.getElementById("room-list");
+                    roomList.innerHTML = "";
+    
+                    if (data.rooms.length === 0) {
+                        roomList.innerHTML = "<li>현재 상담 대기 방이 없습니다.</li>";
+                        return;
+                    }
+    
+                    data.rooms.forEach(room => {
+                        const li = document.createElement("li");
+                        li.id = `room-${room}`;
+                        li.innerHTML = `
+                            방 ID: ${room}
+                            <a href="/consult_app/agent/${room}/" target="_blank">[입장]</a>
+                            <button onclick="completeChat('${room}')">[상담 완료]</button>
+                        `;
+                        roomList.appendChild(li);
+                    });
+                });
+        }
+    
+        function completeChat(roomName) {
+            fetch(`/consult_app/agent/complete/${roomName}/`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        loadRooms();  // 완료 후 새로 불러오기
+                    } else {
+                        alert(data.message);
+                    }
+                });
+        }
+    
+        // 3초마다 방 목록 새로고침
+        setInterval(loadRooms, 3000);
+    
+        // 처음 진입 시에도 한 번 호출
+        loadRooms();
+    </script>
+    
+</body>
+</html>
