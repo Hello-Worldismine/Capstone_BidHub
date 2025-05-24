@@ -48,7 +48,7 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.kakao',
-    'bid_consult'
+    'consult_app',  # consult_app 추가
 ]
 
 MIDDLEWARE = [

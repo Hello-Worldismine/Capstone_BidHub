@@ -34,4 +34,5 @@ urlpatterns = [
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('accounts/', include('allauth.urls')), # Changed prefix to /accounts/
     path('', include('main.urls')),  # main app URLs at root
+    path('consult_app/', include('consult_app.urls')),
 ]
