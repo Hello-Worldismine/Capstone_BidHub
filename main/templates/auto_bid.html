@@ -1,0 +1,80 @@
+{% extends 'layout.html' %}
+{% load static %}
+
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/auto_bid.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h1>자동입찰예약 설정</h1>
+
+  <div class="section">
+    <h2>사건 검색 또는 즐겨찾기</h2>
+    <div class="input-group">
+      <input type="text" id="caseNumber" placeholder="사건번호 입력">
+      <button onclick="searchCase()">검색</button>
+      <button onclick="showFavorites()">즐겨찾기 보기</button>
+    </div>
+  </div>
+
+  <div class="section hidden" id="reservationForm">
+    <h2>자동입찰 예약 설정</h2>
+    <div class="input-group">
+      <input type="text" id="bidAmount" placeholder="입찰 금액 입력">
+    </div>
+    <div class="input-group">
+      <select id="bidTime">
+        <option>09:00</option>
+        <option>10:00</option>
+        <option>11:00</option>
+        <option>12:00</option>
+        <option>13:00</option>
+        <option>14:00</option>
+      </select>
+    </div>
+    <div class="input-group">
+      <label><input type="checkbox" id="activateAutoBid"> 자동입찰 예약 활성화</label>
+    </div>
+    <button onclick="confirmReservation()">예약 저장</button>
+  </div>
+
+  <div class="section hidden" id="confirmationBox">
+    <h2>예약 정보 확인</h2>
+    <div class="confirm-box">
+      <p id="confirmBidAmount"></p>
+      <p id="confirmBidTime"></p>
+      <p id="confirmAutoBid"></p>
+    </div>
+    <button onclick="completeReservation()">확인</button>
+  </div>
+</div>
+
+<script>
+  function searchCase() {
+    document.getElementById('reservationForm').classList.remove('hidden');
+  }
+
+  function showFavorites() {
+    document.getElementById('reservationForm').classList.remove('hidden');
+  }
+
+  function confirmReservation() {
+    const amount = document.getElementById('bidAmount').value;
+    const time = document.getElementById('bidTime').value;
+    const active = document.getElementById('activateAutoBid').checked ? '예' : '아니오';
+
+    document.getElementById('confirmBidAmount').innerText = '입찰 금액: ' + amount + ' 원';
+    document.getElementById('confirmBidTime').innerText = '입찰 시간: ' + time;
+    document.getElementById('confirmAutoBid').innerText = '자동입찰 활성화: ' + active;
+
+    document.getElementById('confirmationBox').classList.remove('hidden');
+  }
+
+  function completeReservation() {
+    alert('자동입찰 예약이 완료되었습니다.');
+    window.location.href = '/my-reservations';
+  }
+</script>
+{% endblock %}

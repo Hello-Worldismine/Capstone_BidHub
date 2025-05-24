@@ -1,0 +1,92 @@
+{% extends 'layout.html' %}
+{% load static %}
+
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/bidform.css' %}">
+{% endblock %}
+
+{% block content %}
+<main class="main-content">
+  <div class="page-container">
+    <!-- 사이드 메뉴 -->
+    <aside class="sidebar">
+      <ul class="side-menu">
+        <li class="active"><a href="{% url 'bidform' %}">입찰표 작성</a></li>
+        <li><a href="#">보증금반환현황조회</a></li>
+        <li><a href="#">즐겨찾기목록</a></li>
+        <li><a href="#">입찰기본설정</a></li>
+        <li><a href="#">자동입찰설정</a></li>
+        <li><a href="{% url 'mypage' %}">마이페이지</a></li>
+      </ul>
+    </aside>
+
+    <!-- 본문 -->
+    <section class="page-content">
+      <h2>입찰표 작성</h2>
+
+      <form class="mypage-section" id="bidForm" method="POST" action="{% url 'bid_submit' %}">
+        {% csrf_token %}
+        <h4>기본 정보 (마이페이지에서 수정 가능)</h4>
+
+        <label>입찰자 성명</label>
+        <p class="readonly">{{ profile.name }}</p>
+
+        <label>주민등록번호 / 법인번호</label>
+        <p class="readonly">{{ profile.resident_id }}</p>
+
+        <label>주소</label>
+        <p class="readonly">{{ profile.address }}</p>
+
+        <label>연락처</label>
+        <p class="readonly">{{ profile.phone }}</p>
+
+        <hr style="margin: 24px 0;" />
+
+        <h4>입찰 정보 입력</h4>
+
+        <div class="search-row">
+          <div class="search-group full-width">
+            <label for="court">법원</label>
+            <select id="court" name="court" class="input-select">
+              <option>서울중앙지방법원</option>
+              <option>서울동부지방법원</option>
+              <option>서울남부지방법원</option>
+              <option>서울서부지방법원</option>
+              <option>수원지방법원</option>
+            </select>
+          </div>
+
+          <div class="search-group full-width">
+            <label for="year">사건번호</label>
+            <div class="case-number-row">
+              <select id="year" name="year" class="input-select small">
+                <option>2024</option>
+                <option>2023</option>
+                <option>2022</option>
+              </select>
+              <span class="case-type">타경</span>
+              <input type="text" id="caseSeq" name="caseSeq" class="input-field small" placeholder="12345" />
+              <button class="btn-search" type="button">검색</button>
+            </div>
+          </div>
+        </div>
+
+        <label for="bidAmount1">입찰가 입력</label>
+        <input type="number" id="bidAmount1" name="bidAmount1" class="input-field" required />
+
+        <label for="bidAmount2">입찰가 확인</label>
+        <input type="number" id="bidAmount2" name="bidAmount2" class="input-field" required />
+
+        <label for="deposit">예치금</label>
+        <input type="number" id="deposit" name="deposit" class="input-field" required />
+
+        <label for="signature">서명</label>
+        <input type="text" id="signature" name="signature" class="input-field" placeholder="홍길동 (서명)" required />
+
+        <button type="submit" class="btn-primary" style="margin-top: 16px;">입찰표 제출</button>
+      </form>
+    </section>
+  </div>
+</main>
+{% endblock %}
