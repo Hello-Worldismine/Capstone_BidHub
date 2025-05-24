@@ -5,25 +5,29 @@ function setInitialTheme() {
   const saved = localStorage.getItem('theme');
   if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
     document.body.classList.add('dark-mode');
-    toggleBtn.textContent = '☀️ 라이트모드';
+    if (toggleBtn) toggleBtn.textContent = '☀️ 라이트모드';
   }
 }
 
-setInitialTheme();
+if (toggleBtn) {
+  setInitialTheme();
 
-toggleBtn.addEventListener('click', () => {
-  const isDark = document.body.classList.toggle('dark-mode');
-  toggleBtn.textContent = isDark ? '☀️ 라이트모드' : '🌙 다크모드';
-  localStorage.setItem('theme', isDark ? 'dark' : 'light');
-});
+  toggleBtn.addEventListener('click', () => {
+    const isDark = document.body.classList.toggle('dark-mode');
+    toggleBtn.textContent = isDark ? '☀️ 라이트모드' : '🌙 다크모드';
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  });
+}
 
 // 연도 입력 4자리 제한
 const yearInput = document.getElementById('year-input');
-yearInput.addEventListener('input', () => {
-  if (yearInput.value.length > 4) {
-    yearInput.value = yearInput.value.slice(0, 4);
-  }
-});
+if (yearInput) {
+  yearInput.addEventListener('input', () => {
+    if (yearInput.value.length > 4) {
+      yearInput.value = yearInput.value.slice(0, 4);
+    }
+  });
+}
 
 // 네비게이션 서브메뉴 표시
 const menuItems = document.querySelectorAll('.menu-item');
@@ -45,6 +49,8 @@ let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
 // 즐겨찾기 테이블 업데이트
 function updateFavoritesTable() {
   const tbody = document.querySelector('#favorites-table tbody');
+  if (!tbody) return;
+  
   tbody.innerHTML = '';
   favorites.forEach(item => {
     const tr = document.createElement('tr');
@@ -56,7 +62,6 @@ function updateFavoritesTable() {
     tbody.appendChild(tr);
   });
 }
-
 
 // 별표 아이콘 상태 초기화
 function updateStarIcons() {
@@ -70,28 +75,29 @@ function updateStarIcons() {
   });
 }
 
-
 // 기일경매목록 불러오기
 function fetchAuctionList() {
   fetch('http://127.0.0.1:8000/api/cases/')
     .then(res => res.json())
     .then(data => {
       const tbody = document.querySelector('.auction-list .table tbody');
+      if (!tbody) return;
+      
       tbody.innerHTML = '';
 
       data.forEach(auction => {
-        const details = auction.itemdetails_set?.[0]; // 첫 번째 디테일만 사용
+        const details = auction.auctionitem_set?.[0]; // 첫 번째 디테일만 사용
 
         if (!details) return; // 없으면 건너뜀
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td>${auction.case_id}</td>
-          <td>${details.min_bid}</td>
+          <td>${auction.case_number}</td>
+          <td>${details.valuation_amount}</td>
           <td>${details.auction_failures}회</td>
-          <td>${details.court_date}</td>
+          <td>${details.auction_date}</td>
           <td><button class="favorite-btn"><i class="fa-regular fa-star"></i></button></td>
-          <td><button class="btn-secondary">입찰하기</button></td>
+          <td><a href="/tender/` + auction.case_number + `/" class="btn-secondary">입찰하기</a></td>
         `;
         tbody.appendChild(tr);
       });
@@ -103,10 +109,9 @@ function fetchAuctionList() {
     });
 }
 
-
 // 별표 버튼 클릭 시 즐겨찾기 토글
 document.addEventListener('click', e => {
-  if (e.target.closest('.favorite-btn')) {9
+  if (e.target.closest('.favorite-btn')) {
     const btn = e.target.closest('.favorite-btn');
     const icon = btn.querySelector('i');
     const row = btn.closest('tr');
@@ -131,8 +136,12 @@ document.addEventListener('click', e => {
   }
 });
 
-
 // 초기 실행
-fetchAuctionList();
-updateFavoritesTable();
+document.addEventListener('DOMContentLoaded', function() {
+  // Check if we're on a page with auction listings
+  if (document.querySelector('.auction-list .table')) {
+    fetchAuctionList();
+  }
+  updateFavoritesTable();
+});
 

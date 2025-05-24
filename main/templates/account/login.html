@@ -77,15 +77,13 @@
           <button type="submit" class="btn-primary">{% trans "Sign In" %}</button>
 
           <div class="social-login">
-            {# Link to password reset #}
             <p><a class="button secondaryAction" href="{% url 'account_reset_password' %}">{% trans "Forgot Password?" %}</a></p>
             <p>계정이 없으신가요? <a href="{% url 'account_signup' %}">회원가입</a></p>
-            {# Link to Kakao login #}
             {% get_providers as socialaccount_providers %}
             {% if socialaccount_providers %}
                 {% provider_login_url "kakao" as kakao_login_url %}
                 <a href="{{ kakao_login_url }}" class="btn-kakao">
-                    <i class="fas fa-comment"></i> {% blocktrans %}Sign in with {{ provider.name }}{% endblocktrans %}
+                    <i class="fas fa-comment"></i> {% blocktrans %}Sign in with Kakao{% endblocktrans %}
                 </a>
             {% endif %}
           </div>
