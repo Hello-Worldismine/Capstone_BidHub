@@ -57,7 +57,7 @@
     <div class="info">
       <p><strong>입찰 보증금 : <span class="highlight-deposit" id="deposit-amount">계산중...</span> (최저매각가격의 10%)</strong></p>
       <p><strong>유찰 횟수: {{ item_details.auction_failures|default:0 }}회 {% if item_details.auction_failures == 0 %}(최초 경매){% endif %}</strong></p>
-      <p><strong>매각기일: {{ item_details.auction_date_1|date:"Y.m.d"|default:"2025.03.27" }}</strong></p>
+      <p><strong>매각기일: {{ item_details.auction_date|date:"Y.m.d"|default:"미정" }}</strong></p>
       <p><strong>남은 시간:</strong> <span class="countdown" id="countdown-timer">계산중...</span></p>
     </div>
 

@@ -22,14 +22,30 @@ def index(request):
     }
     return render(request, 'main/pages/index.html', context) # Pass context to the template
 
+def get_status_text(status_code):
+    """상태 코드를 텍스트로 변환"""
+    status_mapping = {
+        '001': '매각',
+        '002': '유찰', 
+        '003': '매각허가',
+        '004': '매각불허가',
+        '005': '최고가매각불허가결정',
+        '006': '중지',
+        '007': '진행중',
+        '008': '예정',
+        '009': '취하',
+        '010': '미납',
+        '011': '철회',
+        '012': '연기'
+    }
+    return status_mapping.get(status_code, '진행중')
+
 def tender(request, case_number=None):
     if case_number:
-        # 특정 사건번호의 상세 정보를 가져와서 표시
         try:
             case = get_object_or_404(AuctionCase, case_number=case_number)
             item_details = AuctionItem.objects.filter(case_number=case).first()
             
-            # Handle case when item_details is None
             if not item_details:
                 return redirect('index')
             
@@ -50,76 +66,60 @@ def tender(request, case_number=None):
                 'specification_url': item_details.item_spec_url if item_details else None
             }
             
-            # 소재지 정보 (배당요구 정보)
             location_info = {
                 'location': claim_distribution.location if claim_distribution else None,
                 'claim_deadline': claim_distribution.claim_deadline if claim_distribution else None,
                 'case_number': case.case_number if case else None
             }
             
-            # 문서 URL
             document_urls = {
                 'specification_url': item_details.item_spec_url if item_details else None
             }
             
-            # 입찰 내역 현황 - 경매 일정 정보 제공
+            # 입찰 내역 현황 - AuctionSchedule 모델 사용
             bidding_history = []
-            
-            # Parse the valuation amount to a number safely for calculations
             valuation_amount = 0
+            
             if item_details and item_details.valuation_amount:
                 try:
                     val_amount_str = item_details.valuation_amount or "0"
-                    # Remove non-numeric characters except for decimal points
                     val_amount_str = ''.join(c for c in val_amount_str if c.isdigit() or c == '.')
                     valuation_amount = float(val_amount_str)
                 except (ValueError, TypeError):
                     valuation_amount = 0
                 
-            # 경매 일정 데이터 추가 (item_details가 있을 때만)
+            # AuctionSchedule에서 회차별 정보 가져오기
             if item_details:
-                if item_details.auction_date_1:
-                    bidding_history.append({
-                        'id': 1,
-                        'link_text': f"{case.case_number} 1차 입찰",
-                        'type': '1차 입찰',
-                        'min_price': item_details.valuation_amount,
-                        'status': '유찰' if item_details.auction_failures > 0 else '진행중',
-                        'auction_date': item_details.auction_date_1,
-                        'due_date': item_details.decision_date_1
-                    })
+                from app.models import AuctionSchedule
+                schedules = AuctionSchedule.objects.filter(auction_item=item_details).order_by('round_number')
                 
-                if item_details.auction_date_2:
+                for schedule in schedules:
+                    # 회차에 따른 최저가격 계산
+                    if schedule.round_number == 1:
+                        min_price = valuation_amount
+                    elif schedule.round_number == 2:
+                        min_price = valuation_amount * 0.8
+                    elif schedule.round_number == 3:
+                        min_price = valuation_amount * 0.64
+                    elif schedule.round_number == 4:
+                        min_price = valuation_amount * 0.512
+                    else:
+                        min_price = valuation_amount * (0.8 ** (schedule.round_number - 1))
+                    
+                    # 상태 결정
+                    status = get_status_text(schedule.result_status)
+                    
+                    # 기일 종류에 따른 표시 텍스트
+                    schedule_display = schedule.schedule_type or f"{schedule.round_number}차"
+                    
                     bidding_history.append({
-                        'id': 2,
-                        'link_text': f"{case.case_number} 2차 입찰",
-                        'type': '2차 입찰',
-                        'min_price': f"{int(valuation_amount * 0.8):,}",
-                        'status': '유찰' if item_details.auction_failures > 1 else '진행중',
-                        'auction_date': item_details.auction_date_2,
-                        'due_date': item_details.decision_date_2
-                    })
-                
-                if item_details.auction_date_3:
-                    bidding_history.append({
-                        'id': 3,
-                        'link_text': f"{case.case_number} 3차 입찰",
-                        'type': '3차 입찰',
-                        'min_price': f"{int(valuation_amount * 0.64):,}",
-                        'status': '유찰' if item_details.auction_failures > 2 else '진행중',
-                        'auction_date': item_details.auction_date_3,
-                        'due_date': item_details.decision_date_3
-                    })
-                
-                if item_details.auction_date_4:
-                    bidding_history.append({
-                        'id': 4,
-                        'link_text': f"{case.case_number} 4차 입찰",
-                        'type': '4차 입찰',
-                        'min_price': f"{int(valuation_amount * 0.512):,}",
-                        'status': '진행중',
-                        'auction_date': item_details.auction_date_4,
-                        'due_date': item_details.decision_date_4
+                        'id': schedule.round_number,
+                        'link_text': f"{case.case_number} {schedule_display}",
+                        'type': schedule_display,  # "매각기일", "매각결정기일" 등
+                        'min_price': f"{int(min_price):,}" if min_price > 0 else item_details.valuation_amount,
+                        'status': status,
+                        'auction_date': schedule.auction_date,
+                        'due_date': schedule.decision_date
                     })
             
             # 이미지 경로 준비
@@ -130,6 +130,7 @@ def tender(request, case_number=None):
                         image_paths.append(url.strip())
             
             context = {
+                'property_id': case_number,
                 'property_info': property_info,
                 'item_details': item_details,
                 'case': case,
@@ -147,7 +148,6 @@ def tender(request, case_number=None):
         except (AuctionCase.DoesNotExist, AuctionItem.DoesNotExist):
             return redirect('index')
     else:
-        # 기본 tender 페이지 (샘플 데이터)
         return render(request, 'main/pages/tender.html')
 
 def auto_bid(request):
@@ -173,23 +173,26 @@ def mypage(request):
 def bidform(request):
     context = {}
     
-    # URL에서 case_number 파라미터 확인
     case_number = request.GET.get('case_number')
     
     if case_number:
         try:
-            # 케이스 정보 가져오기
             case = get_object_or_404(AuctionCase, case_number=case_number)
             item_details = AuctionItem.objects.filter(case_number=case).first()
             
             if item_details:
-                # 케이스 정보 준비
+                # 가장 최근 스케줄에서 매각기일 가져오기
+                from app.models import AuctionSchedule
+                latest_schedule = AuctionSchedule.objects.filter(
+                    auction_item=item_details
+                ).order_by('-round_number').first()
+                
                 case_info = {
                     'case_number': case.case_number,
                     'case_name': case.case_name,
                     'court_name': case.court_name,
                     'min_bid_price': case.minimum_bid_price or item_details.valuation_amount,
-                    'auction_date': item_details.auction_date_1
+                    'auction_date': latest_schedule.auction_date if latest_schedule else item_details.auction_date
                 }
                 
                 # 보증금 계산 (최저매각가격의 10%)
@@ -201,14 +204,13 @@ def bidform(request):
                 except (ValueError, TypeError):
                     deposit_amount = 0
                 
-                # 사건번호에서 연도와 순번 추출 (예: 2024타경1234)
+                # 사건번호에서 연도와 순번 추출
                 import re
                 case_match = re.match(r'(\d{4})타경(\d+)', case_number)
                 if case_match:
                     case_year = case_match.group(1)
                     case_sequence = case_match.group(2)
                 else:
-                    # 다른 형식의 사건번호 처리
                     if '타경' in case_number:
                         parts = case_number.split('타경')
                         case_year = parts[0] if len(parts) > 1 else ""
@@ -258,11 +260,9 @@ def charge(request):
 
 def property_detail(request, case_number):
     try:
-        # Try to find the auction case with the provided case number
         case = get_object_or_404(AuctionCase, case_number=case_number)
         item_details = AuctionItem.objects.filter(case_number=case).first()
         
-        # Get related data for display
         claim_distribution = ClaimDistribution.objects.filter(case_number=case).first()
         property_listings = PropertyListing.objects.filter(case_number=case)
         interested_parties = AuctionParty.objects.filter(case_number=case)
@@ -279,77 +279,66 @@ def property_detail(request, case_number):
             'specification_url': item_details.item_spec_url
         }
         
-        # 소재지 정보 (배당요구 정보)
         location_info = {
             'location': claim_distribution.location if claim_distribution else None,
             'claim_deadline': claim_distribution.claim_deadline if claim_distribution else None,
             'case_number': case.case_number if case else None
         }
         
-        # 문서 URL
         document_urls = {
             'specification_url': item_details.item_spec_url
         }
         
-        # 입찰 내역 현황 - 경매 일정 정보 제공
+        # 입찰 내역 현황 - AuctionSchedule 사용
         bidding_history = []
         
-        # Parse the valuation amount to a number safely for calculations
+        valuation_amount = 0
         try:
             val_amount_str = item_details.valuation_amount or "0"
-            # Remove non-numeric characters except for decimal points
             val_amount_str = ''.join(c for c in val_amount_str if c.isdigit() or c == '.')
             valuation_amount = float(val_amount_str)
         except (ValueError, TypeError):
             valuation_amount = 0
             
-        # 경매 일정 데이터 추가
-        if item_details.auction_date_1:
-            bidding_history.append({
-                'id': 1,
-                'link_text': f"{case.case_number} 1차 입찰",
-                'type': '1차 입찰',
-                'min_price': item_details.valuation_amount,
-                'status': '유찰' if item_details.auction_failures > 0 else '진행중',
-                'price_details': f"{item_details.valuation_amount} / {int(valuation_amount * 0.8):,} / {int(valuation_amount * 0.1):,}",
-                'auction_date': item_details.auction_date_1,
-                'due_date': item_details.decision_date_1
-            })
+        # AuctionSchedule에서 회차별 정보 가져오기
+        from app.models import AuctionSchedule
+        schedules = AuctionSchedule.objects.filter(auction_item=item_details).order_by('round_number')
         
-        if item_details.auction_date_2:
+        for schedule in schedules:
+            # 회차에 따른 최저가격 계산
+            if schedule.round_number == 1:
+                min_price = valuation_amount
+                deposit_ratio = 0.1
+            elif schedule.round_number == 2:
+                min_price = valuation_amount * 0.8
+                deposit_ratio = 0.08
+            elif schedule.round_number == 3:
+                min_price = valuation_amount * 0.64
+                deposit_ratio = 0.064
+            elif schedule.round_number == 4:
+                min_price = valuation_amount * 0.512
+                deposit_ratio = 0.0512
+            else:
+                min_price = valuation_amount * (0.8 ** (schedule.round_number - 1))
+                deposit_ratio = 0.1 * (0.8 ** (schedule.round_number - 1))
+            
+            # 상태 결정
+            if schedule.result_status:
+                status = schedule.result_status
+            elif item_details.auction_failures >= schedule.round_number:
+                status = '유찰'
+            else:
+                status = '진행중'
+            
             bidding_history.append({
-                'id': 2,
-                'link_text': f"{case.case_number} 2차 입찰",
-                'type': '2차 입찰',
-                'min_price': f"{int(valuation_amount * 0.8):,}",
-                'status': '유찰' if item_details.auction_failures > 1 else '진행중',
-                'price_details': f"{item_details.valuation_amount} / {int(valuation_amount * 0.64):,} / {int(valuation_amount * 0.08):,}",
-                'auction_date': item_details.auction_date_2,
-                'due_date': item_details.decision_date_2
-            })
-        
-        if item_details.auction_date_3:
-            bidding_history.append({
-                'id': 3,
-                'link_text': f"{case.case_number} 3차 입찰",
-                'type': '3차 입찰',
-                'min_price': f"{int(valuation_amount * 0.64):,}",
-                'status': '유찰' if item_details.auction_failures > 2 else '진행중',
-                'price_details': f"{item_details.valuation_amount} / {int(valuation_amount * 0.512):,} / {int(valuation_amount * 0.064):,}",
-                'auction_date': item_details.auction_date_3,
-                'due_date': item_details.decision_date_3
-            })
-        
-        if item_details.auction_date_4:
-            bidding_history.append({
-                'id': 4,
-                'link_text': f"{case.case_number} 4차 입찰",
-                'type': '4차 입찰',
-                'min_price': f"{int(valuation_amount * 0.512):,}",
-                'status': '진행중',
-                'price_details': f"{item_details.valuation_amount} / {int(valuation_amount * 0.4096):,} / {int(valuation_amount * 0.0512):,}",
-                'auction_date': item_details.auction_date_4,
-                'due_date': item_details.decision_date_4
+                'id': schedule.round_number,
+                'link_text': f"{case.case_number} {schedule.round_number}차 입찰",
+                'type': f'{schedule.round_number}차 입찰',
+                'min_price': f"{int(min_price):,}" if min_price > 0 else item_details.valuation_amount,
+                'status': status,
+                'price_details': f"{item_details.valuation_amount} / {int(min_price):,} / {int(valuation_amount * deposit_ratio):,}",
+                'auction_date': schedule.auction_date,
+                'due_date': schedule.decision_date
             })
         
         # 이미지 경로 준비
