@@ -163,20 +163,30 @@ class AuctionItem(models.Model):
     auction_failures = models.IntegerField(default=0, blank=True, null=True, help_text="유찰횟수")
     item_image_url = models.URLField(blank=True, null=True, help_text="이미지URL")
     
-    # 추가 매각기일 정보
-    auction_date_1 = models.DateTimeField(blank=True, null=True, help_text="매각기일 1차")
-    decision_date_1 = models.DateTimeField(blank=True, null=True, help_text="매각결정기일 1차")
-    auction_date_2 = models.DateTimeField(blank=True, null=True, help_text="매각기일 2차")
-    decision_date_2 = models.DateTimeField(blank=True, null=True, help_text="매각결정기일 2차")
-    auction_date_3 = models.DateTimeField(blank=True, null=True, help_text="매각기일 3차")
-    decision_date_3 = models.DateTimeField(blank=True, null=True, help_text="매각결정기일 3차")
-    auction_date_4 = models.DateTimeField(blank=True, null=True, help_text="매각기일 4차")
-    decision_date_4 = models.DateTimeField(blank=True, null=True, help_text="매각결정기일 4차")
-    
     class Meta:
         managed = True
         db_table = 'auction_item'
         unique_together = (('item_number', 'case_number'),)
+
+
+# 매각기일 정보 추가
+class AuctionSchedule(models.Model):
+    id = models.AutoField(primary_key=True)
+    auction_item = models.ForeignKey(AuctionItem, on_delete=models.CASCADE, related_name='schedules', help_text="물건정보")
+    round_number = models.IntegerField(help_text="회차 (1차, 2차, 3차...)")
+    auction_date = models.DateTimeField(blank=True, null=True, help_text="매각기일")
+    decision_date = models.DateTimeField(blank=True, null=True, help_text="매각결정기일")
+    minimum_price = models.BigIntegerField(blank=True, null=True, help_text="최저가격")
+    result_status = models.CharField(max_length=50, blank=True, null=True, help_text="결과상태 (유찰/낙찰/기타)")
+    
+    # 추가 필드
+    schedule_type = models.CharField(max_length=20, blank=True, null=True, help_text="기일 종류 (매각기일/매각결정기일/기타)")
+    
+    class Meta:
+        managed = True
+        db_table = 'auction_schedule'
+        unique_together = (('auction_item', 'round_number'),)
+        ordering = ['round_number']
 
 
 # 목록 정보 (auction_data 초안5 (4).CSV)

@@ -1,0 +1,461 @@
+{
+    "status": 200,
+    "message": "물건상세검색 정보가  조회되었습니다.",
+    "timestamp": 1748162509069,
+    "errors": null,
+    "data": {
+        "dma_result": {
+            "csBaseInfo": {
+                "cortOfcCd": "B000210",
+                "cortOfcNm": "서울중앙지방법원",
+                "cortSptNm": "서울중앙지방법원",
+                "csNo": "20220130113322",
+                "csNm": "부동산강제경매",
+                "csRcptYmd": "20221230",
+                "csCmdcYmd": "20230106",
+                "clmAmt": 25000000,
+                "rletApalYn": "N",
+                "auctnSuspStatCd": "03",
+                "ultmtDvsCd": "000",
+                "csUltmtYmd": null,
+                "csProgStatCd": "0002100001",
+                "jdgeAojAsstnNm": null,
+                "auctnDpcnMrgDvsCd": "0",
+                "csProgSuspRsn": null,
+                "mvprpCsNo": null,
+                "mvprpRletDvsCd": "00031R",
+                "jdbnCd": "1004",
+                "cortAuctnJdbnNm": "경매4계",
+                "jdbnTelno": "530-1816(제4별관 민사집행과)",
+                "execrCsTelno": "02-533-6850~2",
+                "cortTypCd": "40",
+                "expCsNo": null,
+                "lwstDvsCd": "2",
+                "userCsNo": "2022타경113322"
+            },
+            "dstrtDemnInfo": [
+                {
+                    "orddcsDvsCd": "021",
+                    "dstrtDemnLstprdYmd": "20230329"
+                }
+            ],
+            "dspslGdsDxdyInfo": {
+                "cortOfcCd": "B000210",
+                "csNo": "20220130113322",
+                "dspslGdsSeq": 1,
+                "auctnGdsStatCd": "01",
+                "gdsSpcfcWrtYmd": "20250520",
+                "ndstrcRghCtt": null,
+                "sprfcExstcDts": null,
+                "gdsSpcfcRmk": null,
+                "tprtyRnkHypthcStngDts": "2015.10.20 근저당권",
+                "dspslGdsRmk": null,
+                "auctnGdsUsgCd": "01",
+                "flbdNcnt": 0,
+                "aeeEvlAmt": 2720000000,
+                "fstPbancLwsDspslPrc": 2720000000,
+                "scndPbancLwsDspslPrc": null,
+                "thrdPbancLwsDspslPrc": null,
+                "fothPbancLwsDspslPrc": null,
+                "bidDvsCd": "000331",
+                "dspslDxdyYmd": "20250604",
+                "fstDspslHm": "1000",
+                "scndDspslHm": null,
+                "thrdDspslHm": null,
+                "fothDspslHm": null,
+                "dspslDcsnDxdyYmd": "20250611",
+                "dspslGdsSpcfcEcdocId": "EC363C17AC1906E66C8026DE1BD973E1",
+                "auctnDxdyGdsStatCd": "00",
+                "dspslPlcNm": "제4별관 2층 211호 경매법정",
+                "dspslDcsnHm": "1400",
+                "dspslDcsnPlcNm": "제4별관 3층 7호 법정",
+                "bidBgngYmd": null,
+                "bidEndYmd": null,
+                "cortOfcNm": "서울중앙지방법원",
+                "cortSptNm": "서울중앙지방법원",
+                "realMulKind": "1",
+                "orvParam": "YQN2WHHG1nS29x92QX9H4DVlE3xV5g3Hw+4YHf3oxLfy1wE2wR7F0ZlKT1qlis/sQjR1L4vQWIq8YbheV5sp43l9KSbBVZOtDXEzGbdE2IMhZOW4w6qWb3C3lRM1ijTIAAkA"
+            },
+            "picDvsIndvdCnt": [
+                {
+                    "cortOfcCd": "B000210",
+                    "csNo": "20220130113322",
+                    "cortAuctnPicDvsCd": "000245",
+                    "photoGubunCnt": 2
+                },
+                {
+                    "cortOfcCd": "B000210",
+                    "csNo": "20220130113322",
+                    "cortAuctnPicDvsCd": "000241",
+                    "photoGubunCnt": 2
+                },
+                {
+                    "cortOfcCd": "B000210",
+                    "csNo": "20220130113322",
+                    "cortAuctnPicDvsCd": "000244",
+                    "photoGubunCnt": 2
+                }
+            ],
+            "csPicLst": [
+                {
+                    "picFileUrl": "/nas_e_image_pgj/kj/2023/0201/",
+                    "picTitlNm": "B000210202201301133225.jpg",
+                    "cortAuctnPicDvsCd": "000241",
+                    "cortAuctnPicSeq": "5",
+                    "pageSeq": "1",
+                    "cortOfcCd": "B000210",
+                    "csNo": "20220130113322"
+                },
+                {
+                    "picFileUrl": "/nas_e_image_pgj/kj/2023/0201/",
+                    "picTitlNm": "B000210202201301133226.jpg",
+                    "cortAuctnPicDvsCd": "000241",
+                    "cortAuctnPicSeq": "6",
+                    "pageSeq": "2",
+                    "cortOfcCd": "B000210",
+                    "csNo": "20220130113322"
+                },
+                {
+                    "picFileUrl": "/nas_e_image_pgj/kp/2023/0121/",
+                    "picTitlNm": "B000210202201301133221.jpg",
+                    "cortAuctnPicDvsCd": "000244",
+                    "cortAuctnPicSeq": "1",
+                    "pageSeq": "3",
+                    "cortOfcCd": "B000210",
+                    "csNo": "20220130113322"
+                },
+                {
+                    "picFileUrl": "/nas_e_image_pgj/kp/2023/0121/",
+                    "picTitlNm": "B000210202201301133222.jpg",
+                    "cortAuctnPicDvsCd": "000244",
+                    "cortAuctnPicSeq": "2",
+                    "pageSeq": "4",
+                    "cortOfcCd": "B000210",
+                    "csNo": "20220130113322"
+                },
+                {
+                    "picFileUrl": "/nas_e_image_pgj/kp/2023/0121/",
+                    "picTitlNm": "B000210202201301133223.jpg",
+                    "cortAuctnPicDvsCd": "000245",
+                    "cortAuctnPicSeq": "3",
+                    "pageSeq": "5",
+                    "cortOfcCd": "B000210",
+                    "csNo": "20220130113322"
+                },
+                {
+                    "picFileUrl": "/nas_e_image_pgj/kp/2023/0121/",
+                    "picTitlNm": "B000210202201301133224.jpg",
+                    "cortAuctnPicDvsCd": "000245",
+                    "cortAuctnPicSeq": "4",
+                    "pageSeq": "6",
+                    "cortOfcCd": "B000210",
+                    "csNo": "20220130113322"
+                }
+            ],
+            "gdsDspslDxdyLst": [
+                {
+                    "dxdyYmd": "20250604",
+                    "dxdyHm": "1000",
+                    "bidBgngYmd": null,
+                    "bidEndYmd": null,
+                    "dxdyPlcNm": "제4별관 2층 211호 경매법정",
+                    "auctnDxdyKndCd": "01",
+                    "auctnDxdyRsltCd": null,
+                    "auctnDxdyGdsStatCd": "00",
+                    "tsLwsDspslPrc": 2720000000,
+                    "dspslAmt": 0
+                },
+                {
+                    "dxdyYmd": "20250611",
+                    "dxdyHm": "1400",
+                    "bidBgngYmd": null,
+                    "bidEndYmd": null,
+                    "dxdyPlcNm": "제4별관 3층 7호 법정",
+                    "auctnDxdyKndCd": "02",
+                    "auctnDxdyRsltCd": null,
+                    "auctnDxdyGdsStatCd": null,
+                    "tsLwsDspslPrc": 0,
+                    "dspslAmt": 0
+                }
+            ],
+            "gdsDspslObjctLst": [
+                {
+                    "cortOfcCd": "B000210",
+                    "csNo": "20220130113322",
+                    "dspslGdsSeq": 1,
+                    "dspslObjctSeq": 1,
+                    "rletDvsDts": "전유",
+                    "pjbBuldList": "철근콩크리트조\r\n84.96㎡",
+                    "aeeEvlAmt": 2720000000,
+                    "lclDspslGdsLstUsgCd": "20000",
+                    "mclDspslGdsLstUsgCd": "20100",
+                    "sclDspslGdsLstUsgCd": "20104",
+                    "rprsAdongSdCd": "11",
+                    "rprsAdongSggCd": "650",
+                    "rprsAdongEmdCd": "107",
+                    "rprsAdongRiCd": "00",
+                    "stXcrd": 312545,
+                    "stYcrd": 544661,
+                    "adongSdNm": "서울특별시",
+                    "adongSggNm": "서초구",
+                    "adongEmdNm": "반포동",
+                    "adongRiNm": null,
+                    "rprsLtnoAddr": "60-4",
+                    "bldNm": "반포미도아파트",
+                    "objctArDts": null,
+                    "ldcgDts": null,
+                    "dspslStkNmrtVal": 0,
+                    "dspslStkDnmnVal": 0,
+                    "dspslStkCtt": null,
+                    "gdsVendNm": null,
+                    "fuelKndCd": null,
+                    "grbxTypCd": null,
+                    "motrFmtDts": null,
+                    "carMdlNm": null,
+                    "carDsplcCtt": null,
+                    "objctRegNo": null,
+                    "carDelvYr": null,
+                    "carVidCtt": null,
+                    "objctAprvNo": null,
+                    "drvnDistIndctCtt": null,
+                    "auctnLstDvsCd": "03",
+                    "storgPlcAdongSdCd": null,
+                    "storgPlcAdongSggCd": null,
+                    "storgPlcAdongEmdCd": null,
+                    "storgPlcAdongRiCd": null,
+                    "storgPlcAllLtnoAddr": null,
+                    "objctRletCarUnqNo": "11021996044031",
+                    "pnuNoCtt": "1165010700100600004",
+                    "storgPlcAdongSd": null,
+                    "storgPlcAdongSgg": null,
+                    "storgPlcAdongEmd": null,
+                    "storgPlcAdongRi": null,
+                    "rdnmSdNm": "서울특별시",
+                    "rdnmSggNm": "서초구",
+                    "rdEubMyun": null,
+                    "rdnm": "서초중앙로29길",
+                    "rdnmBldNo": "28",
+                    "rdnmRefcAddr": "(반포동,반포미도아파트)",
+                    "addrTypCd": "R",
+                    "storgPlcRdnmAddr": "서울특별시 서초구 서초중앙로29길 00028-00000",
+                    "storgPlcAddrTypCd": "R",
+                    "bldDtlDts": "301동 4층401호",
+                    "userPrintSt": "서울특별시 서초구 서초중앙로29길 28, 301동 4층401호 (반포동,반포미도아파트)",
+                    "rgstRdngYn": "Y"
+                }
+            ],
+            "rgltLandLstAll": [
+                [
+                    {
+                        "cortOfcCd": "B000210",
+                        "csNo": "20220130113322",
+                        "dspslObjctSeq": 1,
+                        "rgltLandSeq": 1,
+                        "rletCarUnqNo": "11021996044031",
+                        "rletDvsDts": "전유",
+                        "landArDts": "75777㎡",
+                        "landLdcgDts": "대",
+                        "auctnRgltKndCd": "12401",
+                        "rgltRateDnmnVal": "75777",
+                        "rgltRateNmrtVal": "58.6",
+                        "rletIndctDts": "서울특별시강남구반포동60-4",
+                        "rgltLandSdNm": "서울특별시",
+                        "rgltLandSggNm": "강남구",
+                        "rgltLandEmdNm": "반포동",
+                        "rgltLandRiNm": null,
+                        "rgltLandLtnoAddr": "60-4",
+                        "rgltLandNo": 1
+                    }
+                ]
+            ],
+            "bldSdtrDtlLstAll": [
+                [
+                    {
+                        "cortOfcCd": "B000210",
+                        "csNo": "20220130113322",
+                        "dspslObjctSeq": 1,
+                        "bldSdtrSeq": 1,
+                        "rletCarUnqNo": "11021996044031",
+                        "rletDvsDts": "1동",
+                        "bldSdtrDtlDts": "철근콩크리트조 슬래브지붕 15층\n아파트\n1층 1075.70㎡\n2층 1045.10㎡\n3층 1045.10㎡\n4층 1045.10㎡\n5층 1045.10㎡\n6층 1045.10㎡\n7층 1045.10㎡\n8층 1045.10㎡\n9층 1045.10㎡\n10층 1045.10㎡\n11층 1045.10㎡\n12층 1045.10㎡\n13층 1045.10㎡\n14층 1045.10㎡\n15층 1045.10㎡\n지층 892.80㎡"
+                    },
+                    {
+                        "cortOfcCd": "B000210",
+                        "csNo": "20220130113322",
+                        "dspslObjctSeq": 1,
+                        "bldSdtrSeq": 2,
+                        "rletCarUnqNo": "11021996044031",
+                        "rletDvsDts": "전유",
+                        "bldSdtrDtlDts": "철근콩크리트조\r\n84.96㎡"
+                    }
+                ]
+            ],
+            "gdsNotSugtBldLsstAll": [
+                []
+            ],
+            "gdsRletStLtnoLstAll": [
+                [
+                    {
+                        "cortOfcCd": "B000210",
+                        "csNo": "20220130113322",
+                        "dspslObjctSeq": 1,
+                        "rletStSeq": 1,
+                        "adongSdCd": "11",
+                        "adongSggCd": "650",
+                        "adongEmdCd": "107",
+                        "adongRiCd": "00",
+                        "rletStLtnoAddr": "60-4",
+                        "adongSdNm": "서울특별시",
+                        "adongSggNm": "서초구",
+                        "adongEmdNm": "반포동",
+                        "adongRiNm": null,
+                        "auctnLstDvsCd": "03",
+                        "mclDspslGdsLstUsgCd": "20100",
+                        "rdnmSdNm": "서울특별시",
+                        "rdnmSggNm": "서초구",
+                        "rdEubMyun": null,
+                        "rdnm": "서초중앙로29길",
+                        "rdnmBldNo": "28",
+                        "rdnmRefcAddr": "(반포동,반포미도아파트)",
+                        "addrTypCd": "R"
+                    }
+                ]
+            ],
+            "aeeWevlMnpntLst": [
+                {
+                    "cortOfcCd": "B000210",
+                    "csNo": "20220130113322",
+                    "aeeWevlMnpntDtlSeq": 1,
+                    "aeeWevlMnpntTbltDvsCd": "00082001",
+                    "aeeWevlMnpntItmCd": "00083001",
+                    "aeeWevlMnpntCtt": "본건은 자하철7호선 고속터미널역 남동측 인근 (직선거리)에 위치하며,주위는 \n대규모 아파트단지,종합병원,고속터미널역 부근의 각종 근린생활시설,학교,야산 \n관공서,법원 등이 혼재하는 지역임."
+                },
+                {
+                    "cortOfcCd": "B000210",
+                    "csNo": "20220130113322",
+                    "aeeWevlMnpntDtlSeq": 2,
+                    "aeeWevlMnpntTbltDvsCd": "00082001",
+                    "aeeWevlMnpntItmCd": "00083003",
+                    "aeeWevlMnpntCtt": "인근 및 근거리 등(직선거리)에  지하철 9,3,7,2호선의 역이 위치하고 있으며\n다수의 버스노선이 있어,대중교통여건은 양호함."
+                },
+                {
+                    "cortOfcCd": "B000210",
+                    "csNo": "20220130113322",
+                    "aeeWevlMnpntDtlSeq": 3,
+                    "aeeWevlMnpntTbltDvsCd": "00082001",
+                    "aeeWevlMnpntItmCd": "00083008",
+                    "aeeWevlMnpntCtt": "부정형의 토지로서,아파트단지부지로 이용중임."
+                },
+                {
+                    "cortOfcCd": "B000210",
+                    "csNo": "20220130113322",
+                    "aeeWevlMnpntDtlSeq": 4,
+                    "aeeWevlMnpntTbltDvsCd": "00082001",
+                    "aeeWevlMnpntItmCd": "00083004",
+                    "aeeWevlMnpntCtt": "소로각지."
+                },
+                {
+                    "cortOfcCd": "B000210",
+                    "csNo": "20220130113322",
+                    "aeeWevlMnpntDtlSeq": 5,
+                    "aeeWevlMnpntTbltDvsCd": "00082001",
+                    "aeeWevlMnpntItmCd": "00083011",
+                    "aeeWevlMnpntCtt": "도시지역,제3종일반주거지역,도로(접함),도시철도(저촉)\n\n상대보호구??(토지전산망의 내용은 참고사항일뿐 교육청에 반드시 확인 요망\n)<교육환경보호에관한 법률>,\n대공방어협조구역(위탁고도:77-257m)<군사기지 및 군사시설 보호법>,\n과밀억제권역<수도권정비계획법>,\n(한강)폐기물매립시설 설치제한지역<<한강수계 상수원수질개선 및 주민지원\n등에 관한 법률>\n\n비오톱1등급(저촉),\n<추가기재> 건축가능하나 별도협의 요망."
+                },
+                {
+                    "cortOfcCd": "B000210",
+                    "csNo": "20220130113322",
+                    "aeeWevlMnpntDtlSeq": 6,
+                    "aeeWevlMnpntTbltDvsCd": "00082001",
+                    "aeeWevlMnpntItmCd": "00083013",
+                    "aeeWevlMnpntCtt": "-"
+                },
+                {
+                    "cortOfcCd": "B000210",
+                    "csNo": "20220130113322",
+                    "aeeWevlMnpntDtlSeq": 7,
+                    "aeeWevlMnpntTbltDvsCd": "00082001",
+                    "aeeWevlMnpntItmCd": "00083014",
+                    "aeeWevlMnpntCtt": "-"
+                },
+                {
+                    "cortOfcCd": "B000210",
+                    "csNo": "20220130113322",
+                    "aeeWevlMnpntDtlSeq": 8,
+                    "aeeWevlMnpntTbltDvsCd": "00082001",
+                    "aeeWevlMnpntItmCd": "00083026",
+                    "aeeWevlMnpntCtt": "임대관계 미상임."
+                },
+                {
+                    "cortOfcCd": "B000210",
+                    "csNo": "20220130113322",
+                    "aeeWevlMnpntDtlSeq": 1,
+                    "aeeWevlMnpntTbltDvsCd": "00082002",
+                    "aeeWevlMnpntItmCd": "00083015",
+                    "aeeWevlMnpntCtt": "철근콩크리트조 슬래브지붕 15층 건물로서,\n\n외벽;몰탈위 페인팅 등 마감\n내벽;벽지 및 타일 등 마감(탐문)\n창호;샷시창 등임."
+                },
+                {
+                    "cortOfcCd": "B000210",
+                    "csNo": "20220130113322",
+                    "aeeWevlMnpntDtlSeq": 2,
+                    "aeeWevlMnpntTbltDvsCd": "00082002",
+                    "aeeWevlMnpntItmCd": "00083006",
+                    "aeeWevlMnpntCtt": "아파트로 이용중임,건축물현황도는 발급되지 않으며,\n방3.욕실 1 로 탐문조사됨."
+                },
+                {
+                    "cortOfcCd": "B000210",
+                    "csNo": "20220130113322",
+                    "aeeWevlMnpntDtlSeq": 3,
+                    "aeeWevlMnpntTbltDvsCd": "00082002",
+                    "aeeWevlMnpntItmCd": "00083017",
+                    "aeeWevlMnpntCtt": "급배수 및 위생설비(탐문),주차설비,승강기설비 등임."
+                },
+                {
+                    "cortOfcCd": "B000210",
+                    "csNo": "20220130113322",
+                    "aeeWevlMnpntDtlSeq": 4,
+                    "aeeWevlMnpntTbltDvsCd": "00082002",
+                    "aeeWevlMnpntItmCd": "00083018",
+                    "aeeWevlMnpntCtt": "-"
+                },
+                {
+                    "cortOfcCd": "B000210",
+                    "csNo": "20220130113322",
+                    "aeeWevlMnpntDtlSeq": 5,
+                    "aeeWevlMnpntTbltDvsCd": "00082002",
+                    "aeeWevlMnpntItmCd": "00083014",
+                    "aeeWevlMnpntCtt": "-"
+                },
+                {
+                    "cortOfcCd": "B000210",
+                    "csNo": "20220130113322",
+                    "aeeWevlMnpntDtlSeq": 6,
+                    "aeeWevlMnpntTbltDvsCd": "00082002",
+                    "aeeWevlMnpntItmCd": "00083026",
+                    "aeeWevlMnpntCtt": "임대관계 미상임."
+                }
+            ],
+            "aroundDspslStats": [
+                {
+                    "term3MgakCnt": 10,
+                    "term6MgakCnt": 21,
+                    "term12MgakCnt": 54,
+                    "term3AvgGamEvalAmt": 2593300000,
+                    "term6AvgGamEvalAmt": 2530129524,
+                    "term12AvgGamEvalAmt": 2264082370,
+                    "term3AvgMgakPrc": 2440903610,
+                    "term6AvgMgakPrc": 2278871031,
+                    "term12AvgMgakPrc": 2177240666,
+                    "term3MgakPrcRate": 93,
+                    "term6MgakPrcRate": 88,
+                    "term12MgakPrcRate": 93,
+                    "term3AvgFlbdNcnt": 1,
+                    "term6AvgFlbdNcnt": 1.3,
+                    "term12AvgFlbdNcnt": 1.1
+                }
+            ]
+        },
+        "ipcheck": true
+    },
+    "token": null
+}
