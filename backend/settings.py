@@ -51,6 +51,8 @@ INSTALLED_APPS = [
     'consult_app',  # consult_app 추가
 ]
 
+AUTH_USER_MODEL = 'accounts.User'
+
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
