@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount',
     'allauth.socialaccount.providers.kakao',
     'consult_app',  # consult_app 추가
+    'chatbot',
 ]
 
 MIDDLEWARE = [
