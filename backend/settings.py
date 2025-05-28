@@ -44,6 +44,8 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.kakao',
+    'consult_app',  # consult_app 추가
+    'chatbot',
     'rest_framework',
     'corsheaders',
     
@@ -52,7 +54,6 @@ INSTALLED_APPS = [
     'auth_api',
     'main',
     'app',
-    'consult_app',
 ]
 
 AUTH_USER_MODEL = 'accounts.User'
