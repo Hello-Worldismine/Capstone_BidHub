@@ -154,6 +154,7 @@ class ClaimDistribution(models.Model):
 class AuctionItem(models.Model):
     item_number = models.IntegerField(help_text="물건번호")
     case_number = models.ForeignKey(AuctionCase, on_delete=models.CASCADE, to_field='case_number', db_column='case_number', help_text="사건번호")
+    property_name = models.CharField(max_length=255, blank=True, null=True, help_text="매물명(건물명)")  # 새로 추가
     item_spec_url = models.CharField(max_length=1000, blank=True, null=True, help_text="매각물건명세서URL")
     item_purpose = models.CharField(max_length=255, blank=True, null=True, help_text="물건용도")
     valuation_amount = models.CharField(max_length=255, blank=True, null=True, help_text="감정평가액")

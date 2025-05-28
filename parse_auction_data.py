@@ -147,11 +147,20 @@ def parse_auction_data(json_file_path):
     
     # 3. AuctionItem 생성
     item_info = dma_result.get('dspslGdsDxdyInfo', {})
+    objects_info = dma_result.get('gdsDspslObjctLst', [])
+
+    # 매물명 추출 (건물명)
+    property_name = ""
+    if objects_info:
+        obj_info = objects_info[0]
+        property_name = obj_info.get('bldNm', '')  # 건물명
+
     if item_info:
         auction_item, created = AuctionItem.objects.get_or_create(
             item_number=item_info.get('dspslGdsSeq', 1),
             case_number=auction_case,
             defaults={
+                'property_name': property_name,  # 새로 추가
                 'valuation_amount': str(item_info.get('aeeEvlAmt', '')),
                 'auction_failures': item_info.get('flbdNcnt', 0),
                 'auction_date': safe_datetime_parse(
@@ -163,7 +172,7 @@ def parse_auction_data(json_file_path):
         )
         
         if created:
-            print(f"Created auction item: {item_info.get('dspslGdsSeq', 1)}")
+            print(f"✓ Created auction item: {property_name} ({item_info.get('dspslGdsSeq', 1)})")
         
         # 4. AuctionSchedule 생성 (매각기일 정보)
         schedules = dma_result.get('gdsDspslDxdyLst', [])
@@ -185,11 +194,13 @@ def parse_auction_data(json_file_path):
                     schedule.get('dxdyHm')
                 )
             elif kind_code == '03':  # 대금지급기한
-                # 대금지급기한도 decision_date에 저장하거나 별도 처리
                 decision_date = safe_datetime_parse(
                     schedule.get('dxdyYmd'), 
                     schedule.get('dxdyHm')
                 )
+            
+            # tsLwsDspslPrc 값 사용 (실제 최저매각가격)
+            minimum_price = schedule.get('tsLwsDspslPrc', 0)
             
             auction_schedule, created = AuctionSchedule.objects.get_or_create(
                 auction_item=auction_item,
@@ -197,14 +208,14 @@ def parse_auction_data(json_file_path):
                 defaults={
                     'auction_date': auction_date,
                     'decision_date': decision_date,
-                    'minimum_price': schedule.get('tsLwsDspslPrc'),
+                    'minimum_price': minimum_price,  # tsLwsDspslPrc 값 저장
                     'result_status': schedule.get('auctnDxdyRsltCd'),
-                    'schedule_type': schedule_type  # "매각기일", "매각결정기일", "대금지급기한"
+                    'schedule_type': schedule_type
                 }
             )
             
             if created:
-                print(f"✓ Created auction schedule round {idx} ({schedule_type}) for item {auction_item.item_number}")
+                print(f"✓ Created auction schedule round {idx} ({schedule_type}) - Price: {minimum_price:,} for item {auction_item.item_number}")
     
     # 5. PropertyListing 생성
     objects_info = dma_result.get('gdsDspslObjctLst', [])
