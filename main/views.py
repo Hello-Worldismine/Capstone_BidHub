@@ -16,9 +16,9 @@ def index(request):
     # Fetch auction items
     # You might want to add filtering here, e.g., by date or status
     # For example: auction_items = AuctionItem.objects.filter(auction_date__gte=timezone.now()).order_by('auction_date')
-    auction_items = AuctionItem.objects.all() # Fetch all items for now
+    auction_items = AuctionItem.objects.select_related('case_number').all()[:10]
     context = {
-        'auction_items': auction_items
+        'auction_items': auction_items  # 이제 property_name도 포함됨
     }
     return render(request, 'main/pages/index.html', context) # Pass context to the template
 
@@ -54,15 +54,71 @@ def tender(request, case_number=None):
             property_listings = PropertyListing.objects.filter(case_number=case)
             interested_parties = AuctionParty.objects.filter(case_number=case)
             
+            # 감정평가액 (기준 가격)
+            valuation_amount = 0
+            if item_details and item_details.valuation_amount:
+                valuation_amount = int(item_details.valuation_amount.replace(',', '')) if isinstance(item_details.valuation_amount, str) else item_details.valuation_amount
+            
+            # AuctionSchedule에서 현재 진행중인 매각기일 찾기
+            from app.models import AuctionSchedule
+            from django.utils import timezone
+            
+            schedules = AuctionSchedule.objects.filter(auction_item=item_details).order_by('round_number')
+            
+            # 현재 진행중인 매각기일의 최저매각가격 찾기
+            current_min_price = valuation_amount  # 기본값
+            current_round = 1
+            
+            now = timezone.now().date()
+            
+            for schedule in schedules:
+                # 매각기일이고 아직 지나지 않은 경우
+                if (schedule.schedule_type == '매각기일' and 
+                    schedule.auction_date and 
+                    schedule.auction_date.date() >= now and
+                    schedule.minimum_price and 
+                    schedule.minimum_price > 0):
+                    
+                    current_min_price = schedule.minimum_price  # tsLwsDspslPrc 값 사용
+                    current_round = schedule.round_number
+                    break
+                
+                # 과거 매각기일 중 가장 최근 회차 확인 (다음 회차 예측용)
+                elif (schedule.schedule_type == '매각기일' and 
+                      schedule.auction_date and 
+                      schedule.auction_date.date() < now):
+                    current_round = schedule.round_number + 1  # 다음 회차
+            
+            # 만약 진행중인 매각기일을 찾지 못했다면 감정평가액 사용
+            if current_min_price == valuation_amount and schedules.exists():
+                # 가장 최근 스케줄의 minimum_price 사용
+                latest_schedule = schedules.filter(
+                    schedule_type='매각기일',
+                    minimum_price__gt=0
+                ).first()
+                
+                if latest_schedule:
+                    current_min_price = latest_schedule.minimum_price
+                    current_round = latest_schedule.round_number
+            
+            # 감정평가액 대비 비율 계산
+            price_ratio = 100
+            if valuation_amount > 0:
+                price_ratio = round((current_min_price / valuation_amount) * 100)
+            
             property_info = {
                 'case_number': case.case_number if case else None,
                 'case_name': case.case_name if case else None,
+                'property_name': item_details.property_name if item_details else None,
                 'court': case.court_name if case else None,
                 'receipt_date': case.filing_date if case else None,
                 'responsible_dept': case.responsible_dept if case else None,
                 'claim_amount': case.claim_amount if case else None,
                 'appeal_status_display': '항고' if case and case.appeal_status else '미항고',
-                'min_bid_price': case.minimum_bid_price if case else (item_details.valuation_amount if item_details else None),
+                'min_bid_price': f"{current_min_price:,}",  # 실제 tsLwsDspslPrc 값
+                'current_round': current_round,
+                'valuation_amount': f"{valuation_amount:,}",
+                'price_ratio': price_ratio,  # 감정가 대비 비율
                 'specification_url': item_details.item_spec_url if item_details else None
             }
             
@@ -78,7 +134,6 @@ def tender(request, case_number=None):
             
             # 입찰 내역 현황 - AuctionSchedule 모델 사용
             bidding_history = []
-            valuation_amount = 0
             
             if item_details and item_details.valuation_amount:
                 try:
@@ -94,17 +149,11 @@ def tender(request, case_number=None):
                 schedules = AuctionSchedule.objects.filter(auction_item=item_details).order_by('round_number')
                 
                 for schedule in schedules:
-                    # 회차에 따른 최저가격 계산
-                    if schedule.round_number == 1:
-                        min_price = valuation_amount
-                    elif schedule.round_number == 2:
-                        min_price = valuation_amount * 0.8
-                    elif schedule.round_number == 3:
-                        min_price = valuation_amount * 0.64
-                    elif schedule.round_number == 4:
-                        min_price = valuation_amount * 0.512
-                    else:
-                        min_price = valuation_amount * (0.8 ** (schedule.round_number - 1))
+                    # 실제 저장된 minimum_price 사용 (tsLwsDspslPrc 값)
+                    min_price = schedule.minimum_price if schedule.minimum_price else 0
+                    
+                    # 보증금 계산 (최저매각가격의 10%)
+                    deposit_amount = int(min_price * 0.1) if min_price > 0 else 0
                     
                     # 상태 결정
                     status = get_status_text(schedule.result_status)
@@ -116,7 +165,7 @@ def tender(request, case_number=None):
                         'id': schedule.round_number,
                         'link_text': f"{case.case_number} {schedule_display}",
                         'type': schedule_display,  # "매각기일", "매각결정기일" 등
-                        'min_price': f"{int(min_price):,}" if min_price > 0 else item_details.valuation_amount,
+                        'min_price': f"{min_price:,}" if min_price > 0 else "정보없음",
                         'status': status,
                         'auction_date': schedule.auction_date,
                         'due_date': schedule.decision_date
@@ -292,35 +341,16 @@ def property_detail(request, case_number):
         # 입찰 내역 현황 - AuctionSchedule 사용
         bidding_history = []
         
-        valuation_amount = 0
-        try:
-            val_amount_str = item_details.valuation_amount or "0"
-            val_amount_str = ''.join(c for c in val_amount_str if c.isdigit() or c == '.')
-            valuation_amount = float(val_amount_str)
-        except (ValueError, TypeError):
-            valuation_amount = 0
-            
         # AuctionSchedule에서 회차별 정보 가져오기
         from app.models import AuctionSchedule
         schedules = AuctionSchedule.objects.filter(auction_item=item_details).order_by('round_number')
         
         for schedule in schedules:
-            # 회차에 따른 최저가격 계산
-            if schedule.round_number == 1:
-                min_price = valuation_amount
-                deposit_ratio = 0.1
-            elif schedule.round_number == 2:
-                min_price = valuation_amount * 0.8
-                deposit_ratio = 0.08
-            elif schedule.round_number == 3:
-                min_price = valuation_amount * 0.64
-                deposit_ratio = 0.064
-            elif schedule.round_number == 4:
-                min_price = valuation_amount * 0.512
-                deposit_ratio = 0.0512
-            else:
-                min_price = valuation_amount * (0.8 ** (schedule.round_number - 1))
-                deposit_ratio = 0.1 * (0.8 ** (schedule.round_number - 1))
+            # 실제 저장된 minimum_price 사용 (tsLwsDspslPrc 값)
+            min_price = schedule.minimum_price if schedule.minimum_price else 0
+            
+            # 보증금 계산 (최저매각가격의 10%)
+            deposit_amount = int(min_price * 0.1) if min_price > 0 else 0
             
             # 상태 결정
             if schedule.result_status:

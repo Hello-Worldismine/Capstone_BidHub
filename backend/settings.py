@@ -37,20 +37,26 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'app',
-    'rest_framework',
-    'corsheaders',
-    'accounts',  # 정확히 추가되어야 함
-    'auth_api',
-    'main',  # main 앱 추가
-    'django.contrib.sites',  # Django Allauth를 위한 추가
+    'django.contrib.sites',  # allauth를 위해 필요
+    
+    # Third-party apps (allauth를 accounts보다 먼저)
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.kakao',
     'consult_app',  # consult_app 추가
     'chatbot',
+    'rest_framework',
+    'corsheaders',
+    
+    # Your apps (accounts를 다른 앱들보다 먼저)
+    'accounts',  # Custom user model app
+    'auth_api',
+    'main',
+    'app',
 ]
+
+AUTH_USER_MODEL = 'accounts.User'
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
