@@ -35,7 +35,7 @@
 
   <div class="right-section">
     
-    <h2>{{ property_info.case_name|default:"매물명" }}
+    <h2>{{ property_info.property_name|default:"매물명" }}
       <span class="badge green">일괄</span>
       <span class="badge brown">{{ item_details.property_type|default:"아파트" }}</span>
     </h2>
@@ -52,7 +52,11 @@
         {{ property_info.case_number|default:"사건번호" }}
       </a>
     </p>
-    <div class="price">{{ property_info.min_bid_price|default:"510,000,000" }}<span style="color:rgb(255, 110, 57); font-size: 12px; font-weight: 500;">&nbsp; 감정가의 100%</span></div>
+    <div class="price">{{ property_info.min_bid_price|default:"3,210,000,000" }}
+  <span style="color:rgb(255, 110, 57); font-size: 12px; font-weight: 500;">
+    &nbsp; 감정가의 {{ property_info.price_ratio|default:100 }}% ({{ property_info.current_round|default:1 }}차)
+  </span>
+</div>
 
     <div class="info">
       <p><strong>입찰 보증금 : <span class="highlight-deposit" id="deposit-amount">계산중...</span> (최저매각가격의 10%)</strong></p>
@@ -61,15 +65,15 @@
       <p><strong>남은 시간:</strong> <span class="countdown" id="countdown-timer">계산중...</span></p>
     </div>
 
-    <form class="bid-form" action="{% url 'bid_submit' %}" method="POST">
+    <form class="bid-form">
       {% csrf_token %}
       <input type="hidden" name="case_number" value="{{ property_info.case_number }}">
       <label for="bid-price">입찰 금액 입력</label>
       <input type="text" id="bid-price" name="bid_amount" placeholder="최저매각가격 : {{ property_info.min_bid_price|default:'510,000,000' }}원" data-min-price="{{ property_info.min_bid_price|default:'510000000' }}" />
 
-      <a href="{% url 'bidform' %}?case_number={{ property_info.case_number }}" class="submit-btn">입찰표 작성하기</a>
+      <button type="button" class="submit-btn" onclick="location.href='{% url 'bidform' %}?case_number={{ property_info.case_number }}'">입찰표 작성하기</button>
       <div class="actions">
-        <a href="{% url 'bid_history' %}" type="button">입찰 내역 보기</a>
+        <button type="button" onclick="location.href='{% url 'bid_history' %}'">입찰 내역 보기</button>
         <button type="button" onclick="addToFavorites('{{ property_info.case_number }}')">관심 목록 추가</button>
       </div>
     </form>
@@ -312,8 +316,78 @@
       updateMainImage();
     };
 
+    // ================ 새로운 가격 포맷팅 및 입찰 검증 기능 추가 ================
+    
+    // 숫자 → "5억 100만원" 변환
+    function formatToKorean(price) {
+      const oku = Math.floor(price / 100000000);
+      const man = Math.floor((price % 100000000) / 10000);
+      let result = "";
+      if (oku > 0) result += oku + "억 ";
+      if (man > 0) result += man + "만원";
+      return result.trim();
+    }
+
+    // 쉼표 제거 후 숫자로 변환
+    function parseNumber(str) {
+      return parseInt(str.replaceAll(",", "").replace(/[^0-9]/g, ""), 10) || 0;
+    }
+
+    // 쉼표가 포함된 문자열로 포맷팅
+    function formatWithComma(num) {
+      return num.toLocaleString("ko-KR");
+    }
+
+    const priceBlock = document.querySelector(".price");
+    const bidInput = document.getElementById("bid-price");
+    const submitBtn = document.querySelector(".submit-btn");
+
+    if (priceBlock) {
+      const fullText = priceBlock.textContent.trim();
+      const match = fullText.match(/[0-9,]+/);
+
+      if (match) {
+        const price = parseNumber(match[0]);
+        const formatted = formatToKorean(price);
+
+        // 가격 블럭 표기 변경 (510,000,000 → 5억 100만원)
+        priceBlock.innerHTML = priceBlock.innerHTML.replace(match[0], formatted);
+
+        // ✅ 입력 필드 이벤트 처리
+        if (bidInput && submitBtn) {
+          bidInput.addEventListener("input", function () {
+            // 입력값에서 숫자만 추출
+            let raw = parseNumber(bidInput.value);
+
+            // 입력창에 쉼표 형식으로 다시 표시
+            bidInput.value = formatWithComma(raw);
+
+            // 입력값이 기준보다 작으면 버튼 비활성화
+            if (raw < price) {
+              submitBtn.disabled = true;
+              submitBtn.style.backgroundColor = "#ccc";
+              submitBtn.style.cursor = "not-allowed";
+              submitBtn.innerText = `입찰 금액은 ${formatted} 이상이어야 합니다`;
+            } else {
+              submitBtn.disabled = false;
+              submitBtn.style.backgroundColor = "#3B82F6";
+              submitBtn.style.cursor = "pointer";
+              submitBtn.innerText = "입찰표 작성하기";
+            }
+          });
+        }
+
+        // 보증금 계산 (최저매각가격의 10%)
+        const depositAmount = Math.floor(price * 0.1);
+        const depositElement = document.getElementById('deposit-amount');
+        if (depositElement) {
+          depositElement.textContent = formatWithComma(depositAmount) + '원';
+        }
+      }
+    }
+
     // 매각기일 카운트다운 계산
-    const auctionDate = "{{ item_details.auction_date_1|date:'Y-m-d' }}";
+    const auctionDate = "{{ item_details.auction_date|date:'Y-m-d' }}";
     if (auctionDate && auctionDate !== "None") {
       const targetDate = new Date(auctionDate);
       const now = new Date();
@@ -321,24 +395,20 @@
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       
       const countdownElement = document.getElementById('countdown-timer');
-      if (diffDays > 0) {
-        countdownElement.textContent = `D-${diffDays}`;
-        countdownElement.style.color = '#e74c3c';
-      } else if (diffDays === 0) {
-        countdownElement.textContent = 'D-Day';
-        countdownElement.style.color = '#e74c3c';
-        countdownElement.style.fontWeight = 'bold';
-      } else {
-        countdownElement.textContent = '마감';
-        countdownElement.style.color = '#95a5a6';
+      if (countdownElement) {
+        if (diffDays > 0) {
+          countdownElement.textContent = `D-${diffDays}`;
+          countdownElement.style.color = '#e74c3c';
+        } else if (diffDays === 0) {
+          countdownElement.textContent = 'D-Day';
+          countdownElement.style.color = '#e74c3c';
+          countdownElement.style.fontWeight = 'bold';
+        } else {
+          countdownElement.textContent = '마감';
+          countdownElement.style.color = '#95a5a6';
+        }
       }
     }
-
-    // 보증금 계산 (최저매각가격의 10%)
-    const minPriceStr = "{{ property_info.min_bid_price|default:'0' }}";
-    const minPrice = parseNumber(minPriceStr);
-    const depositAmount = Math.floor(minPrice * 0.1);
-    document.getElementById('deposit-amount').textContent = formatWithComma(depositAmount) + '원';
   });
 
   // 즐겨찾기 추가 함수
@@ -352,7 +422,7 @@
       favorites.push({
         caseNumber: caseNumber,
         minBid: "{{ property_info.min_bid_price }}",
-        deadline: "{{ item_details.auction_date_1|date:'Y-m-d' }}"
+        deadline: "{{ item_details.auction_date|date:'Y-m-d' }}"
       });
       
       localStorage.setItem('favorites', JSON.stringify(favorites));
@@ -361,7 +431,6 @@
       alert('이미 관심 목록에 있는 물건입니다.');
     }
   }
-
 </script>
 
 <!-- 이미지 확대용 모달 -->
