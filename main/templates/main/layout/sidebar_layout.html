@@ -1,0 +1,35 @@
+{% extends 'main/layout/layout.html' %}
+{% load static %}
+
+{% block extra_css %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'css/layout/sidebar_layout.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="sidebar-layout">
+  <!-- 사이드 메뉴 -->
+  <aside class="sidebar">
+    <ul class="side-menu">
+      {% block sidebar_menu %}
+      <!-- 이 block을 상속받는 템플릿에서 덮어쓸 수 있음 -->
+      <li class="{% if request.resolver_match.url_name == 'bidform' %}active{% endif %}">
+        <a href="{% url 'bidform' %}">입찰표 작성</a>
+      </li>
+      <li><a href="#">보증금반환현황조회</a></li>
+      <li><a href="#">즐겨찾기목록</a></li>
+      <li><a href="#">입찰기본설정</a></li>
+      <li><a href="#">자동입찰설정</a></li>
+      <li><a href="{% url 'mypage' %}">마이페이지</a></li>
+      {% endblock %}
+    </ul>
+  </aside>
+
+  <!-- 본문 컨텐츠 -->
+  <section class="sidebar-content">
+    {% block sidebar_content %}
+    <!-- 실제 페이지별 내용이 들어갈 영역 -->
+    {% endblock %}
+  </section>
+</div>
+{% endblock %}
