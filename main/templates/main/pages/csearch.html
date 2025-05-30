@@ -1,0 +1,305 @@
+{% extends 'main/layout/sidebar_layout.html' %}
+{% load static %}
+
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/pages/csearch.css' %}">
+{% endblock %}
+
+{% block sidebar_menu %}
+<li><a href="#">오늘의경매</a></li>
+<li><a href="#">주간경매공고</a></li>
+<li><a href="{% url 'csearch' %}">빠른검색</a></li>
+<li class="active"><a href="#">조건검색</a></li>
+{% endblock %}
+
+{% block sidebar_content %}
+<h2>조건검색</h2>
+<br>
+<hr style="width: 1000px;">
+
+<div class="filter-toolbar">
+    <button class="filter-toggle" onclick="toggleFilter('type')">물건종류 ▾</button>
+    <button class="filter-toggle" onclick="toggleFilter('price')">입찰금 ▾</button>
+    <button class="filter-toggle" onclick="toggleFilter('fail')">유찰수 ▾</button>
+    <button class="reset-btn" onclick="resetFilters()">초기화</button>
+  </div>
+  
+  <!-- 필터 세부 옵션 영역 -->
+  <div class="filter-options">
+    <div id="filter-type" class="filter-group hidden">
+        <div class="filter-category">
+            <strong>아파트/주택</strong>
+            <div class="filter-buttons">
+              <button onclick="selectFilter(this)">아파트</button>
+              <button onclick="selectFilter(this)">연립주택</button>
+              <button onclick="selectFilter(this)">오피스텔</button>
+              <button onclick="selectFilter(this)">단독주택</button>
+              <button onclick="selectFilter(this)">다세대주택</button>
+              <button onclick="selectFilter(this)">주상복합</button>
+              <button onclick="selectFilter(this)">다가구주택</button>
+              <button onclick="selectFilter(this)">주거기타</button>
+            </div>
+          </div>
+        
+          <div class="filter-category">
+            <strong>상가</strong>
+            <div class="filter-buttons">
+              <button onclick="selectFilter(this)">근린생활시설</button>
+              <button onclick="selectFilter(this)">주/상용건물</button>
+              <button onclick="selectFilter(this)">판매시설</button>
+              <button onclick="selectFilter(this)">위락시설</button>
+              <button onclick="selectFilter(this)">상가기타</button>
+            </div>
+          </div>
+        
+          <div class="filter-category">
+            <strong>건물기타</strong>
+            <div class="filter-buttons">
+              <button onclick="selectFilter(this)">업무시설</button>
+              <button onclick="selectFilter(this)">종교시설</button>
+              <button onclick="selectFilter(this)">공장</button>
+              <button onclick="selectFilter(this)">창고시설</button>
+              <button onclick="selectFilter(this)">숙박시설</button>
+              <button onclick="selectFilter(this)">건물기타</button>
+            </div>
+          </div>
+        
+          <div class="filter-category">
+            <strong>토지</strong>
+            <div class="filter-buttons">
+              <button onclick="selectFilter(this)">대지</button>
+              <button onclick="selectFilter(this)">임야</button>
+              <button onclick="selectFilter(this)">답</button>
+              <button onclick="selectFilter(this)">잡종지</button>
+              <button onclick="selectFilter(this)">전</button>
+            </div>
+          </div>
+        
+          <div class="filter-category">
+            <strong>토지기타</strong>
+            <div class="filter-buttons">
+              <button onclick="selectFilter(this)">도로</button>
+              <button onclick="selectFilter(this)">공장용지</button>
+              <button onclick="selectFilter(this)">창고용지</button>
+              <button onclick="selectFilter(this)">묘지</button>
+              <button onclick="selectFilter(this)">목장용지</button>
+              <button onclick="selectFilter(this)">주유소용지</button>
+              <button onclick="selectFilter(this)">종교용지</button>
+              <button onclick="selectFilter(this)">토지기타</button>
+            </div>
+          </div>
+
+    </div>
+  
+    <div id="filter-price" class="filter-group hidden">
+        <div class="price-grid">
+            <button class="price-button" onclick="selectPrice(this)">1천</button>
+            <button class="price-button" onclick="selectPrice(this)">5천</button>
+            <button class="price-button" onclick="selectPrice(this)">1억</button>
+        
+            <button class="price-button" onclick="selectPrice(this)">2억</button>
+            <button class="price-button" onclick="selectPrice(this)">3억</button>
+            <button class="price-button" onclick="selectPrice(this)">4억</button>
+            <button class="price-button" onclick="selectPrice(this)">5억</button>
+            <button class="price-button" onclick="selectPrice(this)">6억</button>
+            <button class="price-button" onclick="selectPrice(this)">7억</button>
+        
+            <button class="price-button" onclick="selectPrice(this)">8억</button>
+            <button class="price-button" onclick="selectPrice(this)">9억</button>
+            <button class="price-button" onclick="selectPrice(this)">10억</button>
+            <button class="price-button" onclick="selectPrice(this)">11억</button>
+            <button class="price-button" onclick="selectPrice(this)">12억</button>
+            <button class="price-button" onclick="selectPrice(this)">13억</button>
+        
+            <button class="price-button" onclick="selectPrice(this)">14억</button>
+            <button class="price-button" onclick="selectPrice(this)">15억</button>
+            <button class="price-button" onclick="selectPrice(this)">16억</button>
+            <button class="price-button" onclick="selectPrice(this)">17억</button>
+            <button class="price-button" onclick="selectPrice(this)">18억</button>
+            <button class="price-button" onclick="selectPrice(this)">18억~</button>
+            
+          </div>
+          <div class="price-range">
+            <div class="range-box">
+              <button onclick="adjustPrice('min', 'down')">-</button>
+              <span id="minPriceLabel">최소</span>
+              <button onclick="adjustPrice('min', 'up')">+</button>
+            </div>
+            <span> ~ </span>
+            <div class="range-box">
+              <button onclick="adjustPrice('max', 'down')">-</button>
+              <span id="maxPriceLabel">최대</span>
+              <button onclick="adjustPrice('max', 'up')">+</button>
+            </div>
+          </div>
+          
+    </div>
+  
+    <div id="filter-fail" class="filter-group hidden">
+      <button onclick="selectFilter(this)">유찰 1회</button>
+      <button onclick="selectFilter(this)">유찰 1회</button>
+      <button onclick="selectFilter(this)">2회 이상</button>
+    </div>
+  </div>
+
+  <!-- 검색 결과 리스트 -->
+<div class="result-list">
+    {% comment %} 이 부분은 실제 데이터 반복 렌더링에 활용 가능 {% endcomment %}
+    {% for case in search_results %}
+    <div class="result-card">
+      <div class="thumbnail"><img src="{% static 'images/placeholder.png' %}" alt="물건 이미지"></div>
+      <div class="card-info">
+        <!-- 여기서 사건번호 누르면 상세로 들어가도록 url 연결.
+            입찰날짜가 지나거나 아직 많이 남은 경우, 입찰금액 입력 란과 버튼 안보이게 할 예정임(조건부로 설정해야함..) -->
+        <h3>{{ case.year }} 타경 {{ case.number }}</h3>
+        <p>감정평가액</p><p>최저매각가격</p>
+        <p>유찰횟수</p>
+        <p>주소</p>
+        <button>입찰하기</button>
+      </div>
+    </div>
+    {% empty %}
+    <p class="no-result">검색 결과가 없습니다.</p>
+    {% endfor %}
+  </div>
+  
+  {% endblock %}
+  
+  {% block extra_js %}
+  <script>
+    function toggleFilter(id) {
+      document.querySelectorAll('.filter-group').forEach(g => g.classList.add('hidden'));
+      const target = document.getElementById('filter-' + id);
+      if (target.classList.contains('hidden')) {
+        target.classList.remove('hidden');
+      } else {
+        target.classList.add('hidden');
+      }
+    }
+  
+    function selectFilter(btn) {
+      btn.classList.toggle('selected');
+    }
+  
+    function resetFilters() {
+      document.querySelectorAll('.filter-group button').forEach(b => b.classList.remove('selected'));
+    }
+
+    let priceButtonsClicked = [];
+
+function parsePriceToNumber(priceText) {
+  if (priceText.includes("천")) {
+    return parseInt(priceText.replace("천", "")) * 10000000;  // 5천 → 50,000,000
+  } else if (priceText.includes("억")) {
+    return priceText === "18억~" ? 1000000001 : parseInt(priceText.replace("억", "")) * 100000000;
+  }
+  return 0;
+}
+
+function selectPrice(button) {
+  // 클릭 기록 초기화
+  document.querySelectorAll('.price-button').forEach(b => {
+    b.classList.remove('selected-min', 'selected-max');
+  });
+
+  // 기록 저장 (최대 2개만 유지)
+  priceButtonsClicked.push(button);
+  if (priceButtonsClicked.length > 2) {
+    priceButtonsClicked.shift();
+  }
+
+  // 두 개가 되면 처리
+  if (priceButtonsClicked.length === 2) {
+    const [btn1, btn2] = priceButtonsClicked;
+
+    // 가격을 숫자로 변환
+    const val1 = parsePriceToNumber(btn1.innerText);
+    const val2 = parsePriceToNumber(btn2.innerText);
+
+    let minBtn, maxBtn, minVal, maxVal;
+
+    if (val1 <= val2) {
+      minBtn = btn1;
+      maxBtn = btn2;
+      minVal = val1;
+      maxVal = val2;
+    } else {
+      minBtn = btn2;
+      maxBtn = btn1;
+      minVal = val2;
+      maxVal = val1;
+    }
+
+    minBtn.classList.add("selected-min");
+    maxBtn.classList.add("selected-max");
+
+    document.getElementById("minPriceLabel").innerText = minBtn.innerText;
+    document.getElementById("maxPriceLabel").innerText = maxBtn.innerText;
+
+    minPrice = minVal;
+    maxPrice = maxVal;
+  }
+}
+
+
+
+function formatKoreanPrice(num) {
+  if (num < 100000000) {
+    return (num / 10000000) + "천";
+  } else if (num >= 100000000 && num < 1000000000) {
+    return (num / 100000000) + "억";
+  } else {
+    return "18억~";  // 상한선 처리
+  }
+}
+
+let minPrice = null;
+let maxPrice = null;
+
+function adjustPrice(type, direction) {
+  // 현재 값 불러오기
+
+  let price = (type === "min") ? minPrice : maxPrice;
+
+  // 클릭한 버튼이 없으면 조작 금지
+  if (price === null) return;
+
+  // 증감 처리
+  if (direction === "up") {
+    price += 50000000;
+  } else if (direction === "down" && price > 50000000) {
+    price -= 50000000;
+    if (price < 0) price = 0; // 하한선 0원
+  }
+
+  // 상한 처리
+  if (price > 1800000000) {
+    price = 1800000001;  // 18억~
+  }
+
+
+  // 상태 저장 + UI 갱신
+  if (type === "min") {
+    minPrice = price;
+    document.getElementById("minPriceLabel").innerText = formatKoreanPrice(minPrice);
+  } else {
+    maxPrice = price;
+    document.getElementById("maxPriceLabel").innerText = formatKoreanPrice(maxPrice);
+  }
+
+  // 자동 비교 후 잘못되면 초기화
+  if (minPrice !== null && maxPrice !== null && minPrice > maxPrice) {
+    alert("최소 입찰금이 최대보다 클 수 없습니다.");
+    minPrice = null;
+    maxPrice = null;
+    document.getElementById("minPriceLabel").innerText = "최소";
+    document.getElementById("maxPriceLabel").innerText = "최대";
+    document.querySelectorAll('.price-button').forEach(b => {
+      b.classList.remove("selected-min", "selected-max");
+    });
+    priceButtonsClicked = [];
+  }
+}
+  </script>
+  {% endblock %}

@@ -1,0 +1,74 @@
+{% extends 'main/layout/sidebar_layout.html' %}
+
+{% load static %}
+
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/pages/favlist.css' %}">
+{% endblock %}
+
+{% block sidebar_menu %}
+<li><a href="{% url 'bid_history' %}">나의입찰내역</a></li>
+<li class="active"><a href="#">관심목록</a></li>
+<li><a href="{% url 'auto_bid' %}">자동입찰설정</a></li>
+<li><a href="{% url 'mypage' %}">마이페이지</a></li>
+{% endblock %}
+
+{% block sidebar_content %}
+<h2>나의관심목록</h2>
+<br>
+<hr style="width: 1000px;">
+
+
+<div class="fav-container">
+    {% for item in favorite_list %}
+  <div class="fav-card">
+    <!-- 왼쪽: 이미지 -->
+    <div class="fav-image">
+      <img src="{% static 'images/placeholder.png' %}" alt="물건 이미지">
+    </div>
+
+    <!-- 가운데: 물건 정보 -->
+    <div class="fav-info">
+      <h3>{{ item.year }} 타경 {{ item.case_number }}</h3>
+      <p>최저<br>감정</p>
+    </div>
+
+    <!-- 오른쪽: 버튼 -->
+    <div class="fav-action">
+      <a href="{% url 'bidform' %}?case_id={{ item.id }}" class="btn">입찰하기</a>
+    </div>
+  </div>
+{% endfor %}
+
+
+
+<!-- 예시 데이터 (db연결 전 확인용) -->
+  <div class="fav-card">
+    <div class="fav-image">
+      <img src="{% static 'img/choonsik/choonsik-3.jfif' %}" alt="물건 이미지">
+    </div>
+    <div class="fav-info">
+      <h3>2024 타경 54321</h3>
+      <p>최저<br>감정</p>
+    </div>
+    <div class="fav-action">
+      <a href="#" class="btn">입찰하기</a>
+    </div>
+  </div>
+
+  <div class="fav-card">
+    <div class="fav-image">
+      <img src="{% static 'img/choonsik/choonsik-2.jfif' %}" alt="물건 이미지">
+    </div>
+    <div class="fav-info">
+      <h3>2024 타경 25678</h3>
+      <p>최저<br>감정</p>
+    </div>
+    <div class="fav-action">
+        <a href="#" class="btn">입찰하기</a>
+      </div>
+  </div>
+
+</div>
+{% endblock %}

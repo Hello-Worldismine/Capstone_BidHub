@@ -1,4 +1,4 @@
-{% extends 'main/layout/layout.html' %}
+{% extends 'main/layout/sidebar_layout.html' %}
 {% load static %}
 
 {% block extra_css %}
@@ -6,15 +6,10 @@
 <link rel="stylesheet" href="{% static 'css/pages/charge.css' %}">
 {% endblock %}
 
-{% block content %}
-  <div class="page-container">
-    <!-- Sidebar -->
-    <aside class="sidebar">
-      <ul class="side-menu">
-        <li><a href="{% url 'bidform' %}">입찰표 작성</a></li>
-        <li class="active"><a href="#">예치금 충전</a></li>
-      </ul>
-    </aside>
+{% block sidebar_menu %}
+<li><a href="{% url 'bidform' %}">입찰표 작성</a></li>
+<li class="active"><a href="#">예치금충전</a></li>
+{% endblock %}
 
     <!-- Content -->
     <section class="page-content">
