@@ -1,0 +1,70 @@
+{% extends 'main/layout/sidebar_layout.html' %}
+{% load static %}
+
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/pages/fsearch.css' %}">
+{% endblock %}
+
+{% block sidebar_menu %}
+<li><a href="#">오늘의경매</a></li>
+<li><a href="#">주간경매공고</a></li>
+<li class="active"><a href="#">빠른검색</a></li>
+<li><a href="#">조건검색</a></li>
+{% endblock %}
+
+{% block sidebar_content %}
+<h2>빠른검색</h2>
+<br>
+<hr style="width: 1000px;">
+
+<div class="search-box">
+    <form method="GET" action="{% url 'fsearch' %}">
+        <div class="form-group">
+            <label for="court">법원 선택</label>
+            <select id="court" name="court" required>
+                <option value="">법원을 선택하세요</option>
+                <option value="서울중앙지방법원">서울중앙지방법원</option>
+                <option value="서울동부지방법원">서울동부지방법원</option>
+                <option value="수원지방법원">수원지방법원</option>
+                <option value="대전지방법원">대전지방법원</option>
+                <option value="부산지방법원">부산지방법원</option>
+                <option value="광주지방법원">광주지방법원</option>
+            </select>
+
+        </div>
+
+        <div class="form-group horizontal-group">
+            <div class="case-number-group">
+                <span class="fixed-text">사건번호</span>
+                <input type="text" name="year" maxlength="4" placeholder="연도 입력" required>
+                <span class="fixed-text">타경</span>
+                <input type="text" name="number" maxlength="6" placeholder="번호 입력" required>
+                <button type="submit" class="search-btn">검색</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- 검색 결과 리스트 -->
+<div class="result-list">
+    {% comment %} 이 부분은 실제 데이터 반복 렌더링에 활용 가능 {% endcomment %}
+    {% for case in search_results %}
+    <div class="result-card">
+      <div class="thumbnail"><img src="{% static 'images/placeholder.png' %}" alt="물건 이미지"></div>
+      <div class="card-info">
+        <!-- 여기서 사건번호 누르면 상세로 들어가도록 url 연결.
+            입찰날짜가 지나거나 아직 많이 남은 경우, 입찰금액 입력 란과 버튼 안보이게 할 예정임(조건부로 설정해야함..) -->
+        <h3>{{ case.year }} 타경 {{ case.number }}</h3>
+        <p>감정평가액</p><p>최저매각가격</p>
+        <p>유찰횟수</p>
+        <p>주소</p>
+        <button>입찰하기</button>
+      </div>
+    </div>
+    {% empty %}
+    <p class="no-result">검색 결과가 없습니다.</p>
+    {% endfor %}
+  </div>
+
+{% endblock %}

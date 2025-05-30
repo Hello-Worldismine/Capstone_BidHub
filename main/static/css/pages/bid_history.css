@@ -1,0 +1,97 @@
+/* refund.css */
+.auto-bid-tabs {
+  width: 1000px;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 30px;
+}
+
+.tab-menu {
+  display: flex;
+  width: fit-content;
+}
+
+.tab-item {
+  padding: 12px 24px;
+  font-weight: 600;
+  color: #888;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.tab-item.active {
+  color: #000;
+  border-bottom: 2px solid #000;
+}
+
+.refund-container {
+    max-width: 1000px;
+    margin-top: 40px;
+    padding: 24px;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
+    margin-bottom: 100px;
+  }
+
+  .refund-container,
+.refund-row {
+  position: relative;
+  z-index: 1;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 24px;
+  border-left: 4px solid #3b82f6;
+  padding-left: 12px;
+}
+  
+  .refund-box {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .refund-row {
+    display: grid;
+    grid-template-columns: 2fr 2fr 2fr 2fr 2fr;
+    padding: 16px;
+    border-radius: 10px;
+    background-color: #f9fafb;
+    font-size: 15px;
+    color: #374151;
+    transition: background-color 0.3s;
+    align-items: center;
+  }
+  
+  
+  .refund-row.header {
+    background-color: #e0e7ff;
+    font-weight: 600;
+    color: #1e3a8a;
+  }
+  
+  .status {
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    text-align: center;
+    display: inline-block;
+    min-width: 60px;
+    max-width: 80px;
+  }
+  
+  .status.done {
+    background-color: #dcfce7;
+    color: #16a34a;
+  }
+  
+  .status.pending {
+    background-color: #fef3c7;
+    color: #d97706;
+  }
+  

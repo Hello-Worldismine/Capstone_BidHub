@@ -1,0 +1,111 @@
+{% extends 'main/layout/layout.html' %}
+{% load static %}
+
+{% block extra_css %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'css/pages/join.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="join-container">
+  <h2>회원가입</h2>
+
+  <form method="POST" action="{% url 'register' %}">
+    {% csrf_token %}
+
+    <!-- 아이디 -->
+    <div class="form-group">
+      <label for="username">아이디</label>
+      <div class="input-with-button">
+        <input type="text" id="username" name="username" required>
+        <button type="button">중복확인</button>
+      </div>
+    </div>
+
+    <!-- 비밀번호 -->
+    <div class="form-group">
+      <label for="password">비밀번호</label>
+      <input type="password" id="password" name="password" required>
+    </div>
+
+    <!-- 비밀번호 확인 -->
+    <div class="form-group">
+      <label for="password2">비밀번호 확인</label>
+      <input type="password" id="password2" name="password2" required>
+    </div>
+
+    <!-- 이름 -->
+    <div class="form-group">
+      <label for="name">이름</label>
+      <input type="text" id="name" name="name" required>
+    </div>
+
+    <!-- 이메일 + 인증 -->
+    <div class="form-group">
+      <label for="email">이메일</label>
+      <div class="input-with-button">
+        <input type="email" id="email" name="email" required>
+        <button type="button" onclick="sendVerification()">인증요청</button>
+      </div>
+      <input type="text" id="emailCode" placeholder="인증 코드 입력" class="mt-10">
+    </div>
+
+    <!-- 전화번호 -->
+    <div class="form-group">
+      <label for="phone">전화번호</label>
+      <input type="text" id="phone" name="phone" placeholder="010-1234-5678" required>
+    </div>
+
+    <!-- 성별 -->
+    <div class="form-group">
+      <label>성별</label>
+      <div class="gender-group">
+        <label><input type="radio" name="gender" value="M" required> 남성</label>
+        <label><input type="radio" name="gender" value="F"> 여성</label>
+      </div>
+    </div>
+
+    <!-- Metamask -->
+    <div class="form-group">
+      <label for="wallet">Metamask 지갑 주소</label>
+      <div class="input-with-button">
+        <input type="text" id="wallet" name="wallet_address" placeholder="0x..." required readonly>
+        <button type="button" onclick="connectWallet()">지갑연결</button>
+      </div>
+    </div>
+
+    <button type="submit" class="submit-btn">가입하기</button>
+  </form>
+</div>
+
+<!-- ✅ Metamask 연결 모달 -->
+<div id="walletModal" class="modal hidden">
+  <h3>Metamask 연결</h3>
+  <p>Metamask 지갑을 연결하시겠습니까?</p>
+  <button onclick="confirmWallet()">연결</button>
+  <button onclick="closeModal()">취소</button>
+</div>
+<div id="walletOverlay" class="modal-overlay hidden"></div>
+
+<script>
+  function connectWallet() {
+    document.getElementById('walletModal').classList.remove('hidden');
+    document.getElementById('walletOverlay').classList.remove('hidden');
+  }
+
+  function confirmWallet() {
+    // 예시 주소 → 실제론 web3 연동 필요
+    document.getElementById('wallet').value = '0x1234abcd5678efgh9012ijkl3456mnop7890qrst';
+    closeModal();
+  }
+
+  function closeModal() {
+    document.getElementById('walletModal').classList.add('hidden');
+    document.getElementById('walletOverlay').classList.add('hidden');
+  }
+
+  function sendVerification() {
+    alert("입력한 이메일 주소로 인증코드를 보냈습니다.");
+  }
+</script>
+{% endblock %}
