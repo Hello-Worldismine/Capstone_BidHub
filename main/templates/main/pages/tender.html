@@ -6,6 +6,11 @@
 <link rel="stylesheet" href="{% static 'css/pages/tender.css' %}">
 {% endblock %}
 
+{% block extra_js %}
+{{ block.super }}
+<script src="{% static 'js/pages/tender.js' %}"></script>
+{% endblock %}
+
 {% block content %}
 
 <!-- 입찰블럭 -->
@@ -14,53 +19,67 @@
     <!-- 메인 이미지 + 좌우 화살표 -->
     <div class="main-image-container">
       <button class="arrow left" onclick="prevImage()">&#10094;</button>
-      <img id="mainImage" src="{% static 'img/ex/01.png' %}" alt="메인 이미지" />
+      <img id="mainImage" src="{% if image_paths %}{{ image_paths.0 }}{% else %}{% static 'img/ex/01.png' %}{% endif %}" alt="메인 이미지" />
       <button class="arrow right" onclick="nextImage()">&#10095;</button>
-      <div id="image-counter">1 / 5</div>
+      <div id="image-counter">1 / {{ image_paths|length|default:5 }}</div>
     </div>
 
     <!-- 썸네일 리스트 -->
     <div class="thumbnail-row">
-      <img src="{% static 'img/ex/01.png' %}" class="thumb" onclick="setMainImage(0)" />
-      <img src="{% static 'img/ex/02.png' %}" class="thumb" onclick="setMainImage(1)" />
-      <img src="{% static 'img/ex/03.png' %}" class="thumb" onclick="setMainImage(2)" />
-      <img src="{% static 'img/ex/04.png' %}" class="thumb" onclick="setMainImage(3)" />
-      <img src="{% static 'img/ex/05.jpg' %}" class="thumb" onclick="setMainImage(4)" />
+      {% for image_path in image_paths %}
+        <img src="{{ image_path }}" class="thumb" onclick="setMainImage({{ forloop.counter0 }})" />
+      {% empty %}
+        <img src="{% static 'img/ex/01.png' %}" class="thumb" onclick="setMainImage(0)" />
+        <img src="{% static 'img/ex/02.png' %}" class="thumb" onclick="setMainImage(1)" />
+        <img src="{% static 'img/ex/03.png' %}" class="thumb" onclick="setMainImage(2)" />
+        <img src="{% static 'img/ex/04.png' %}" class="thumb" onclick="setMainImage(3)" />
+        <img src="{% static 'img/ex/05.jpg' %}" class="thumb" onclick="setMainImage(4)" />
+      {% endfor %}
     </div>
   </div>
 
   <div class="right-section">
     
-    <h2>부평산곡푸르지오아파트
+    <h2>{{ property_info.property_name|default:"매물명" }}
       <span class="badge green">일괄</span>
-      <span class="badge brown">아파트</span>
+      <span class="badge brown">{{ item_details.property_type|default:"아파트" }}</span>
     </h2>
-    <p class="meta">59.91㎡ (전용 18평)</p>
+    <p class="meta">{{ item_details.area|default:"59.91㎡ (전용 18평)" }}</p>
     <p class="meta">
-      인천광역시 부평구 안남로 269, 101동 11층1101호
+      {{ location_info.location|default:"주소 정보 없음" }}
       <a href="https://map.kakao.com/" target="_blank" class="map-btn">
         <i class="fa-solid fa-map-location-dot"></i>&nbsp;지도보기
       </a>
     </p>
     
-    <p class="case-title"><a href="#" target="_blank" rel="noopener noreferrer">2024타경523368</a></p>
-    <div class="price">510,000,000<span style="color:rgb(255, 110, 57); font-size: 12px; font-weight: 500;">&nbsp; 감정가의 100%</span></div>
+    <p class="case-title">
+      <a href="{% if document_urls.specification_url %}{{ document_urls.specification_url }}{% else %}#{% endif %}" target="_blank" rel="noopener noreferrer">
+        {{ property_info.case_number|default:"사건번호" }}
+      </a>
+    </p>
+    <div class="price">{{ property_info.min_bid_price|default:"3,210,000,000" }}
+  <span style="color:rgb(255, 110, 57); font-size: 12px; font-weight: 500;">
+    &nbsp; 감정가의 {{ property_info.price_ratio|default:100 }}% ({{ property_info.current_round|default:1 }}차)
+  </span>
+</div>
 
     <div class="info">
-      <p><strong>입찰 보증금 : <span class="highlight-deposit">50,100,000원</span> (최저매각가격의 10%)</strong></p>
-      <p><strong>유찰 횟수: 0회 (최초 경매)</strong></p>
-      <p><strong>매각기일: 2025.03.27</strong></p>
-      <p><strong>남은 시간:</strong> <span class="countdown">D-3</span></p>
+      <p><strong>입찰 보증금 : <span class="highlight-deposit" id="deposit-amount">계산중...</span> (최저매각가격의 10%)</strong></p>
+      <p><strong>유찰 횟수: {{ item_details.auction_failures|default:0 }}회 {% if item_details.auction_failures == 0 %}(최초 경매){% endif %}</strong></p>
+      <p><strong>매각기일: {{ item_details.auction_date|date:"Y.m.d"|default:"미정" }}</strong></p>
+      <p><strong>남은 시간:</strong> <span class="countdown" id="countdown-timer">계산중...</span></p>
     </div>
 
     <form class="bid-form">
+      {% csrf_token %}
+      <input type="hidden" name="case_number" value="{{ property_info.case_number }}">
       <label for="bid-price">입찰 금액 입력</label>
-      <input type="text" id="bid-price" placeholder="최저매각가격 : 510,000,000원" data-min-price="510000000" />
+      <input type="text" id="bid-price" name="bid_amount" placeholder="최저매각가격 : {{ property_info.min_bid_price|default:'510,000,000' }}원" data-min-price="{{ property_info.min_bid_price|default:'510000000' }}" />
 
-      <button type="submit" class="submit-btn">입찰하기</button>
+      <button type="button" class="submit-btn" onclick="location.href='{% url 'bidform' %}?case_number={{ property_info.case_number }}'">입찰표 작성하기</button>
       <div class="actions">
-        <button type="button">입찰 내역 보기</button>
-        <button type="button">관심 목록 추가</button>
+        <button type="button" onclick="location.href='{% url 'bid_history' %}'">입찰 내역 보기</button>
+        <button type="button" onclick="addToFavorites('{{ property_info.case_number }}')">관심 목록 추가</button>
       </div>
     </form>
   </div>
@@ -72,27 +91,27 @@
   <table class="info-table">
     <tr>
       <th>사건번호</th>
-      <td>2020타경107804</td>
+      <td>{{ property_info.case_number|default:"정보 없음" }}</td>
       <th>사건명</th>
-      <td>부동산임의경매</td>
+      <td>{{ property_info.case_name|default:"정보 없음" }}</td>
     </tr>
     <tr>
       <th>접수일자</th>
-      <td>2020.09.02</td>
+      <td>{{ property_info.receipt_date|date:"Y.m.d"|default:"정보 없음" }}</td>
       <th>개시결정일자</th>
-      <td>2020.09.08</td>
+      <td>{{ case.filing_date|date:"Y.m.d"|default:"정보 없음" }}</td>
     </tr>
     <tr>
       <th>담당계</th>
       <td colspan="3" class="long-text">
-        경매1계 전화 : 02-5301820 ... 정보의 제공이 제한될 수 있습니다.
+        {{ property_info.responsible_dept|default:"담당계 정보가 없습니다." }}
       </td>
     </tr>
     <tr>
       <th>청구금액</th>
-      <td>4,992,054,794원</td>
+      <td>{{ property_info.claim_amount|default:"정보 없음" }}</td>
       <th>사건항고/정지여부</th>
-      <td></td>
+      <td>{{ property_info.appeal_status_display|default:"미항고" }}</td>
     </tr>
     <tr>
       <th>종국결과</th>
@@ -114,13 +133,8 @@
     <tbody>
       <tr>
         <td>1</td>
-        <td>서울특별시 종로구 평창동 425-1</td>
-        <td>2020.11.23</td>
-      </tr>
-      <tr>
-        <td>2</td>
-        <td>서울특별시 종로구 평창동 425-2</td>
-        <td>2020.11.23</td>
+        <td>{{ location_info.location|default:"소재지 정보 없음" }}</td>
+        <td>{{ location_info.claim_deadline|date:"Y.m.d"|default:"정보 없음" }}</td>
       </tr>
     </tbody>
   </table>
@@ -137,29 +151,49 @@
     </thead>
     <tbody>
       <tr>
-        <td>1<br><button>매각물건명세서</button></td>
-        <td>다세대</td>
-        <td>35,341,107,000원</td>
+        <td>1<br>
+          {% if document_urls.specification_url %}
+            <a href="{{ document_urls.specification_url }}" target="_blank">
+              <button>매각물건명세서</button>
+            </a>
+          {% else %}
+            <button disabled>매각물건명세서</button>
+          {% endif %}
+        </td>
+        <td>{{ item_details.property_type|default:"정보 없음" }}</td>
+        <td>{{ item_details.valuation_amount|default:"정보 없음" }}</td>
         <td>일괄매각</td>
       </tr>
     </tbody>
   </table>
 
+  {% if bidding_history %}
+  <h2 class="section-title">입찰 내역 현황</h2>
   <table class="info-table">
     <thead>
       <tr>
-        <th>물건상태</th>
-        <th>기일정보</th>
+        <th>회차</th>
+        <th>입찰 종류</th>
+        <th>최저매각가격</th>
+        <th>경매일자</th>
+        <th>상태</th>
       </tr>
     </thead>
     <tbody>
+      {% for bid in bidding_history %}
       <tr>
-        <td>매각준비-><span style="font-weight: bold;">매각공고</span></td>
-        <td>2025.05.27</td>
+        <td>{{ bid.id }}차</td>
+        <td>{{ bid.type }}</td>
+        <td>{{ bid.min_price }}</td>
+        <td>{{ bid.auction_date|date:"Y.m.d" }}</td>
+        <td>{{ bid.status }}</td>
       </tr>
+      {% endfor %}
     </tbody>
   </table>
+  {% endif %}
 
+  {% if building_details %}
   <h2 class="section-title">목록내역</h2>
   <table class="info-table">
     <thead>
@@ -170,27 +204,18 @@
       </tr>
     </thead>
     <tbody>
+      {% for detail in building_details %}
       <tr>
-        <td style="white-space: pre-line;">서울특별시 동작구 상도동 209-9 / 
-          서울특별시 동작구 양녕로25길 2-9 (상도동,더포레스트)</td>
-        <td>공동주택</td>
-        <td style="white-space: pre-line;">1동부분의 건물의 표시
-          철근콘크리트구조 경사스라브지붕
-          5층 다세대주택
-          1층 193.28㎡ (연면적제외)
-          1층 16.76㎡
-          2층 172.56㎡
-          3층 172.56㎡
-          4층 148.92㎡
-          5층 123.74㎡
-          옥탑1층 17.02㎡ (연면적제외)
-
-          전유부분의 건물의 표시
-          철근콘크리트구조 45.1㎡</td>
+        <td style="white-space: pre-line;">{{ detail.address|default:"정보 없음" }}</td>
+        <td>{{ detail.building_type|default:"정보 없음" }}</td>
+        <td style="white-space: pre-line;">{{ detail.building_details|default:"상세 정보 없음" }}</td>
       </tr>
+      {% endfor %}
     </tbody>
   </table>
+  {% endif %}
 
+  {% if interested_parties %}
   <h2 class="section-title">당사자내역</h2>
   <table class="info-table">
     <thead>
@@ -200,165 +225,48 @@
       </tr>
     </thead>
     <tbody>
+      {% for party in interested_parties %}
       <tr>
-        <td>채권자</td>
-        <td>주OOO (OOO OOOO OOOOO)</td>
+        <td>{{ party.party_type|default:"정보 없음" }}</td>
+        <td>{{ party.party_name|default:"정보 없음" }}</td>
       </tr>
-      <tr>
-        <td>제3취득자</td>
-        <td>현OO</td>
-      </tr>
-      <tr>
-        <td>임차인</td>
-        <td>김OO</td>
-      </tr>
+      {% endfor %}
     </tbody>
   </table>
+  {% endif %}
 </div>
 
-
 <script>
-  document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", function () {
+    // 이미지 경로 설정
     const imagePaths = [
-      "{% static 'img/ex/01.png' %}",
-      "{% static 'img/ex/02.png' %}",
-      "{% static 'img/ex/03.png' %}",
-      "{% static 'img/ex/04.png' %}",
-      "{% static 'img/ex/05.jpg' %}"
+        {% for image_path in image_paths %}
+            "{{ image_path }}"{% if not forloop.last %},{% endif %}
+        {% empty %}
+            "{% static 'img/ex/01.png' %}",
+            "{% static 'img/ex/02.png' %}",
+            "{% static 'img/ex/03.png' %}",
+            "{% static 'img/ex/04.png' %}",
+            "{% static 'img/ex/05.jpg' %}"
+        {% endfor %}
     ];
 
-    let currentIndex = 0;
-    const mainImage = document.getElementById("mainImage");
-    const modal = document.getElementById("imageModal");
-    const modalImage = document.getElementById("modalImage");
-    const closeBtn = document.querySelector(".close");
-    const modalPrev = document.getElementById("modalPrev");
-    const modalNext = document.getElementById("modalNext");
+    // tender.js에서 정의한 함수들 호출
+    window.setImagePaths(imagePaths);
+    window.initializePage("{{ item_details.auction_date|date:'Y-m-d' }}");
 
-    function updateMainImage() {
-      mainImage.src = imagePaths[currentIndex];
-      document.getElementById("image-counter").textContent = `${currentIndex + 1} / ${imagePaths.length}`;
+    // 즐겨찾기 버튼 이벤트 설정
+    const favoriteBtn = document.querySelector('button[onclick*="addToFavorites"]');
+    if (favoriteBtn) {
+        favoriteBtn.onclick = function() {
+            window.addToFavorites(
+                "{{ property_info.case_number }}",
+                "{{ property_info.min_bid_price }}",
+                "{{ item_details.auction_date|date:'Y-m-d' }}"
+            );
+        };
     }
-
-    function openModal(index) {
-      currentIndex = index;
-      modalImage.src = imagePaths[currentIndex];
-      modal.style.display = "block";
-    }
-
-    function closeModal() {
-      modal.style.display = "none";
-    }
-
-    function showNextImage() {
-      currentIndex = (currentIndex + 1) % imagePaths.length;
-      modalImage.src = imagePaths[currentIndex];
-    }
-
-    function showPrevImage() {
-      currentIndex = (currentIndex - 1 + imagePaths.length) % imagePaths.length;
-      modalImage.src = imagePaths[currentIndex];
-    }
-
-    // 연결
-    mainImage.addEventListener("click", () => openModal(currentIndex));
-    document.querySelectorAll(".thumb").forEach((thumb, index) => {
-      thumb.addEventListener("click", () => {
-        currentIndex = index;
-        updateMainImage();
-      });
-      thumb.addEventListener("dblclick", () => openModal(index));
-    });
-
-    closeBtn.addEventListener("click", closeModal);
-    modalPrev.addEventListener("click", showPrevImage);
-    modalNext.addEventListener("click", showNextImage);
-
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) closeModal();
-    });
-
-    // 기존 이미지 업데이트 함수
-    updateMainImage();
-
-    // 외부 접근 가능하도록
-    window.setMainImage = function (index) {
-      currentIndex = index;
-      updateMainImage();
-    };
-
-    window.prevImage = function () {
-      currentIndex = (currentIndex - 1 + imagePaths.length) % imagePaths.length;
-      updateMainImage();
-    };
-
-    window.nextImage = function () {
-      currentIndex = (currentIndex + 1) % imagePaths.length;
-      updateMainImage();
-    };
-  });
-
-  document.addEventListener("DOMContentLoaded", function () {
-    // 숫자 → "5억 100만원" 변환
-    function formatToKorean(price) {
-      const oku = Math.floor(price / 100000000);
-      const man = Math.floor((price % 100000000) / 10000);
-      let result = "";
-      if (oku > 0) result += oku + "억 ";
-      if (man > 0) result += man + "만원";
-      return result.trim();
-    }
-
-    // 쉼표 제거 후 숫자로 변환
-    function parseNumber(str) {
-      return parseInt(str.replaceAll(",", "").replace(/[^0-9]/g, ""), 10) || 0;
-    }
-
-    // 쉼표가 포함된 문자열로 포맷팅
-    function formatWithComma(num) {
-      return num.toLocaleString("ko-KR");
-    }
-
-    const priceBlock = document.querySelector(".price");
-    const bidInput = document.getElementById("bid-price");
-    const submitBtn = document.querySelector(".submit-btn");
-
-    if (priceBlock) {
-      const fullText = priceBlock.textContent.trim();
-      const match = fullText.match(/[0-9,]+/);
-
-      if (match) {
-        const price = parseNumber(match[0]);
-        const formatted = formatToKorean(price);
-
-        // 가격 블럭 표기 변경 (510,000,000 → 5억 100만원)
-        priceBlock.innerHTML = priceBlock.innerHTML.replace(match[0], formatted);
-
-        // ✅ 입력 필드 이벤트 처리
-        if (bidInput && submitBtn) {
-          bidInput.addEventListener("input", function () {
-            // 입력값에서 숫자만 추출
-            let raw = parseNumber(bidInput.value);
-
-            // 입력창에 쉼표 형식으로 다시 표시
-            bidInput.value = formatWithComma(raw);
-
-            // 입력값이 기준보다 작으면 버튼 비활성화
-            if (raw < price) {
-              submitBtn.disabled = true;
-              submitBtn.style.backgroundColor = "#ccc";
-              submitBtn.innerText = `입찰 금액은 ${formatted} 이상이어야 합니다`;
-            } else {
-              submitBtn.disabled = false;
-              submitBtn.style.backgroundColor = "#3B82F6";
-              submitBtn.innerText = "입찰하기";
-            }
-          });
-        }
-      }
-    }
-  });
-
+});
 </script>
 
 <!-- 이미지 확대용 모달 -->

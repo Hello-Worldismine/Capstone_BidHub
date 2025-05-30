@@ -1,0 +1,189 @@
+/* 공통 설정 */
+body, html {
+    margin: 0;
+    padding: 0;
+    font-family: 'Noto Sans KR', sans-serif;
+    background-color: #ffffff;
+    color: #333;
+  }
+  
+  /* 레이아웃 */
+  .main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - 160px);
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 40px 32px;
+    box-sizing: border-box;
+  }
+  
+  .page-container {
+    display: flex;
+    width: 100%;
+  }
+  
+  .sidebar {
+    width: 180px;
+    margin-right: 40px;
+  }
+  
+  .side-menu {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .side-menu li {
+    margin-bottom: 12px;
+  }
+  
+  .side-menu a {
+    display: block;
+    padding: 12px 16px;
+    border-radius: 8px;
+    background-color: #f1f3f5;
+    color: #333;
+    text-decoration: none;
+  }
+  
+  .side-menu li.active a {
+    background-color: #cfd4da;
+    font-weight: bold;
+  }
+  
+  .page-content {
+    flex: 1;
+  }
+  
+  /* 콘텐츠 박스 */
+  .mypage-section {
+    background-color: #f9fafb;
+    padding: 24px;
+    border-radius: 12px;
+    margin-bottom: 32px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    max-width: 600px;
+    width: 100%;
+  }
+  
+  .mypage-section h4 {
+    font-size: 1.1rem;
+    margin-bottom: 16px;
+    color: #1f2937;
+  }
+  
+  .mypage-section label {
+    display: block;
+    font-weight: 500;
+    font-size: 14px;
+    margin: 16px 0 6px;
+  }
+  
+  /* 입력 필드 및 읽기 전용 공통 */
+  .input-field,
+  .input-select,
+  .readonly {
+    display: block;
+    width: 100%;
+    max-width: 480px;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 14px;
+    margin-bottom: 16px;
+    box-sizing: border-box;
+  }
+  
+  .readonly {
+    background-color: #ffffff;
+    color: #333;
+    border-color: #d1d5db;
+  }
+  
+  /* 소형 필드 */
+  .input-field.small,
+  .input-select.small {
+    width: 100px;
+    padding: 10px;
+  }
+  
+  /* 검색영역 */
+  .search-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+  
+  .case-type {
+    font-weight: 500;
+    margin-right: 4px;
+  }
+  
+  /* 버튼 */
+  .btn-primary,
+  .btn-search {
+    padding: 12px 24px;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .btn-primary {
+    background-color: #3B82F6;
+    color: white;
+    border-radius: 20px;
+  }
+  
+  .btn-primary:hover {
+    background-color: #2563eb;
+  }
+  
+  .btn-search {
+    background-color: #3B82F6;
+    color: white;
+  }
+  
+  .btn-search:hover {
+    background-color: #2563eb;
+  }
+  
+  /* 반응형 */
+  @media (max-width: 768px) {
+    .page-container {
+      flex-direction: column;
+    }
+  
+    .sidebar {
+      width: 100%;
+      margin-bottom: 24px;
+    }
+  
+    .mypage-section {
+      width: 100%;
+    }
+  }
+
+  .search-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 16px;
+    min-width: 220px;
+  }
+  
+  .full-width {
+    width: 100%;
+  }
+  
+  .case-number-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 6px;
+  }
+  
+  

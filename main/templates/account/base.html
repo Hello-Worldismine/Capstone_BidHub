@@ -1,0 +1,51 @@
+{% load i18n %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block head_title %}BidHub{% endblock %}</title>
+    
+    {% block extra_head %}
+    <link rel="stylesheet" href="{% static 'css/pages/login.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    {% endblock %}
+  </head>
+  <body>
+    {% block body %}
+
+    {% if messages %}
+    <div>
+      <strong>{% trans "Messages:" %}</strong>
+      <ul>
+        {% for message in messages %}
+        <li>{{message}}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    {# Placeholder for potential menu items #}
+    {#
+    <div>
+      <strong>{% trans "Menu:" %}</strong>
+      <ul>
+        {% if user.is_authenticated %}
+        <li><a href="{% url 'account_email' %}">{% trans "Change E-mail" %}</a></li>
+        <li><a href="{% url 'account_logout' %}">{% trans "Sign Out" %}</a></li>
+        {% else %}
+        <li><a href="{% url 'account_login' %}">{% trans "Sign In" %}</a></li>
+        <li><a href="{% url 'account_signup' %}">{% trans "Sign Up" %}</a></li>
+        {% endif %}
+      </ul>
+    </div>
+    #} 
+    {% block content %}
+    {% endblock %}
+    {% endblock %}
+    {% block extra_body %}
+    {% endblock %}
+  </body>
+</html>

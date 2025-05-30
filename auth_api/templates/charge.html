@@ -1,0 +1,36 @@
+{% extends 'layout.html' %}
+{% load static %}
+
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/charge.css' %}">
+{% endblock %}
+
+{% block content %}
+  <div class="page-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <ul class="side-menu">
+        <li><a href="#">입찰표 작성</a></li>
+        <li class="active"><a href="#">예치금 충전</a></li>
+      </ul>
+    </aside>
+
+    <!-- Content -->
+    <section class="page-content">
+      <h2>예치금 충전</h2>
+      <input type="text" id="ethAmount" placeholder="금액입력" class="input-charge" />
+      <button class="btn-primary" onclick="depositETH(event)">충전하기 →</button>
+      <div id="status" style="margin-top: 12px; font-size: 14px; color: #333;"></div>
+
+      <div class="notice-box">
+        <p><strong><i class="fa-solid fa-circle-info"></i> 지갑 연결 후 예치금 충전이 가능합니다.</strong></p>
+        <p>마이페이지에서 개인 지갑의 지갑 코드를 연동해주세요.<br />
+        지갑 코드는: ________ 에서 입력 가능합니다.</p>
+      </div>
+    </section>
+  </div>
+
+<script src="{% static 'js/charge.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+{% endblock %}
