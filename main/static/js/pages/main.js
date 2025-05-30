@@ -1,147 +1,231 @@
-// 다크모드 토글 버튼
-const toggleBtn = document.getElementById('toggle-theme-btn');
+document.addEventListener("DOMContentLoaded", function () {
+    // 전역 변수
+    let currentIndex = 0;
+    let imagePaths = [];
+    
+    // DOM 요소
+    const mainImage = document.getElementById("mainImage");
+    const modal = document.getElementById("imageModal");
+    const modalImage = document.getElementById("modalImage");
+    const closeBtn = document.querySelector(".close");
+    const modalPrev = document.getElementById("modalPrev");
+    const modalNext = document.getElementById("modalNext");
 
-function setInitialTheme() {
-  const saved = localStorage.getItem('theme');
-  if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-    document.body.classList.add('dark-mode');
-    if (toggleBtn) toggleBtn.textContent = '☀️ 라이트모드';
-  }
-}
-
-if (toggleBtn) {
-  setInitialTheme();
-
-  toggleBtn.addEventListener('click', () => {
-    const isDark = document.body.classList.toggle('dark-mode');
-    toggleBtn.textContent = isDark ? '☀️ 라이트모드' : '🌙 다크모드';
-    localStorage.setItem('theme', isDark ? 'dark' : 'light');
-  });
-}
-
-// 연도 입력 4자리 제한
-const yearInput = document.getElementById('year-input');
-if (yearInput) {
-  yearInput.addEventListener('input', () => {
-    if (yearInput.value.length > 4) {
-      yearInput.value = yearInput.value.slice(0, 4);
-    }
-  });
-}
-
-// 네비게이션 서브메뉴 표시
-const menuItems = document.querySelectorAll('.menu-item');
-menuItems.forEach(item => {
-  item.addEventListener('mouseenter', () => {
-    const submenu = item.querySelector('.submenu');
-    if (submenu) submenu.style.display = 'block';
-  });
-
-  item.addEventListener('mouseleave', () => {
-    const submenu = item.querySelector('.submenu');
-    if (submenu) submenu.style.display = 'none';
-  });
-});
-
-// 즐겨찾기 목록 로딩
-let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
-
-// 즐겨찾기 테이블 업데이트
-function updateFavoritesTable() {
-  const tbody = document.querySelector('#favorites-table tbody');
-  if (!tbody) return;
-  
-  tbody.innerHTML = '';
-  favorites.forEach(item => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${item.caseNumber}</td>
-      <td>${item.minBid}</td>
-      <td>${item.deadline}</td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-// 별표 아이콘 상태 초기화
-function updateStarIcons() {
-  document.querySelectorAll('.auction-list .favorite-btn').forEach(btn => {
-    const row = btn.closest('tr');
-    const caseNumber = row.children[0].textContent;
-    const icon = btn.querySelector('i');
-    const isFavorited = favorites.some(f => f.caseNumber === caseNumber);
-    icon.classList.toggle('fa-solid', isFavorited);
-    icon.classList.toggle('fa-regular', !isFavorited);
-  });
-}
-
-// 기일경매목록 불러오기
-function fetchAuctionList() {
-  fetch('http://127.0.0.1:8000/api/cases/')
-    .then(res => res.json())
-    .then(data => {
-      const tbody = document.querySelector('.auction-list .table tbody');
-      if (!tbody) return;
-      
-      tbody.innerHTML = '';
-
-      data.forEach(auction => {
-        const details = auction.auctionitem_set?.[0]; // 첫 번째 디테일만 사용
-
-        if (!details) return; // 없으면 건너뜀
-
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${auction.case_number}</td>
-          <td>${details.valuation_amount}</td>
-          <td>${details.auction_failures}회</td>
-          <td>${details.auction_date}</td>
-          <td><button class="favorite-btn"><i class="fa-regular fa-star"></i></button></td>
-          <td><a href="/tender/` + auction.case_number + `/" class="btn-secondary">입찰하기</a></td>
-        `;
-        tbody.appendChild(tr);
-      });
-
-      updateStarIcons();
-    })
-    .catch(err => {
-      console.error('기일경매목록 불러오기 실패:', err);
-    });
-}
-
-// 별표 버튼 클릭 시 즐겨찾기 토글
-document.addEventListener('click', e => {
-  if (e.target.closest('.favorite-btn')) {
-    const btn = e.target.closest('.favorite-btn');
-    const icon = btn.querySelector('i');
-    const row = btn.closest('tr');
-    const caseNumber = row.children[0].textContent;
-    const minBid = row.children[1].textContent;
-    const deadline = row.children[3].textContent;
-
-    const index = favorites.findIndex(f => f.caseNumber === caseNumber);
-
-    if (index === -1) {
-      favorites.push({ caseNumber, minBid, deadline });
-      icon.classList.remove('fa-regular');
-      icon.classList.add('fa-solid');
-    } else {
-      favorites.splice(index, 1);
-      icon.classList.remove('fa-solid');
-      icon.classList.add('fa-regular');
+    // 이미지 관련 함수들
+    function updateMainImage() {
+        if (imagePaths.length > 0 && mainImage) {
+            mainImage.src = imagePaths[currentIndex];
+            const counter = document.getElementById("image-counter");
+            if (counter) {
+                counter.textContent = `${currentIndex + 1} / ${imagePaths.length}`;
+            }
+        }
     }
 
-    localStorage.setItem('favorites', JSON.stringify(favorites));
-    updateFavoritesTable();
-  }
-});
+    function openModal(index) {
+        currentIndex = index;
+        if (modalImage && imagePaths.length > 0) {
+            modalImage.src = imagePaths[currentIndex];
+            modal.style.display = "block";
+        }
+    }
 
-// 초기 실행
-document.addEventListener('DOMContentLoaded', function() {
-  // Check if we're on a page with auction listings
-  if (document.querySelector('.auction-list .table')) {
-    fetchAuctionList();
-  }
-  updateFavoritesTable();
+    function closeModal() {
+        if (modal) {
+            modal.style.display = "none";
+        }
+    }
+
+    function showNextImage() {
+        if (imagePaths.length > 0) {
+            currentIndex = (currentIndex + 1) % imagePaths.length;
+            if (modalImage) {
+                modalImage.src = imagePaths[currentIndex];
+            }
+        }
+    }
+
+    function showPrevImage() {
+        if (imagePaths.length > 0) {
+            currentIndex = (currentIndex - 1 + imagePaths.length) % imagePaths.length;
+            if (modalImage) {
+                modalImage.src = imagePaths[currentIndex];
+            }
+        }
+    }
+
+    // 이벤트 리스너 설정
+    function setupImageEventListeners() {
+        if (mainImage) {
+            mainImage.addEventListener("click", () => openModal(currentIndex));
+        }
+
+        document.querySelectorAll(".thumb").forEach((thumb, index) => {
+            thumb.addEventListener("click", () => {
+                currentIndex = index;
+                updateMainImage();
+            });
+            thumb.addEventListener("dblclick", () => openModal(index));
+        });
+
+        if (closeBtn) {
+            closeBtn.addEventListener("click", closeModal);
+        }
+        if (modalPrev) {
+            modalPrev.addEventListener("click", showPrevImage);
+        }
+        if (modalNext) {
+            modalNext.addEventListener("click", showNextImage);
+        }
+
+        if (modal) {
+            modal.addEventListener("click", (e) => {
+                if (e.target === modal) closeModal();
+            });
+        }
+    }
+
+    // 가격 포맷팅 함수들
+    function formatToKorean(price) {
+        const oku = Math.floor(price / 100000000);
+        const man = Math.floor((price % 100000000) / 10000);
+        let result = "";
+        if (oku > 0) result += oku + "억 ";
+        if (man > 0) result += man + "만원";
+        return result.trim();
+    }
+
+    function parseNumber(str) {
+        return parseInt(str.replaceAll(",", "").replace(/[^0-9]/g, ""), 10) || 0;
+    }
+
+    function formatWithComma(num) {
+        return num.toLocaleString("ko-KR");
+    }
+
+    // 가격 및 입찰 검증 설정
+    function setupPriceValidation() {
+        const priceBlock = document.querySelector(".price");
+        const bidInput = document.getElementById("bid-price");
+        const submitBtn = document.querySelector(".submit-btn");
+
+        if (priceBlock) {
+            const fullText = priceBlock.textContent.trim();
+            const match = fullText.match(/[0-9,]+/);
+
+            if (match) {
+                const price = parseNumber(match[0]);
+                const formatted = formatToKorean(price);
+
+                // 가격 블럭 표기 변경 (510,000,000 → 5억 100만원)
+                priceBlock.innerHTML = priceBlock.innerHTML.replace(match[0], formatted);
+
+                // 입력 필드 이벤트 처리
+                if (bidInput && submitBtn) {
+                    bidInput.addEventListener("input", function () {
+                        let raw = parseNumber(bidInput.value);
+                        bidInput.value = formatWithComma(raw);
+
+                        if (raw < price) {
+                            submitBtn.disabled = true;
+                            submitBtn.style.backgroundColor = "#ccc";
+                            submitBtn.style.cursor = "not-allowed";
+                            submitBtn.style.pointerEvents = "none";
+                            submitBtn.innerText = `입찰 금액은 ${formatted} 이상이어야 합니다`;
+                        } else {
+                            submitBtn.disabled = false;
+                            submitBtn.style.backgroundColor = "#3B82F6";
+                            submitBtn.style.cursor = "pointer";
+                            submitBtn.style.pointerEvents = "auto";
+                            submitBtn.innerText = "입찰표 작성하기";
+                        }
+                    });
+                }
+
+                // 보증금 계산 (최저매각가격의 10%)
+                const depositAmount = Math.floor(price * 0.1);
+                const depositElement = document.getElementById('deposit-amount');
+                if (depositElement) {
+                    depositElement.textContent = formatWithComma(depositAmount) + '원';
+                }
+            }
+        }
+    }
+
+    // 카운트다운 설정
+    function setupCountdown(auctionDateStr) {
+        if (auctionDateStr && auctionDateStr !== "None") {
+            const targetDate = new Date(auctionDateStr);
+            const now = new Date();
+            const diffTime = targetDate - now;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            const countdownElement = document.getElementById('countdown-timer');
+            if (countdownElement) {
+                if (diffDays > 0) {
+                    countdownElement.textContent = `D-${diffDays}`;
+                    countdownElement.style.color = '#e74c3c';
+                } else if (diffDays === 0) {
+                    countdownElement.textContent = 'D-Day';
+                    countdownElement.style.color = '#e74c3c';
+                    countdownElement.style.fontWeight = 'bold';
+                } else {
+                    countdownElement.textContent = '마감';
+                    countdownElement.style.color = '#95a5a6';
+                }
+            }
+        }
+    }
+
+    // 외부에서 호출 가능한 함수들
+    window.setMainImage = function (index) {
+        currentIndex = index;
+        updateMainImage();
+    };
+
+    window.prevImage = function () {
+        currentIndex = (currentIndex - 1 + imagePaths.length) % imagePaths.length;
+        updateMainImage();
+    };
+
+    window.nextImage = function () {
+        currentIndex = (currentIndex + 1) % imagePaths.length;
+        updateMainImage();
+    };
+
+    // 즐겨찾기 함수
+    window.addToFavorites = function (caseNumber, minBid, auctionDate) {
+        let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+        
+        const exists = favorites.some(fav => fav.caseNumber === caseNumber);
+        
+        if (!exists) {
+            favorites.push({
+                caseNumber: caseNumber,
+                minBid: minBid,
+                deadline: auctionDate
+            });
+            
+            localStorage.setItem('favorites', JSON.stringify(favorites));
+            alert('관심 목록에 추가되었습니다.');
+        } else {
+            alert('이미 관심 목록에 있는 물건입니다.');
+        }
+    };
+
+    // 이미지 경로 설정 함수 (템플릿에서 호출)
+    window.setImagePaths = function (paths) {
+        imagePaths = paths;
+        updateMainImage();
+    };
+
+    // 초기화
+    setupImageEventListeners();
+    setupPriceValidation();
+    
+    // 전역 설정 함수 (템플릿에서 호출)
+    window.initializePage = function (auctionDate) {
+        setupCountdown(auctionDate);
+    };
 });
 

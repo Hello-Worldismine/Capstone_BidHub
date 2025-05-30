@@ -107,13 +107,13 @@
   <div class="search-group">
     <label for="deposit">보증금</label>
     <div class="input-wrapper">
-      <input type="number" id="deposit" name="deposit" class="input-field deposit" 
-             value="{{ deposit_amount|default:'' }}" 
-             {% if case_info %}readonly style="background-color: #f8f9fa;"{% endif %} 
-             required /><span class="case-type">원</span>
+        <input type="number" id="deposit" name="deposit" class="input-field deposit" 
+               value="{{ deposit_amount_raw|default:'' }}" 
+               {% if case_info %}readonly style="background-color: #f8f9fa;"{% endif %} 
+               required /><span class="case-type">원</span>
     </div>
     {% if case_info %}
-    <small style="color: #6c757d;">* 최저매각가격의 10%로 자동 계산됩니다.</small>
+    <small style="color: #6c757d;">* 최저매각가격의 10%로 자동 계산됩니다. ({{ deposit_amount }}원)</small>
     {% endif %}
   </div>
   <br>
@@ -121,20 +121,20 @@
   <div class="search-group">
     <label for="bidAmount1">입찰가 입력</label>
     <div class="input-wrapper">
-      <input type="number" id="bidAmount1" name="bidAmount1" class="input-field price" 
-             min="{% if case_info %}{{ min_bid_price|floatformat:0 }}{% else %}1{% endif %}" 
-             value="{{ min_bid_price|default:'' }}" 
-             required /><span class="case-type">원</span>
+        <input type="number" id="bidAmount1" name="bidAmount1" class="input-field price" 
+               min="{{ min_bid_price_raw|default:1 }}" 
+               value="{{ min_bid_price_raw|default:'' }}" 
+               required /><span class="case-type">원</span>
     </div>
     {% if case_info %}
-    <small style="color: #6c757d;">* 최저매각가격: {{ min_bid_price }}</small>
+    <small style="color: #6c757d;">* 최저매각가격: {{ min_bid_price }}원</small>
     {% endif %}
 
     <label for="bidAmount2">입찰가 확인</label>
     <div class="input-wrapper">
-      <input type="number" id="bidAmount2" name="bidAmount2" class="input-field price" 
-             min="{% if case_info %}{{ min_bid_price|floatformat:0 }}{% else %}1{% endif %}" 
-             required /><span class="case-type">원</span>
+        <input type="number" id="bidAmount2" name="bidAmount2" class="input-field price" 
+               min="{{ min_bid_price_raw|default:1 }}" 
+               required /><span class="case-type">원</span>
     </div>
   </div>
   <br>
@@ -325,6 +325,39 @@
     }
   });
   {% endif %}
+
+  // 입찰가 필드에 쉼표 포맷팅 추가
+  function formatNumber(input) {
+    input.addEventListener('input', function() {
+        let value = this.value.replace(/[^0-9]/g, '');
+        let numValue = parseInt(value) || 0;
+        
+        // 표시용 (쉼표 포함)이 아닌 숫자값 유지
+        this.value = numValue;
+    });
+    
+    // 포커스 아웃 시 쉼표 포맷팅 표시 (선택사항)
+    input.addEventListener('blur', function() {
+        if (this.value) {
+            let numValue = parseInt(this.value) || 0;
+            // 일시적으로 쉼표 포맷 표시
+            this.setAttribute('data-formatted', numValue.toLocaleString());
+        }
+    });
+  }
+  
+  // 보증금과 입찰가 필드에 포맷팅 적용
+  const depositField = document.getElementById('deposit');
+  const bidAmount1 = document.getElementById('bidAmount1');
+  const bidAmount2 = document.getElementById('bidAmount2');
+  
+  if (depositField && depositField.value) {
+      depositField.style.backgroundColor = '#f8f9fa';
+      depositField.readOnly = true;
+  }
+  
+  formatNumber(bidAmount1);
+  formatNumber(bidAmount2);
 </script>
 
 {% endblock %}

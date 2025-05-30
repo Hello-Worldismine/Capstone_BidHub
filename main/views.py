@@ -230,28 +230,73 @@ def bidform(request):
             item_details = AuctionItem.objects.filter(case_number=case).first()
             
             if item_details:
-                # 가장 최근 스케줄에서 매각기일 가져오기
+                # tender 뷰와 동일한 로직으로 현재 최저매각가격 찾기
                 from app.models import AuctionSchedule
+                from django.utils import timezone
+                
+                schedules = AuctionSchedule.objects.filter(auction_item=item_details).order_by('round_number')
+                
+                # 감정평가액 (기준 가격)
+                valuation_amount = 0
+                if item_details.valuation_amount:
+                    valuation_amount = int(item_details.valuation_amount.replace(',', '')) if isinstance(item_details.valuation_amount, str) else item_details.valuation_amount
+                
+                # 현재 진행중인 매각기일의 최저매각가격 찾기
+                current_min_price = valuation_amount  # 기본값
+                current_round = 1
+                
+                now = timezone.now().date()
+                
+                for schedule in schedules:
+                    # 매각기일이고 아직 지나지 않은 경우
+                    if (schedule.schedule_type == '매각기일' and 
+                        schedule.auction_date and 
+                        schedule.auction_date.date() >= now and
+                        schedule.minimum_price and 
+                        schedule.minimum_price > 0):
+                        
+                        current_min_price = schedule.minimum_price  # tsLwsDspslPrc 값 사용
+                        current_round = schedule.round_number
+                        break
+                    
+                    # 과거 매각기일 중 가장 최근 회차 확인 (다음 회차 예측용)
+                    elif (schedule.schedule_type == '매각기일' and 
+                          schedule.auction_date and 
+                          schedule.auction_date.date() < now):
+                        current_round = schedule.round_number + 1  # 다음 회차
+                
+                # 만약 진행중인 매각기일을 찾지 못했다면 감정평가액 사용
+                if current_min_price == valuation_amount and schedules.exists():
+                    # 가장 최근 스케줄의 minimum_price 사용
+                    latest_schedule = schedules.filter(
+                        schedule_type='매각기일',
+                        minimum_price__gt=0
+                    ).first()
+                    
+                    if latest_schedule:
+                        current_min_price = latest_schedule.minimum_price
+                        current_round = latest_schedule.round_number
+                
+                # 가장 최근 매각기일 가져오기 (날짜 표시용)
                 latest_schedule = AuctionSchedule.objects.filter(
-                    auction_item=item_details
+                    auction_item=item_details,
+                    schedule_type='매각기일'
                 ).order_by('-round_number').first()
                 
                 case_info = {
                     'case_number': case.case_number,
                     'case_name': case.case_name,
                     'court_name': case.court_name,
-                    'min_bid_price': case.minimum_bid_price or item_details.valuation_amount,
+                    'property_name': item_details.property_name,
+                    'min_bid_price': f"{current_min_price:,}",  # 실제 최저매각가격
+                    'min_bid_price_raw': current_min_price,     # 계산용 원본값
+                    'valuation_amount': f"{valuation_amount:,}",  # 감정평가액
+                    'current_round': current_round,
                     'auction_date': latest_schedule.auction_date if latest_schedule else item_details.auction_date
                 }
                 
-                # 보증금 계산 (최저매각가격의 10%)
-                try:
-                    min_price_str = case_info['min_bid_price'] or "0"
-                    min_price_str = ''.join(c for c in min_price_str if c.isdigit() or c == '.')
-                    min_price = float(min_price_str)
-                    deposit_amount = int(min_price * 0.1)
-                except (ValueError, TypeError):
-                    deposit_amount = 0
+                # 보증금 계산 (실제 최저매각가격의 10%)
+                deposit_amount = int(current_min_price * 0.1) if current_min_price > 0 else 0
                 
                 # 사건번호에서 연도와 순번 추출
                 import re
@@ -270,14 +315,25 @@ def bidform(request):
                 
                 context.update({
                     'case_info': case_info,
-                    'deposit_amount': deposit_amount,
-                    'min_bid_price': case_info['min_bid_price'],
+                    'deposit_amount': f"{deposit_amount:,}",     # 표시용 (쉼표 포함)
+                    'deposit_amount_raw': deposit_amount,        # 입력 필드용 (숫자만)
+                    'min_bid_price': case_info['min_bid_price'], # 표시용 (쉼표 포함)
+                    'min_bid_price_raw': current_min_price,      # 입력 필드용 (숫자만)
                     'case_year': case_year,
                     'case_sequence': case_sequence,
                     'has_case_info': True
                 })
+                
         except (AuctionCase.DoesNotExist, AuctionItem.DoesNotExist):
-            pass
+            context.update({
+                'error_message': "해당 사건 정보를 찾을 수 없습니다.",
+                'has_case_info': False
+            })
+    else:
+        context.update({
+            'error_message': "사건번호가 필요합니다.",
+            'has_case_info': False
+        })
     
     return render(request, 'main/pages/bidform.html', context)
 

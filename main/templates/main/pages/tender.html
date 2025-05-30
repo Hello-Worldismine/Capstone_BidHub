@@ -6,6 +6,11 @@
 <link rel="stylesheet" href="{% static 'css/pages/tender.css' %}">
 {% endblock %}
 
+{% block extra_js %}
+{{ block.super }}
+<script src="{% static 'js/pages/tender.js' %}"></script>
+{% endblock %}
+
 {% block content %}
 
 <!-- 입찰블럭 -->
@@ -232,205 +237,36 @@
 </div>
 
 <script>
-  document.addEventListener("DOMContentLoaded", function () {
-    // 이미지 경로 설정 - Django 템플릿에서 전달받은 데이터 사용
+document.addEventListener("DOMContentLoaded", function () {
+    // 이미지 경로 설정
     const imagePaths = [
-      {% for image_path in image_paths %}
-        "{{ image_path }}"{% if not forloop.last %},{% endif %}
-      {% empty %}
-        "{% static 'img/ex/01.png' %}",
-        "{% static 'img/ex/02.png' %}",
-        "{% static 'img/ex/03.png' %}",
-        "{% static 'img/ex/04.png' %}",
-        "{% static 'img/ex/05.jpg' %}"
-      {% endfor %}
+        {% for image_path in image_paths %}
+            "{{ image_path }}"{% if not forloop.last %},{% endif %}
+        {% empty %}
+            "{% static 'img/ex/01.png' %}",
+            "{% static 'img/ex/02.png' %}",
+            "{% static 'img/ex/03.png' %}",
+            "{% static 'img/ex/04.png' %}",
+            "{% static 'img/ex/05.jpg' %}"
+        {% endfor %}
     ];
 
-    let currentIndex = 0;
-    const mainImage = document.getElementById("mainImage");
-    const modal = document.getElementById("imageModal");
-    const modalImage = document.getElementById("modalImage");
-    const closeBtn = document.querySelector(".close");
-    const modalPrev = document.getElementById("modalPrev");
-    const modalNext = document.getElementById("modalNext");
+    // tender.js에서 정의한 함수들 호출
+    window.setImagePaths(imagePaths);
+    window.initializePage("{{ item_details.auction_date|date:'Y-m-d' }}");
 
-    function updateMainImage() {
-      mainImage.src = imagePaths[currentIndex];
-      document.getElementById("image-counter").textContent = `${currentIndex + 1} / ${imagePaths.length}`;
+    // 즐겨찾기 버튼 이벤트 설정
+    const favoriteBtn = document.querySelector('button[onclick*="addToFavorites"]');
+    if (favoriteBtn) {
+        favoriteBtn.onclick = function() {
+            window.addToFavorites(
+                "{{ property_info.case_number }}",
+                "{{ property_info.min_bid_price }}",
+                "{{ item_details.auction_date|date:'Y-m-d' }}"
+            );
+        };
     }
-
-    function openModal(index) {
-      currentIndex = index;
-      modalImage.src = imagePaths[currentIndex];
-      modal.style.display = "block";
-    }
-
-    function closeModal() {
-      modal.style.display = "none";
-    }
-
-    function showNextImage() {
-      currentIndex = (currentIndex + 1) % imagePaths.length;
-      modalImage.src = imagePaths[currentIndex];
-    }
-
-    function showPrevImage() {
-      currentIndex = (currentIndex - 1 + imagePaths.length) % imagePaths.length;
-      modalImage.src = imagePaths[currentIndex];
-    }
-
-    // 연결
-    mainImage.addEventListener("click", () => openModal(currentIndex));
-    document.querySelectorAll(".thumb").forEach((thumb, index) => {
-      thumb.addEventListener("click", () => {
-        currentIndex = index;
-        updateMainImage();
-      });
-      thumb.addEventListener("dblclick", () => openModal(index));
-    });
-
-    closeBtn.addEventListener("click", closeModal);
-    modalPrev.addEventListener("click", showPrevImage);
-    modalNext.addEventListener("click", showNextImage);
-
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) closeModal();
-    });
-
-    // 기존 이미지 업데이트 함수
-    updateMainImage();
-
-    // 외부 접근 가능하도록
-    window.setMainImage = function (index) {
-      currentIndex = index;
-      updateMainImage();
-    };
-
-    window.prevImage = function () {
-      currentIndex = (currentIndex - 1 + imagePaths.length) % imagePaths.length;
-      updateMainImage();
-    };
-
-    window.nextImage = function () {
-      currentIndex = (currentIndex + 1) % imagePaths.length;
-      updateMainImage();
-    };
-
-    // ================ 새로운 가격 포맷팅 및 입찰 검증 기능 추가 ================
-    
-    // 숫자 → "5억 100만원" 변환
-    function formatToKorean(price) {
-      const oku = Math.floor(price / 100000000);
-      const man = Math.floor((price % 100000000) / 10000);
-      let result = "";
-      if (oku > 0) result += oku + "억 ";
-      if (man > 0) result += man + "만원";
-      return result.trim();
-    }
-
-    // 쉼표 제거 후 숫자로 변환
-    function parseNumber(str) {
-      return parseInt(str.replaceAll(",", "").replace(/[^0-9]/g, ""), 10) || 0;
-    }
-
-    // 쉼표가 포함된 문자열로 포맷팅
-    function formatWithComma(num) {
-      return num.toLocaleString("ko-KR");
-    }
-
-    const priceBlock = document.querySelector(".price");
-    const bidInput = document.getElementById("bid-price");
-    const submitBtn = document.querySelector(".submit-btn");
-
-    if (priceBlock) {
-      const fullText = priceBlock.textContent.trim();
-      const match = fullText.match(/[0-9,]+/);
-
-      if (match) {
-        const price = parseNumber(match[0]);
-        const formatted = formatToKorean(price);
-
-        // 가격 블럭 표기 변경 (510,000,000 → 5억 100만원)
-        priceBlock.innerHTML = priceBlock.innerHTML.replace(match[0], formatted);
-
-        // ✅ 입력 필드 이벤트 처리
-        if (bidInput && submitBtn) {
-          bidInput.addEventListener("input", function () {
-            // 입력값에서 숫자만 추출
-            let raw = parseNumber(bidInput.value);
-
-            // 입력창에 쉼표 형식으로 다시 표시
-            bidInput.value = formatWithComma(raw);
-
-            // 입력값이 기준보다 작으면 버튼 비활성화
-            if (raw < price) {
-              submitBtn.disabled = true;
-              submitBtn.style.backgroundColor = "#ccc";
-              submitBtn.style.cursor = "not-allowed";
-              submitBtn.innerText = `입찰 금액은 ${formatted} 이상이어야 합니다`;
-            } else {
-              submitBtn.disabled = false;
-              submitBtn.style.backgroundColor = "#3B82F6";
-              submitBtn.style.cursor = "pointer";
-              submitBtn.innerText = "입찰표 작성하기";
-            }
-          });
-        }
-
-        // 보증금 계산 (최저매각가격의 10%)
-        const depositAmount = Math.floor(price * 0.1);
-        const depositElement = document.getElementById('deposit-amount');
-        if (depositElement) {
-          depositElement.textContent = formatWithComma(depositAmount) + '원';
-        }
-      }
-    }
-
-    // 매각기일 카운트다운 계산
-    const auctionDate = "{{ item_details.auction_date|date:'Y-m-d' }}";
-    if (auctionDate && auctionDate !== "None") {
-      const targetDate = new Date(auctionDate);
-      const now = new Date();
-      const diffTime = targetDate - now;
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      
-      const countdownElement = document.getElementById('countdown-timer');
-      if (countdownElement) {
-        if (diffDays > 0) {
-          countdownElement.textContent = `D-${diffDays}`;
-          countdownElement.style.color = '#e74c3c';
-        } else if (diffDays === 0) {
-          countdownElement.textContent = 'D-Day';
-          countdownElement.style.color = '#e74c3c';
-          countdownElement.style.fontWeight = 'bold';
-        } else {
-          countdownElement.textContent = '마감';
-          countdownElement.style.color = '#95a5a6';
-        }
-      }
-    }
-  });
-
-  // 즐겨찾기 추가 함수
-  function addToFavorites(caseNumber) {
-    let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
-    
-    // 이미 즐겨찾기에 있는지 확인
-    const exists = favorites.some(fav => fav.caseNumber === caseNumber);
-    
-    if (!exists) {
-      favorites.push({
-        caseNumber: caseNumber,
-        minBid: "{{ property_info.min_bid_price }}",
-        deadline: "{{ item_details.auction_date|date:'Y-m-d' }}"
-      });
-      
-      localStorage.setItem('favorites', JSON.stringify(favorites));
-      alert('관심 목록에 추가되었습니다.');
-    } else {
-      alert('이미 관심 목록에 있는 물건입니다.');
-    }
-  }
+});
 </script>
 
 <!-- 이미지 확대용 모달 -->

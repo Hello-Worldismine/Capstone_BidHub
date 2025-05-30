@@ -10,7 +10,6 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('app', '0003_auctionschedule_schedule_type'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
