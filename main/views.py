@@ -9,8 +9,9 @@ import json
 from decimal import Decimal # Import Decimal
 from django.templatetags.static import static # Import static function
 from django.conf import settings # Import settings
-from app.models import AuctionItem, AuctionCase, ClaimDistribution, PropertyListing, AuctionParty
+from app.models import AuctionItem, AuctionCase, ClaimDistribution, PropertyListing, AuctionParty, BuildingDetail
 from django.utils import timezone # Add timezone import
+from django.db.models import Q, Prefetch
 
 def index(request):
     # Fetch auction items
@@ -53,6 +54,15 @@ def tender(request, case_number=None):
             claim_distribution = ClaimDistribution.objects.filter(case_number=case).first()
             property_listings = PropertyListing.objects.filter(case_number=case)
             interested_parties = AuctionParty.objects.filter(case_number=case)
+            
+            # 건물 상세정보 가져오기 (BuildingDetail 모델 사용)
+            building_details = []
+            try:
+                building_details_qs = BuildingDetail.objects.filter(auction_item=item_details).order_by('sequence')
+                building_details = list(building_details_qs)
+            except Exception as e:
+                print(f"❌ BuildingDetail 조회 오류: {e}")
+                building_details = []
             
             # 감정평가액 (기준 가격)
             valuation_amount = 0
@@ -186,7 +196,7 @@ def tender(request, case_number=None):
                 'location_info': location_info,
                 'document_urls': document_urls,
                 'bidding_history': bidding_history,
-                'building_details': property_listings,
+                'building_details': building_details,  # 수정된 부분: BuildingDetail 모델 데이터 사용
                 'interested_parties': interested_parties,
                 'image_paths': image_paths,
                 'naver_maps_client_id': getattr(settings, 'NAVER_MAPS_CLIENT_ID', '')
@@ -397,6 +407,19 @@ def property_detail(request, case_number):
         # 입찰 내역 현황 - AuctionSchedule 사용
         bidding_history = []
         
+        # 감정평가액 계산
+        valuation_amount = 0
+        if item_details and item_details.valuation_amount:
+            try:
+                val_amount_str = item_details.valuation_amount or "0"
+                val_amount_str = ''.join(c for c in val_amount_str if c.isdigit() or c == '.')
+                valuation_amount = float(val_amount_str)
+            except (ValueError, TypeError):
+                valuation_amount = 0
+        
+        # 보증금 비율 (10%)
+        deposit_ratio = 0.1
+        
         # AuctionSchedule에서 회차별 정보 가져오기
         from app.models import AuctionSchedule
         schedules = AuctionSchedule.objects.filter(auction_item=item_details).order_by('round_number')
@@ -445,7 +468,7 @@ def property_detail(request, case_number):
             'building_details': property_listings,
             'interested_parties': interested_parties,
             'image_paths': image_paths,
-            'naver_maps_client_id': getattr(settings, 'NAVER_MAPS_CLIENT_ID', '')
+            'naver_maps_client_id': getattr(settings, 'NAVER_MAPS_CLIENT_ID', ''),
         }
         
         return render(request, 'main/pages/property_detail.html', context)
@@ -469,11 +492,16 @@ def get_favorite_properties(request):
 def bid_history(request):
     return render(request, 'main/pages/bid_history.html')
 
-def refund(request):
-    return render(request, 'main/pages/refund.html')
+def favlist(request):
+    return render(request, 'main/pages/favlist.html') #수정 (favorites -> favlist)
 
-def favorites(request):
-    return render(request, 'main/pages/favorites.html')
+def csearch(request):
+    return render(request, 'main/pages/csearch.html')
+
+def join(request):
+    return render(request, 'account/signup.html')
+def login(request):
+    return render(request, 'account/login.html')
 
 def update_wallet(request):
     if request.method == 'POST':
@@ -481,4 +509,155 @@ def update_wallet(request):
         return redirect('mypage')
     return redirect('mypage')
 
-# Remove custom login/logout views - use allauth instead
+def search_cases_api(request):
+    """사건 검색 API (AJAX용) - 법원 필수, 연도/번호 선택"""
+    if request.method != 'GET':
+        return JsonResponse({'error': 'GET 요청만 허용됩니다.'}, status=405)
+    
+    court = request.GET.get('court', '').strip()
+    year = request.GET.get('year', '').strip()
+    number = request.GET.get('number', '').strip()
+    
+    # 법원은 필수 선택
+    if not court:
+        return JsonResponse({
+            'error': '법원을 선택해주세요.',
+            'results': []
+        }, status=400)
+    
+    try:
+        # 입력된 필드만 검증
+        if year:
+            year_int = int(year)
+            if year_int < 2000 or year_int > 2030:
+                raise ValueError("연도 범위 오류")
+        
+        if number:
+            number_int = int(number)
+            if number_int <= 0:
+                raise ValueError("사건번호 오류")
+            
+    except ValueError:
+        return JsonResponse({
+            'error': '올바른 형식으로 입력해주세요.',
+            'results': []
+        }, status=400)
+    
+    try:
+        # 기본 법원 검색 조건
+        query = Q(court_name__icontains=court)
+        
+        # 연도 조건 추가 (선택사항)
+        if year:
+            query &= Q(case_number__icontains=year)
+        
+        # 사건번호 조건 추가 (선택사항)
+        if number:
+            query &= Q(case_number__icontains=number)
+        
+        # 데이터베이스 검색 - 올바른 관계명 사용
+        cases = AuctionCase.objects.filter(query).prefetch_related(
+            'auctionitem_set'
+        ).distinct()[:50]
+        
+        # JSON 형태로 변환
+        results = []
+        for case in cases:
+            # 관련 경매 물건 정보
+            auction_items = case.auctionitem_set.all()
+            
+            case_data = {
+                'id': case.case_number,  # case_number를 id로 사용
+                'case_number': case.case_number,
+                'case_name': case.case_name,
+                'court': case.court_name,
+                'auctionitem_set': [{
+                    'id': item.id,
+                    'item_number': item.item_number,
+                    'property_name': item.property_name,
+                    'valuation_amount': str(item.valuation_amount) if item.valuation_amount else None,
+                    'auction_failures': item.auction_failures,
+                    'item_note': item.item_note,
+                    'item_purpose': item.item_purpose,
+                    'auction_date': item.auction_date.isoformat() if item.auction_date else None,
+                } for item in auction_items],
+                # 스케줄 정보를 아이템별로 가져오기
+                'schedules': []
+            }
+            
+            # 각 아이템의 스케줄 정보 수집
+            for item in auction_items:
+                schedules = item.schedules.all()
+                for schedule in schedules:
+                    case_data['schedules'].append({
+                        'id': schedule.id,
+                        'schedule_type': schedule.schedule_type,
+                        'auction_date': schedule.auction_date.isoformat() if schedule.auction_date else None,
+                        'minimum_price': str(schedule.minimum_price) if schedule.minimum_price else None,
+                        'round_number': schedule.round_number,
+                        'result_status': schedule.result_status,
+                    })
+            
+            results.append(case_data)
+        
+        return JsonResponse({
+            'success': True,
+            'results': results,
+            'count': len(results),
+            'message': f'{len(results)}건의 검색 결과를 찾았습니다.'
+        })
+        
+    except Exception as e:
+        import traceback
+        print(f"Search error: {e}")
+        print(traceback.format_exc())
+        return JsonResponse({
+            'error': f'검색 중 오류가 발생했습니다: {str(e)}',
+            'results': []
+        }, status=500)
+
+def fsearch(request):
+    """빠른 검색 페이지"""
+    context = {
+        'title': '빠른검색',
+    }
+    
+    # GET 파라미터가 있으면 초기 검색 수행
+    court = request.GET.get('court', '').strip()
+    year = request.GET.get('year', '').strip()
+    number = request.GET.get('number', '').strip()
+    
+    if court:  # 법원이 선택된 경우에만 검색
+        try:
+            # 기본 법원 검색 조건
+            query = Q(court_name__icontains=court)
+            
+            # 연도 조건 추가 (선택사항)
+            if year:
+                query &= Q(case_number__icontains=year)
+            
+            # 사건번호 조건 추가 (선택사항)
+            if number:
+                query &= Q(case_number__icontains=number)
+            
+            cases = AuctionCase.objects.filter(query).prefetch_related(
+                'auctionitem_set'
+            )[:50]
+            
+            context.update({
+                'search_results': cases,
+                'search_performed': True,
+                'search_params': {
+                    'court': court,
+                    'year': year,
+                    'number': number
+                }
+            })
+            
+        except Exception as e:
+            context.update({
+                'search_error': f'검색 중 오류가 발생했습니다: {str(e)}',
+                'search_performed': True
+            })
+    
+    return render(request, 'main/pages/fsearch.html', context)

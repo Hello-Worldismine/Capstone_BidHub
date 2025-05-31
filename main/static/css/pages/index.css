@@ -82,6 +82,25 @@
   margin-bottom: 10px;
 }
 
+.auction-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.auction-title {
+  margin: 0;
+  font-size: 24px;
+}
+
+.court-dropdown {
+  padding: 5px 10px;
+  font-size: 14x;
+  border-radius: 4px;
+}
+
+
 .table {
   width: 100%;
   border-collapse: collapse;

@@ -1,0 +1,170 @@
+.filter-toolbar {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.filter-toggle {
+    background: none;
+    border: none;
+    font-size: 16px;
+    color: #333;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 6px 12px;
+    border-bottom: 2px solid transparent;
+    transition: border-color 0.2s;
+}
+
+.filter-toggle.active {
+    border-bottom: 3px solid #007bff;
+    font-weight: bold;
+    color: #007bff;
+  }
+
+.filter-toggle:hover {
+    border-color: #007bff;
+}
+
+.reset-btn {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.reset-btn:hover {
+    color: #000;
+}
+
+.filter-options {
+    margin-bottom: 40px;
+}
+
+.filter-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.filter-group button {
+    padding: 8px 16px;
+    background: #f2f2f2;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.filter-group button.selected {
+    background: #007bff;
+    color: white;
+    border-color: #0056b3;
+}
+
+.filter-group button:hover {
+    background: #e0e0e0;
+}
+
+.hidden {
+    display: none;
+}
+
+
+/* 물건 종류 필터 부분 */
+.filter-category {
+    display: block;
+    width: 100%;
+    margin-bottom: 24px;
+}
+
+.filter-category strong {
+    display: block;
+    font-size: 16px;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.filter-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.filter-buttons button {
+    padding: 8px 16px;
+    background: #f2f4f8;
+    border: 1px solid #ccd1d8;
+    border-radius: 20px;
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.filter-buttons button.selected {
+    background: #007bff;
+    border-color: #0056b3;
+    color: #fff;
+}
+
+.filter-buttons button:hover {
+    background: #e6e9ef;
+}
+
+/* 입찰금액 필터 부분 */
+.price-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  
+  .price-button {
+    padding: 10px 0;
+    background: #f2f2f2;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  
+  .price-button.selected-min {
+    background: #007bff;
+    color: white;
+    border-color: #0056b3;
+  }
+  
+  .price-button.selected-max {
+    background: #28a745;
+    color: white;
+    border-color: #1e7e34;
+  }
+  
+  .price-range {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    align-items: center;
+  }
+  
+  .range-box {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    padding: 6px 12px;
+    background: #fff;
+  }
+  
+  .range-box span {
+    min-width: 50px;
+    text-align: center;
+    font-weight: 600;
+  }
+  

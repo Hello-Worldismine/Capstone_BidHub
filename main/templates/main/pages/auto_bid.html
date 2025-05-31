@@ -2,35 +2,80 @@
 {% load static %}
 
 {% block extra_css %}
-  {{ block.super }}
-  <link rel="stylesheet" href="{% static 'css/pages/auto_bid.css' %}">
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/pages/auto_bid.css' %}">
 {% endblock %}
 
 {% block sidebar_menu %}
-  <li><a href="{% url 'bidform' %}">입찰표 작성</a></li>
-  <li><a href="#">보증금반환현황조회</a></li>
-  <li><a href="#">즐겨찾기목록</a></li>
-  <li class="active"><a href="#">자동입찰설정</a></li>
-  <li><a href="{% url 'mypage' %}">마이페이지</a></li>
+<li><a href="{% url 'bid_history' %}">나의입찰내역</a></li>
+<li><a href="{% url 'favlist' %}">관심목록</a></li>
+<li class="active"><a href="#">자동입찰예약</a></li>
+<li><a href="{% url 'mypage' %}">마이페이지</a></li>
 {% endblock %}
 
 {% block sidebar_content %}
-<h2>자동입찰설정</h2>
+<h2>자동입찰 예약 설정</h2>
 <br>
-<hr style="width: 1000px;">
-<div class="container">
+<hr style="width: 1000px; margin: 0;">
 
-  <div class="search">
-    <h2 class="section-title">사건 검색 또는 즐겨찾기</h2>
+<!-- 탭 메뉴 -->
+<div class="auto-bid-tabs">
+  <div class="tab-menu">
+    <div class="tab-item active" onclick="showTab('search')">사건검색</div>
+    <div class="tab-item" onclick="showTab('favorites')">관심목록</div>
+  </div>
+</div>
+
+<!-- 탭 콘텐츠 -->
+<div class="auto-bid-container">
+  <!-- 사건검색 화면 -->
+  <div id="search-tab" class="tab-content">
+    <h3 class="title">사건검색</h3>
     <div class="input-group">
-      <input type="text" id="caseNumber" placeholder="사건번호 입력">
+    <label for="court">법원 선택</label>
+        <select id="court" name="court" required>
+            <option value="">법원을 선택하세요</option>
+            <option value="서울중앙지방법원">서울중앙지방법원</option>
+            <option value="서울동부지방법원">서울동부지방법원</option>
+            <option value="수원지방법원">수원지방법원</option>
+            <option value="대전지방법원">대전지방법원</option>
+            <option value="부산지방법원">부산지방법원</option>
+            <option value="광주지방법원">광주지방법원</option>
+        </select>
+      </div>
+    <div class="input-group">
+      <label class="fixed-label">사건번호</label>
+      <input type="number" id="year-input" placeholder="년도 입력" class="input-field" min="2000" max="2025" maxlength="4">
+  
+      <label class="fixed-label">타경</label>
+      <input type="text" placeholder="번호 입력" class="input-field">
+  
       <button onclick="searchCase()">검색</button>
-      <button onclick="showFavorites()">즐겨찾기 보기</button>
+    </div>
+    <div id="searchResult" class="search-result hidden">
+      
+      <ul>
+        <li onclick="selectSearchResult('2024타경7890')">🔍 2024타경7890 (서울동부지법)</li>
+        <li onclick="selectSearchResult('2024타경3456')">🔍 2024타경3456 (인천지방법원)</li>
+      </ul>
     </div>
   </div>
 
-  <div class="section hidden" id="reservationForm">
-    <h2 class="section-title">자동입찰 예약 설정</h2>
+  <!-- 관심목록 화면 -->
+  <div id="favorites-tab" class="tab-content hidden">
+    <div class="favorites-list">
+      <h3 class="title">관심목록</h3>
+      <ul>
+        <li onclick="selectFavorite('2023타경1234')">📌 2023타경1234 (서울중앙지방법원)</li>
+        <li onclick="selectFavorite('2023타경5678')">📌 2023타경5678 (수원지방법원)</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 예약 설정 영역 -->
+  <div id="reservationForm" class="section">
+    <h3 class="title">예약 설정</h3>
+    <div id="selectedCaseInfo" style="margin-bottom: 10px; color: #333;"></div>
     <div class="input-group">
       <input type="text" id="bidAmount" placeholder="입찰 금액 입력">
     </div>
@@ -49,25 +94,43 @@
     </div>
     <button onclick="confirmReservation()">예약 저장</button>
   </div>
+</div>
 
-  <div class="section hidden" id="confirmationBox">
-    <h2>예약 정보 확인</h2>
-    <div class="confirm-box">
-      <p id="confirmBidAmount"></p>
-      <p id="confirmBidTime"></p>
-      <p id="confirmAutoBid"></p>
-    </div>
-    <button onclick="completeReservation()">확인</button>
+<!-- 모달 오버레이 -->
+<div id="modalOverlay" class="modal-overlay hidden"></div>
+
+<!-- 모달 창 -->
+<div id="confirmationModal" class="modal hidden">
+  <h3>예약 정보 확인</h3>
+  <div class="confirm-box">
+    <p id="confirmBidAmount"></p>
+    <p id="confirmBidTime"></p>
+    <p id="confirmAutoBid"></p>
   </div>
+  <button onclick="closeModal()">확인</button>
 </div>
 
 <script>
-  function searchCase() {
-    document.getElementById('reservationForm').classList.remove('hidden');
+  function showTab(tab) {
+    document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
+    document.querySelector(`.tab-item[onclick="showTab('${tab}')"]`).classList.add('active');
+
+    document.getElementById('search-tab').classList.add('hidden');
+    document.getElementById('favorites-tab').classList.add('hidden');
+    document.getElementById('searchResult').classList.add('hidden');
+    document.getElementById(tab + '-tab').classList.remove('hidden');
   }
 
-  function showFavorites() {
-    document.getElementById('reservationForm').classList.remove('hidden');
+  function searchCase() {
+    document.getElementById('searchResult').classList.remove('hidden');
+  }
+
+  function selectSearchResult(caseId) {
+    document.getElementById('selectedCaseInfo').innerText = `선택한 물건: ${caseId}`;
+  }
+
+  function selectFavorite(caseId) {
+    document.getElementById('selectedCaseInfo').innerText = `선택한 물건: ${caseId}`;
   }
 
   function confirmReservation() {
@@ -79,10 +142,13 @@
     document.getElementById('confirmBidTime').innerText = '입찰 시간: ' + time;
     document.getElementById('confirmAutoBid').innerText = '자동입찰 활성화: ' + active;
 
-    document.getElementById('confirmationBox').classList.remove('hidden');
+    document.getElementById('modalOverlay').classList.remove('hidden');
+    document.getElementById('confirmationModal').classList.remove('hidden');
   }
 
-  function completeReservation() {
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.add('hidden');
+    document.getElementById('confirmationModal').classList.add('hidden');
     alert('자동입찰 예약이 완료되었습니다.');
     window.location.href = '/my-reservations';
   }
