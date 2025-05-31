@@ -1,0 +1,267 @@
+{% extends 'main/layout/sidebar_layout.html' %}
+{% load static %}
+
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/pages/csearch.css' %}">
+
+{% endblock %}
+
+{% block sidebar_menu %}
+<li><a href="#">오늘의경매</a></li>
+<li><a href="#">주간경매공고</a></li>
+<li><a href="{% url 'fsearch' %}">빠른검색</a></li>
+<li class="active"><a href="{% url 'csearch' %}">조건검색</a></li>
+{% endblock %}
+
+{% block sidebar_content %}
+<h2>조건검색</h2>
+<br>
+<hr style="width: 1000px; margin-bottom: 30px;">
+
+<div class="filter-toolbar">
+    <button class="filter-toggle" onclick="toggleFilter('type')">물건종류 ▾</button>
+    <button class="filter-toggle" onclick="toggleFilter('price')">입찰금 ▾</button>
+    <button class="filter-toggle" onclick="toggleFilter('fail')">유찰수 ▾</button>
+    <button class="reset-btn" onclick="resetFilters()">초기화</button>
+</div>
+
+<!-- 필터 세부 옵션 영역 -->
+<!-- 물건종류 필터 그룹 -->
+<div id="filter-type" class="filter-group">
+    <div class="filter-category">
+        <strong>아파트주택</strong>
+        <div class="filter-buttons">
+            <button onclick="selectFilter(this)">아파트</button>
+            <button onclick="selectFilter(this)">연립주택</button>
+            <button onclick="selectFilter(this)">오피스텔</button>
+            <button onclick="selectFilter(this)">단독주택</button>
+            <button onclick="selectFilter(this)">다세대주택</button>
+            <button onclick="selectFilter(this)">주상복합</button>
+            <button onclick="selectFilter(this)">다가구주택</button>
+            <button onclick="selectFilter(this)">주거기타</button>
+        </div>
+    </div>
+
+    <div class="filter-category">
+        <strong>상가</strong>
+        <div class="filter-buttons">
+            <button onclick="selectFilter(this)">근린생활시설</button>
+            <button onclick="selectFilter(this)">주/상용건물</button>
+            <button onclick="selectFilter(this)">판매시설</button>
+            <button onclick="selectFilter(this)">위락시설</button>
+            <button onclick="selectFilter(this)">상가기타</button>
+        </div>
+    </div>
+
+    <div class="filter-category">
+        <strong>건물기타</strong>
+        <div class="filter-buttons">
+            <button onclick="selectFilter(this)">업무시설</button>
+            <button onclick="selectFilter(this)">종교시설</button>
+            <button onclick="selectFilter(this)">공장</button>
+            <button onclick="selectFilter(this)">창고시설</button>
+            <button onclick="selectFilter(this)">숙박시설</button>
+            <button onclick="selectFilter(this)">건물기타</button>
+        </div>
+    </div>
+
+    <div class="filter-category">
+        <strong>토지</strong>
+        <div class="filter-buttons">
+            <button onclick="selectFilter(this)">대지</button>
+            <button onclick="selectFilter(this)">임야</button>
+            <button onclick="selectFilter(this)">답</button>
+            <button onclick="selectFilter(this)">잡종지</button>
+            <button onclick="selectFilter(this)">전</button>
+        </div>
+    </div>
+
+    <div class="filter-category">
+        <strong>토지기타</strong>
+        <div class="filter-buttons">
+            <button onclick="selectFilter(this)">도로</button>
+            <button onclick="selectFilter(this)">공장용지</button>
+            <button onclick="selectFilter(this)">창고용지</button>
+            <button onclick="selectFilter(this)">묘지</button>
+            <button onclick="selectFilter(this)">목장용지</button>
+            <button onclick="selectFilter(this)">주유소용지</button>
+            <button onclick="selectFilter(this)">종교용지</button>
+            <button onclick="selectFilter(this)">토지기타</button>
+        </div>
+    </div>
+</div>
+
+<div id="filter-price" class="filter-group hidden">
+    <div class="price-grid">
+        <button class="price-button" onclick="selectPrice(this)">5천</button>
+        <button class="price-button" onclick="selectPrice(this)">1억</button>
+        <button class="price-button" onclick="selectPrice(this)">2억</button>
+        <button class="price-button" onclick="selectPrice(this)">3억</button>
+        <button class="price-button" onclick="selectPrice(this)">4억</button>
+        <button class="price-button" onclick="selectPrice(this)">5억</button>
+        <button class="price-button" onclick="selectPrice(this)">6억</button>
+        <button class="price-button" onclick="selectPrice(this)">7억</button>
+        <button class="price-button" onclick="selectPrice(this)">8억</button>
+        <button class="price-button" onclick="selectPrice(this)">9억</button>
+        <button class="price-button" onclick="selectPrice(this)">10억</button>
+        <button class="price-button" onclick="selectPrice(this)">11억</button>
+        <button class="price-button" onclick="selectPrice(this)">12억</button>
+        <button class="price-button" onclick="selectPrice(this)">13억</button>
+        <button class="price-button" onclick="selectPrice(this)">14억</button>
+        <button class="price-button" onclick="selectPrice(this)">15억</button>
+        <button class="price-button" onclick="selectPrice(this)">16억</button>
+        <button class="price-button" onclick="selectPrice(this)">17억</button>
+        <button class="price-button" onclick="selectPrice(this)">18억~</button>
+    </div>
+  
+    <div class="price-range">
+        <div class="range-box">
+            <button onclick="adjustPrice('min', 'down')">-</button>
+            <span id="minPriceLabel">최소</span>
+            <button onclick="adjustPrice('min', 'up')">+</button>
+        </div>
+        <span> ~ </span>
+        <div class="range-box">
+            <button onclick="adjustPrice('max', 'down')">-</button>
+            <span id="maxPriceLabel">최대</span>
+            <button onclick="adjustPrice('max', 'up')">+</button>
+        </div>
+    </div>
+</div>
+
+<div id="filter-fail" class="filter-group hidden">
+    <button onclick="selectFilter(this)">최초경매</button>
+    <button onclick="selectFilter(this)">유찰 1회</button>
+    <button onclick="selectFilter(this)">유찰 2회</button>
+    <button onclick="selectFilter(this)">3회 이상</button>
+</div>
+
+<!-- 검색 결과 영역 -->
+<div class="search-results">
+    {% if filters_applied %}
+        <div class="results-summary">
+            <strong>검색 결과: {{ total_count }}건</strong>
+            {% if filter_params.item_types %}
+                <span class="filter-tag">물건종류: {{ filter_params.item_types }}</span>
+            {% endif %}
+            {% if filter_params.failure_count %}
+                <span class="filter-tag">유찰횟수: {{ filter_params.failure_count }}</span>
+            {% endif %}
+        </div>
+    {% else %}
+        <div class="results-summary">
+            <strong>전체 매물: {{ total_count }}건</strong>
+            <p>조건을 선택하여 원하는 매물을 찾아보세요.</p>
+        </div>
+    {% endif %}
+
+    <!-- 매물 리스트 -->
+    {% for case in auction_cases %}
+        <div class="result-card" data-case-id="{{ case.case_number }}">
+            <div class="thumbnail">
+                {% with auction_item=case.auctionitem_set.first %}
+                    {% if auction_item.item_image_url %}
+                        <img src="{{ auction_item.item_image_url }}" 
+                             alt="물건 이미지" 
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="no-image" style="display: none;">이미지 없음</div>
+                    {% else %}
+                        <div class="no-image">이미지 없음</div>
+                    {% endif %}
+                {% endwith %}
+            </div>
+            
+            <div class="card-info">
+                                <!-- csearch.html 177줄 근처 수정 -->
+                <h3 class="case-number">
+                    <a href="{% url 'tender_detail' case_number=case.case_number %}">
+                        {{ case.case_number }}
+                    </a>
+                </h3>
+                
+                <div class="info-row">
+                    <strong>법원:</strong> {{ case.court_name }}
+                </div>
+                
+                <div class="info-row">
+                    <strong>사건명:</strong> {{ case.case_name|default:"정보없음" }}
+                </div>
+                
+                {% with auction_item=case.auctionitem_set.first %}
+                {% if auction_item %}
+                    <div class="info-row">
+                        <strong>감정평가액:</strong> 
+                        {% if auction_item.valuation_amount %}
+                            <span class="price-highlight">{{ auction_item.valuation_amount|floatformat:0 }}원</span>
+                        {% else %}
+                            정보없음
+                        {% endif %}
+                    </div>
+                    
+                    <div class="info-row">
+                        <strong>유찰횟수:</strong> 
+                        {{ auction_item.auction_failures|default:0 }}회
+                        {% if auction_item.auction_failures == 0 %}
+                            <span class="status-badge status-first">최초경매</span>
+                        {% else %}
+                            <span class="status-badge status-fail">유찰 {{ auction_item.auction_failures }}회</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="info-row">
+                        <strong>물건용도:</strong> {{ auction_item.item_purpose|default:"정보없음" }}
+                    </div>
+                    
+                    <div class="info-row">
+                        <strong>주소:</strong> {{ auction_item.item_note|default:"주소 정보 없음" }}
+                    </div>
+                    
+                    {% if auction_item.auction_date %}
+                        <div class="info-row">
+                            <strong>매각기일:</strong> {{ auction_item.auction_date|date:"Y-m-d H:i" }}
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div class="info-row">
+                        <strong>물건정보:</strong> 등록된 물건이 없습니다.
+                    </div>
+                {% endif %}
+                {% endwith %}
+            </div>
+        </div>
+    {% empty %}
+        <div class="loading">
+            검색 조건에 맞는 매물이 없습니다.
+        </div>
+    {% endfor %}
+
+    <!-- 페이징 -->
+    {% if auction_cases.has_other_pages %}
+        <div class="pagination">
+            {% if auction_cases.has_previous %}
+                <a href="?page=1{% if filter_params.item_types %}&item_types={{ filter_params.item_types }}{% endif %}{% if filter_params.min_price %}&min_price={{ filter_params.min_price }}{% endif %}{% if filter_params.max_price %}&max_price={{ filter_params.max_price }}{% endif %}{% if filter_params.failure_count %}&failure_count={{ filter_params.failure_count }}{% endif %}">&laquo; 처음</a>
+                <a href="?page={{ auction_cases.previous_page_number }}{% if filter_params.item_types %}&item_types={{ filter_params.item_types }}{% endif %}{% if filter_params.min_price %}&min_price={{ filter_params.min_price }}{% endif %}{% if filter_params.max_price %}&max_price={{ filter_params.max_price }}{% endif %}{% if filter_params.failure_count %}&failure_count={{ filter_params.failure_count }}{% endif %}">&lsaquo; 이전</a>
+            {% endif %}
+
+            {% for num in auction_cases.paginator.page_range %}
+                {% if auction_cases.number == num %}
+                    <span class="current">{{ num }}</span>
+                {% elif num > auction_cases.number|add:'-3' and num < auction_cases.number|add:'3' %}
+                    <a href="?page={{ num }}{% if filter_params.item_types %}&item_types={{ filter_params.item_types }}{% endif %}{% if filter_params.min_price %}&min_price={{ filter_params.min_price }}{% endif %}{% if filter_params.max_price %}&max_price={{ filter_params.max_price }}{% endif %}{% if filter_params.failure_count %}&failure_count={{ filter_params.failure_count }}{% endif %}">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if auction_cases.has_next %}
+                <a href="?page={{ auction_cases.next_page_number }}{% if filter_params.item_types %}&item_types={{ filter_params.item_types }}{% endif %}{% if filter_params.min_price %}&min_price={{ filter_params.min_price }}{% endif %}{% if filter_params.max_price %}&max_price={{ filter_params.max_price }}{% endif %}{% if filter_params.failure_count %}&failure_count={{ filter_params.failure_count }}{% endif %}">다음 &rsaquo;</a>
+                <a href="?page={{ auction_cases.paginator.num_pages }}{% if filter_params.item_types %}&item_types={{ filter_params.item_types }}{% endif %}{% if filter_params.min_price %}&min_price={{ filter_params.min_price }}{% endif %}{% if filter_params.max_price %}&max_price={{ filter_params.max_price }}{% endif %}{% if filter_params.failure_count %}&failure_count={{ filter_params.failure_count }}{% endif %}">마지막 &raquo;</a>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/pages/csearch.js' %}"></script>
+{% endblock %}

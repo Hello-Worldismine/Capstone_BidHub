@@ -9,8 +9,9 @@ import json
 from decimal import Decimal # Import Decimal
 from django.templatetags.static import static # Import static function
 from django.conf import settings # Import settings
-from app.models import AuctionItem, AuctionCase, ClaimDistribution, PropertyListing, AuctionParty
+from app.models import AuctionItem, AuctionCase, ClaimDistribution, PropertyListing, AuctionParty, BuildingDetail
 from django.utils import timezone # Add timezone import
+from django.db.models import Q, Prefetch
 
 def index(request):
     # Fetch auction items
@@ -53,6 +54,15 @@ def tender(request, case_number=None):
             claim_distribution = ClaimDistribution.objects.filter(case_number=case).first()
             property_listings = PropertyListing.objects.filter(case_number=case)
             interested_parties = AuctionParty.objects.filter(case_number=case)
+            
+            # 건물 상세정보 가져오기 (BuildingDetail 모델 사용)
+            building_details = []
+            try:
+                building_details_qs = BuildingDetail.objects.filter(auction_item=item_details).order_by('sequence')
+                building_details = list(building_details_qs)
+            except Exception as e:
+                print(f"❌ BuildingDetail 조회 오류: {e}")
+                building_details = []
             
             # 감정평가액 (기준 가격)
             valuation_amount = 0
@@ -186,7 +196,7 @@ def tender(request, case_number=None):
                 'location_info': location_info,
                 'document_urls': document_urls,
                 'bidding_history': bidding_history,
-                'building_details': property_listings,
+                'building_details': building_details,  # 수정된 부분: BuildingDetail 모델 데이터 사용
                 'interested_parties': interested_parties,
                 'image_paths': image_paths,
                 'naver_maps_client_id': getattr(settings, 'NAVER_MAPS_CLIENT_ID', '')
@@ -239,7 +249,13 @@ def bidform(request):
                 # 감정평가액 (기준 가격)
                 valuation_amount = 0
                 if item_details.valuation_amount:
-                    valuation_amount = int(item_details.valuation_amount.replace(',', '')) if isinstance(item_details.valuation_amount, str) else item_details.valuation_amount
+                    try:
+                        if isinstance(item_details.valuation_amount, str):
+                            valuation_amount = int(item_details.valuation_amount.replace(',', ''))
+                        else:
+                            valuation_amount = int(item_details.valuation_amount)
+                    except (ValueError, TypeError):
+                        valuation_amount = 0
                 
                 # 현재 진행중인 매각기일의 최저매각가격 찾기
                 current_min_price = valuation_amount  # 기본값
@@ -397,6 +413,19 @@ def property_detail(request, case_number):
         # 입찰 내역 현황 - AuctionSchedule 사용
         bidding_history = []
         
+        # 감정평가액 계산
+        valuation_amount = 0
+        if item_details and item_details.valuation_amount:
+            try:
+                val_amount_str = item_details.valuation_amount or "0"
+                val_amount_str = ''.join(c for c in val_amount_str if c.isdigit() or c == '.')
+                valuation_amount = float(val_amount_str)
+            except (ValueError, TypeError):
+                valuation_amount = 0
+        
+        # 보증금 비율 (10%)
+        deposit_ratio = 0.1
+        
         # AuctionSchedule에서 회차별 정보 가져오기
         from app.models import AuctionSchedule
         schedules = AuctionSchedule.objects.filter(auction_item=item_details).order_by('round_number')
@@ -445,7 +474,7 @@ def property_detail(request, case_number):
             'building_details': property_listings,
             'interested_parties': interested_parties,
             'image_paths': image_paths,
-            'naver_maps_client_id': getattr(settings, 'NAVER_MAPS_CLIENT_ID', '')
+            'naver_maps_client_id': getattr(settings, 'NAVER_MAPS_CLIENT_ID', ''),
         }
         
         return render(request, 'main/pages/property_detail.html', context)
@@ -481,4 +510,279 @@ def update_wallet(request):
         return redirect('mypage')
     return redirect('mypage')
 
-# Remove custom login/logout views - use allauth instead
+def search_cases_api(request):
+    """사건 검색 API (AJAX용) - 법원 필수, 연도/번호 선택"""
+    if request.method != 'GET':
+        return JsonResponse({'error': 'GET 요청만 허용됩니다.'}, status=405)
+    
+    court = request.GET.get('court', '').strip()
+    year = request.GET.get('year', '').strip()
+    number = request.GET.get('number', '').strip()
+    
+    # 법원은 필수 선택
+    if not court:
+        return JsonResponse({
+            'error': '법원을 선택해주세요.',
+            'results': []
+        }, status=400)
+    
+    try:
+        # 입력된 필드만 검증
+        if year:
+            year_int = int(year)
+            if year_int < 2000 or year_int > 2030:
+                raise ValueError("연도 범위 오류")
+        
+        if number:
+            number_int = int(number)
+            if number_int <= 0:
+                raise ValueError("사건번호 오류")
+            
+    except ValueError:
+        return JsonResponse({
+            'error': '올바른 형식으로 입력해주세요.',
+            'results': []
+        }, status=400)
+    
+    try:
+        # 기본 법원 검색 조건
+        query = Q(court_name__icontains=court)
+        
+        # 연도 조건 추가 (선택사항)
+        if year:
+            query &= Q(case_number__icontains=year)
+        
+        # 사건번호 조건 추가 (선택사항)
+        if number:
+            query &= Q(case_number__icontains=number)
+        
+        # 데이터베이스 검색 - 올바른 관계명 사용
+        cases = AuctionCase.objects.filter(query).prefetch_related(
+            'auctionitem_set'
+        ).distinct()[:50]
+        
+        # JSON 형태로 변환
+        results = []
+        for case in cases:
+            # 관련 경매 물건 정보
+            auction_items = case.auctionitem_set.all()
+            
+            case_data = {
+                'id': case.case_number,  # case_number를 id로 사용
+                'case_number': case.case_number,
+                'case_name': case.case_name,
+                'court': case.court_name,
+                'auctionitem_set': [{
+                    'id': item.id,
+                    'item_number': item.item_number,
+                    'property_name': item.property_name,
+                    'valuation_amount': str(item.valuation_amount) if item.valuation_amount else None,
+                    'auction_failures': item.auction_failures,
+                    'item_note': item.item_note,
+                    'item_purpose': item.item_purpose,
+                    'auction_date': item.auction_date.isoformat() if item.auction_date else None,
+                } for item in auction_items],
+                # 스케줄 정보를 아이템별로 가져오기
+                'schedules': []
+            }
+            
+            # 각 아이템의 스케줄 정보 수집
+            for item in auction_items:
+                schedules = item.schedules.all()
+                for schedule in schedules:
+                    case_data['schedules'].append({
+                        'id': schedule.id,
+                        'schedule_type': schedule.schedule_type,
+                        'auction_date': schedule.auction_date.isoformat() if schedule.auction_date else None,
+                        'minimum_price': str(schedule.minimum_price) if schedule.minimum_price else None,
+                        'round_number': schedule.round_number,
+                        'result_status': schedule.result_status,
+                    })
+            
+            results.append(case_data)
+        
+        return JsonResponse({
+            'success': True,
+            'results': results,
+            'count': len(results),
+            'message': f'{len(results)}건의 검색 결과를 찾았습니다.'
+        })
+        
+    except Exception as e:
+        import traceback
+        print(f"Search error: {e}")
+        print(traceback.format_exc())
+        return JsonResponse({
+            'error': f'검색 중 오류가 발생했습니다: {str(e)}',
+            'results': []
+        }, status=500)
+
+def fsearch(request):
+    """빠른 검색 페이지"""
+    context = {
+        'title': '빠른검색',
+    }
+    
+    # GET 파라미터가 있으면 초기 검색 수행
+    court = request.GET.get('court', '').strip()
+    year = request.GET.get('year', '').strip()
+    number = request.GET.get('number', '').strip()
+    
+    if court:  # 법원이 선택된 경우에만 검색
+        try:
+            # 기본 법원 검색 조건
+            query = Q(court_name__icontains=court)
+            
+            # 연도 조건 추가 (선택사항)
+            if year:
+                query &= Q(case_number__icontains=year)
+            
+            # 사건번호 조건 추가 (선택사항)
+            if number:
+                query &= Q(case_number__icontains=number)
+            
+            cases = AuctionCase.objects.filter(query).prefetch_related(
+                'auctionitem_set'
+            )[:50]
+            
+            context.update({
+                'search_results': cases,
+                'search_performed': True,
+                'search_params': {
+                    'court': court,
+                    'year': year,
+                    'number': number
+                }
+            })
+            
+        except Exception as e:
+            context.update({
+                'search_error': f'검색 중 오류가 발생했습니다: {str(e)}',
+                'search_performed': True
+            })
+    
+    return render(request, 'main/pages/fsearch.html', context)
+
+
+def csearch(request):
+    """조건검색 페이지 및 필터링 처리"""
+    from django.core.paginator import Paginator
+    from django.db.models import Q
+    import logging
+    
+    logger = logging.getLogger(__name__)
+    
+    # 기본 쿼리셋
+    auction_cases = AuctionCase.objects.select_related().prefetch_related('auctionitem_set').all()
+    
+    # 필터 파라미터 받기
+    item_types = request.GET.getlist('item_types')  # 복수 선택 가능
+    min_price = request.GET.get('min_price')
+    max_price = request.GET.get('max_price')
+    failure_count = request.GET.get('failure_count')
+    
+    # 디버깅용 로그
+    print(f"Received filters - item_types: {item_types}, min_price: {min_price}, max_price: {max_price}, failure_count: {failure_count}")
+    
+    # 필터 적용 여부 확인
+    filters_applied = bool(item_types or min_price or max_price or failure_count)
+    
+    # 초기 매물 수
+    initial_count = auction_cases.count()
+    print(f"Initial auction cases count: {initial_count}")
+    
+    # 물건 종류 필터
+    if item_types:
+        # AuctionItem의 item_purpose 필드로 필터링
+        type_query = Q()
+        for item_type in item_types:
+            type_query |= Q(auctionitem__item_purpose__icontains=item_type)
+        auction_cases = auction_cases.filter(type_query).distinct()
+        print(f"After item type filter: {auction_cases.count()}")
+    
+    # 가격 필터 (감정평가액 기준) - Python에서 직접 필터링
+    if min_price or max_price:
+        try:
+            min_price_val = int(min_price) if min_price else 0
+            max_price_val = int(max_price) if max_price else float('inf')
+            
+            print(f"Applying price filter: {min_price_val} <= price <= {max_price_val}")
+            
+            # 18억 이상인 경우 상한선 제거
+            if max_price_val >= 1800000000:
+                max_price_val = float('inf')
+            
+            filtered_cases = []
+            for case in auction_cases:
+                case_items = case.auctionitem_set.all()
+                for item in case_items:
+                    if item.valuation_amount:
+                        try:
+                            # 문자열에서 쉼표 제거 후 정수 변환
+                            if isinstance(item.valuation_amount, str):
+                                amount = int(item.valuation_amount.replace(',', ''))
+                            else:
+                                amount = int(item.valuation_amount)
+                            
+                            # 범위 내에 있으면 케이스 추가
+                            if min_price_val <= amount <= max_price_val:
+                                if case not in filtered_cases:
+                                    filtered_cases.append(case)
+                                break  # 한 아이템이라도 조건에 맞으면 케이스 포함
+                        except (ValueError, TypeError):
+                            continue
+            
+            # 필터링된 케이스들의 ID로 쿼리셋 재구성
+            case_ids = [case.case_number for case in filtered_cases]
+            auction_cases = AuctionCase.objects.filter(case_number__in=case_ids).select_related().prefetch_related('auctionitem_set')
+            
+            print(f"After price filter: {auction_cases.count()}")
+            
+        except (ValueError, TypeError) as e:
+            print(f"Error in price filtering: {e}")
+    
+    # 유찰횟수 필터
+    if failure_count:
+        print(f"Applying failure_count filter: {failure_count}")
+        if failure_count == "최초경매":
+            auction_cases = auction_cases.filter(auctionitem__auction_failures=0)
+        elif failure_count == "유찰 1회":
+            auction_cases = auction_cases.filter(auctionitem__auction_failures=1)
+        elif failure_count == "유찰 2회":
+            auction_cases = auction_cases.filter(auctionitem__auction_failures=2)
+        elif failure_count == "3회 이상":
+            auction_cases = auction_cases.filter(auctionitem__auction_failures__gte=3)
+        print(f"After failure_count filter: {auction_cases.count()}")
+    
+    # 중복 제거 및 정렬 - filing_date로 정렬 (최신순)
+    auction_cases = auction_cases.distinct().order_by('-filing_date', '-case_number')
+    
+    final_count = auction_cases.count()
+    print(f"Final count after distinct and ordering: {final_count}")
+    
+    # 실제 데이터 샘플 확인 (처음 5개)
+    if final_count > 0:
+        sample_cases = auction_cases[:5]
+        for case in sample_cases:
+            items = case.auctionitem_set.all()
+            for item in items:
+                print(f"Case: {case.case_number}, Valuation: {item.valuation_amount}")
+    
+    # 페이징 처리
+    paginator = Paginator(auction_cases, 20)  # 페이지당 20개
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'auction_cases': page_obj,
+        'total_count': paginator.count,
+        'filters_applied': filters_applied,
+        'filter_params': {
+            'item_types': ', '.join(item_types) if item_types else None,
+            'min_price': min_price,
+            'max_price': max_price,
+            'failure_count': failure_count,
+        }
+    }
+    
+    return render(request, 'main/pages/csearch.html', context)

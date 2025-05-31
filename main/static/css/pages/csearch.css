@@ -1,0 +1,18 @@
+.filter-toggle.active {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.filter-group.hidden {
+    display: none;
+}
+
+.filter-group {
+    display: block;
+    margin-top: 20px;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
