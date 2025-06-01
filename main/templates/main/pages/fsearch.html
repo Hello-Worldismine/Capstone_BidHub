@@ -14,13 +14,13 @@
 <li><a href="#">오늘의경매</a></li>
 <li><a href="#">주간경매공고</a></li>
 <li class="active"><a href="#">빠른검색</a></li>
-<li><a href="#">조건검색</a></li>
+<li><a href="{% url 'csearch' %}">조건검색</a></li>
 {% endblock %}
 
 {% block sidebar_content %}
 <h2>빠른검색</h2>
 <br>
-<hr style="width: 1000px;">
+<hr style="width: 1000px; margin: 0;">
 
 <div class="search-box">
     <form method="GET" action="{% url 'fsearch' %}">

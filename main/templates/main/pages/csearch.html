@@ -14,13 +14,13 @@
 <li><a href="#">오늘의경매</a></li>
 <li><a href="#">주간경매공고</a></li>
 <li><a href="{% url 'fsearch' %}">빠른검색</a></li>
-<li class="active"><a href="{% url 'csearch' %}">조건검색</a></li>
+<li class="active"><a href="#">조건검색</a></li>
 {% endblock %}
 
 {% block sidebar_content %}
 <h2>조건검색</h2>
 <br>
-<hr style="width: 1000px; margin-bottom: 30px;">
+<hr style="width: 1000px; margin: 0;">
 
 <div class="filter-toolbar">
     <button class="filter-toggle" onclick="toggleFilter('type')">물건종류 ▾</button>
@@ -33,7 +33,7 @@
 <!-- 물건종류 필터 그룹 -->
 <div id="filter-type" class="filter-group">
     <div class="filter-category">
-        <strong>아파트주택</strong>
+        <strong>아파트/주택</strong>
         <div class="filter-buttons">
             <button onclick="selectFilter(this)">아파트</button>
             <button onclick="selectFilter(this)">연립주택</button>
@@ -86,7 +86,7 @@
             <button onclick="selectFilter(this)">도로</button>
             <button onclick="selectFilter(this)">공장용지</button>
             <button onclick="selectFilter(this)">창고용지</button>
-            <button onclick="selectFilter(this)">묘지</button>
+            <button onclick="selectFilter(this)">과수원</button>
             <button onclick="selectFilter(this)">목장용지</button>
             <button onclick="selectFilter(this)">주유소용지</button>
             <button onclick="selectFilter(this)">종교용지</button>
@@ -97,38 +97,41 @@
 
 <div id="filter-price" class="filter-group hidden">
     <div class="price-grid">
-        <button class="price-button" onclick="selectPrice(this)">5천</button>
-        <button class="price-button" onclick="selectPrice(this)">1억</button>
-        <button class="price-button" onclick="selectPrice(this)">2억</button>
-        <button class="price-button" onclick="selectPrice(this)">3억</button>
-        <button class="price-button" onclick="selectPrice(this)">4억</button>
-        <button class="price-button" onclick="selectPrice(this)">5억</button>
-        <button class="price-button" onclick="selectPrice(this)">6억</button>
-        <button class="price-button" onclick="selectPrice(this)">7억</button>
-        <button class="price-button" onclick="selectPrice(this)">8억</button>
-        <button class="price-button" onclick="selectPrice(this)">9억</button>
-        <button class="price-button" onclick="selectPrice(this)">10억</button>
-        <button class="price-button" onclick="selectPrice(this)">11억</button>
-        <button class="price-button" onclick="selectPrice(this)">12억</button>
-        <button class="price-button" onclick="selectPrice(this)">13억</button>
-        <button class="price-button" onclick="selectPrice(this)">14억</button>
-        <button class="price-button" onclick="selectPrice(this)">15억</button>
-        <button class="price-button" onclick="selectPrice(this)">16억</button>
-        <button class="price-button" onclick="selectPrice(this)">17억</button>
-        <button class="price-button" onclick="selectPrice(this)">18억~</button>
+      <button class="price-button" onclick="selectPrice(this)">5천</button>
+      <button class="price-button" onclick="selectPrice(this)">1억</button>
+  
+      <button class="price-button" onclick="selectPrice(this)">2억</button>
+      <button class="price-button" onclick="selectPrice(this)">3억</button>
+      <button class="price-button" onclick="selectPrice(this)">4억</button>
+      <button class="price-button" onclick="selectPrice(this)">5억</button>
+      <button class="price-button" onclick="selectPrice(this)">6억</button>
+      <button class="price-button" onclick="selectPrice(this)">7억</button>
+  
+      <button class="price-button" onclick="selectPrice(this)">8억</button>
+      <button class="price-button" onclick="selectPrice(this)">9억</button>
+      <button class="price-button" onclick="selectPrice(this)">10억</button>
+      <button class="price-button" onclick="selectPrice(this)">11억</button>
+      <button class="price-button" onclick="selectPrice(this)">12억</button>
+      <button class="price-button" onclick="selectPrice(this)">13억</button>
+  
+      <button class="price-button" onclick="selectPrice(this)">14억</button>
+      <button class="price-button" onclick="selectPrice(this)">15억</button>
+      <button class="price-button" onclick="selectPrice(this)">16억</button>
+      <button class="price-button" onclick="selectPrice(this)">17억</button>
+      <button class="price-button" onclick="selectPrice(this)">18억~</button>
     </div>
   
     <div class="price-range">
         <div class="range-box">
-            <button onclick="adjustPrice('min', 'down')">-</button>
-            <span id="minPriceLabel">최소</span>
-            <button onclick="adjustPrice('min', 'up')">+</button>
+          <button onclick="adjustPrice('min', 'down')">-</button>
+          <span id="minPriceLabel">최소</span>
+          <button onclick="adjustPrice('min', 'up')">+</button>
         </div>
         <span> ~ </span>
         <div class="range-box">
-            <button onclick="adjustPrice('max', 'down')">-</button>
-            <span id="maxPriceLabel">최대</span>
-            <button onclick="adjustPrice('max', 'up')">+</button>
+          <button onclick="adjustPrice('max', 'down')">-</button>
+          <span id="maxPriceLabel">최대</span>
+          <button onclick="adjustPrice('max', 'up')">+</button>
         </div>
       </div>
       

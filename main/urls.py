@@ -8,18 +8,20 @@ urlpatterns = [
     path('tender/<str:case_number>/', views.tender, name='tender_detail'),
     path('auto_bid/', views.auto_bid, name='auto_bid'),
     path('mypage/', views.mypage, name='mypage'),
+    path('join/', views.join, name='join'),
+    path('login/', views.login, name='login'),
     path('bidform/', views.bidform, name='bidform'),
     path('bid_submit/', views.bid_submit, name='bid_submit'),
     path('charge/', views.charge, name='charge'),
     path('property/<str:case_number>/', views.property_detail, name='property_detail'),
     path('bid_history/', views.bid_history, name='bid_history'),
-    path('refund/', views.refund, name='refund'),
-    path('favorites/', views.favorites, name='favorites'),
+    path('favlist/', views.favlist, name='favlist'),
     path('update_wallet/', views.update_wallet, name='update_wallet'),
     
     # 빠른 검색 페이지
     path('fsearch/', views.fsearch, name='fsearch'),
-    # 조건검색 페이지 (AJAX와 일반 요청 모두 처리)
+
+    # 조건 검색 페이지
     path('csearch/', views.csearch, name='csearch'),
     
     # API 엔드포인트들

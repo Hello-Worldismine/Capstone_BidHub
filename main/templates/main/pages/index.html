@@ -28,7 +28,15 @@
 
   <!-- 기일경매목록 -->
   <section class="auction-list">
-    <h2>기일경매목록</h2>
+    <div class="auction-header">
+      <h2 class="auction-title">기일경매목록</h2>
+      <select id="court-filter" class="court-dropdown">
+        <option value="all">전체 법원</option>
+        <option value="서울지방법원">서울지방법원</option>
+        <option value="수원지방법원">수원지방법원</option>
+        <option value="부산지방법원">부산지방법원</option>
+      </select>
+    </div>
     <table class="table">
       <thead>
         <tr>
@@ -72,3 +80,24 @@
     </ul>
   </aside>
 {% endblock %}
+
+<script>
+  // 기일경매목록 법원 필터링 기능
+  document.addEventListener('DOMContentLoaded', function () {
+    const filter = document.getElementById('court-filter');
+    const rows = document.querySelectorAll('#auction-table tbody tr');
+
+    filter.addEventListener('change', function () {
+      const selected = this.value;
+
+      rows.forEach(row => {
+        const court = row.getAttribute('data-court');
+        if (selected === 'all' || court === selected) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    });
+  });
+</script>

@@ -1,0 +1,160 @@
+.fav-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 1000px;
+  margin-top: 40px;
+}
+
+/* 카드 전체 */
+.fav-card {
+  position: relative; /* 하트의 절대 위치 기준 */
+  display: flex;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 15px;
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  gap: 20px;
+}
+
+/* 이미지 */
+.fav-image img {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 10px;
+  background: #f0f0f0;
+}
+
+/* 텍스트 정보 묶음 */
+.fav-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex: 1;
+}
+
+/* 상단: 타입 뱃지 + 주소 + NEW */
+.fav-top {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 5px;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.badge {
+  background-color: #8c5ae3;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.address {
+  color: #333;
+}
+
+.new-label {
+  color: red;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+/* 감정가 강조 */
+.fav-price {
+  font-size: 18px;
+  font-weight: bold;
+  color: #d94a38;
+  margin: 6px 0;
+}
+
+/* 하단: 경매일, 거리, 주소 등 */
+.fav-bottom {
+  font-size: 13px;
+  color: #555;
+  line-height: 1.4;
+}
+
+/* 버튼 (선택 시 우측 하단 배치도 가능) */
+.fav-action {
+  margin-top: 10px;
+}
+
+.fav-action .btn {
+  padding: 6px 12px;
+  font-size: 14px;
+  border: 1px solid #aaa;
+  background-color: white;
+  border-radius: 4px;
+  text-decoration: none;
+  color: #333;
+  transition: all 0.2s;
+}
+
+.fav-action .btn:hover {
+  background-color: #eee;
+}
+
+.fav-details {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* 하트 아이콘: 오른쪽 상단 */
+.fav-heart {
+  position: absolute;
+  top: 50%;               /* 수직 중앙 */
+  right: 10px;            /* 오른쪽 끝에서 10px */
+  transform: translateY(-50%); /* 정확한 수직 가운데 보정 */
+  font-size: 20px;
+  color: #e74c3c;
+  cursor: pointer;
+  z-index: 10;
+  margin-right: 30px;
+}
+
+.fav-heart:hover {
+  opacity: 0.7;
+}
+
+
+.property-type {
+  padding: 4px 8px;
+  font-size: 12px;
+  color: white;
+  border-radius: 4px;
+  font-weight: bold;
+  display: inline-block;
+}
+
+/* 아파트주택 */
+.property-type.apt {
+  background-color: #8c5ae3;
+}
+
+/* 상가 */
+.property-type.store {
+  background-color: #2b7cff;
+}
+
+/* 건물기타 */
+.property-type.etc-building {
+  background-color: #47c880;
+}
+
+/* 토지 */
+.property-type.land {
+  background-color: #f48024;
+}
+
+/* 토지기타 */
+.property-type.etc-land {
+  background-color: #888;
+}

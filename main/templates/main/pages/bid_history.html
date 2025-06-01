@@ -1,7 +1,56 @@
-<!-- 예시: bid_history.html -->
-{% extends 'main/layout/layout.html' %}
+{% extends 'main/layout/sidebar_layout.html' %}
+{% load static %}
 
-{% block content %}
-<h2>나의 입찰 내역</h2>
-<p>여기에 입찰 정보 리스트를 넣으세요.</p>
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/pages/bid_history.css' %}">
+{% endblock %}
+
+{% block sidebar_menu %}
+<li class="active"><a href="{% url 'bid_history' %}">나의입찰내역</a></li>
+<li><a href="#">관심목록</a></li>
+<li><a href="#">자동입찰설정</a></li>
+<li><a href="#">마이페이지</a></li>
+{% endblock %}
+
+{% block sidebar_content %}
+<h2>나의입찰내역</h2>
+<br>
+<hr style="width: 1000px; margin: 0;">
+
+<!-- 탭 메뉴 -->
+<div class="auto-bid-tabs">
+  <div class="tab-menu">
+    <div class="tab-item active" onclick="showTab('search')">입찰내역</div>
+    <div class="tab-item" onclick="showTab('favorites')">자동입찰예약내역</div>
+  </div>
+</div>
+
+  <div class="refund-container">
+    <div class="refund-box">
+    <div class="refund-row header">
+      <div>사건번호</div>
+      <div>입찰금액</div>
+      <div>예치금</div>
+      <div>반환상태</div>
+      <div>반환일자</div>
+    </div>
+
+    <div class="refund-row">
+      <div><a href="#">2024타경12345</a></div>
+      <div>510,000,000원</div>
+      <div>51,000,000원</div>
+      <div><span class="status pending">처리중</span></div>
+      <div>-</div>
+    </div>
+
+    <div class="refund-row">
+      <div><a href="#">2024타경67890</a></div>
+      <div>620,000,000원</div>
+      <div>62,000,000원</div>
+      <div><span class="status done">완료</span></div>
+      <div>2025-04-18</div>
+    </div>
+  </div>
+  </div>
 {% endblock %}

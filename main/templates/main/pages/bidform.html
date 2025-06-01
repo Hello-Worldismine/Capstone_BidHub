@@ -8,16 +8,13 @@
 
 {% block sidebar_menu %}
 <li class="active"><a href="{% url 'bidform' %}">입찰표 작성</a></li>
-<li><a href="{% url 'refund' %}">보증금반환현황조회</a></li>
-<li><a href="{% url 'favorites' %}">즐겨찾기목록</a></li>
-<li><a href="{% url 'auto_bid' %}">자동입찰설정</a></li>
-<li><a href="{% url 'mypage' %}">마이페이지</a></li>
+<li><a href="{% url 'charge' %}">예치금충전</a></li>
 {% endblock %}
 
 {% block sidebar_content %}
 <h2>입찰표 작성</h2>
 <br>
-<hr style="width: 1000px;">
+<hr style="width: 1000px; margin: 0;">
 
 <form class="bidform-section" id="bidForm" method="POST" action="{% url 'bid_submit' %}">
   {% csrf_token %}
@@ -104,7 +101,10 @@
   </div>
   {% endif %}
 
+  <br>
+  <h4 class="section-title">입찰 금액 입력</h4>
   <div class="search-group">
+    
     <label for="deposit">보증금</label>
     <div class="input-wrapper">
         <input type="number" id="deposit" name="deposit" class="input-field deposit" 

@@ -1,0 +1,128 @@
+/* ===== 탭 메뉴 ===== */
+.auto-bid-tabs {
+  max-width: 1000px;
+  margin-bottom: 32px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.tab-menu {
+  display: flex;
+  width: fit-content;
+}
+
+.tab-item {
+  padding: 12px 24px;
+  font-weight: 600;
+  color: #6b7280;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.tab-item:hover {
+  color: #111827;
+}
+
+.tab-item.active {
+  color: #111827;
+  border-bottom: 2px solid #3b82f6;
+}
+
+/* ===== 반환 내역 컨테이너 ===== */
+.refund-container {
+  max-width: 940px;
+  padding: 32px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.05);
+  font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ===== 표 wrapper ===== */
+.refund-box {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ===== 표 한 줄 ===== */
+.refund-row {
+  display: grid;
+  grid-template-columns: 2fr 2fr 2fr 2fr 2fr;
+  align-items: center;
+  padding: 18px 20px;
+  border-radius: 12px;
+  background-color: #f9fafb;
+  font-size: 15px;
+  color: #374151;
+  transition: background-color 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+
+
+
+.refund-row:not(.header):hover {
+  background-color: #f3f4f6;
+}
+
+/* ===== 헤더 줄 ===== */
+.refund-row.header {
+  background-color: #eff6ff;
+  font-weight: 700;
+  color: #1d4ed8;
+  border-bottom: 1px solid #dbeafe;
+  /* 아래 3줄 추가로 완전 동일하게 맞춤 */
+  padding: 18px 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.refund-row div {
+  text-align: center;
+}
+
+/* ===== 상태 뱃지 ===== */
+.status {
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  text-align: center;
+  display: inline-block;
+  min-width: 64px;
+  font-size: 13px;
+}
+
+.status.done {
+  background-color: #dcfce7;
+  color: #16a34a;
+}
+
+.status.pending {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+/* ===== 반응형 ===== */
+@media (max-width: 768px) {
+  .refund-container {
+    padding: 20px;
+  }
+
+  .refund-row {
+    grid-template-columns: repeat(2, 1fr);
+    row-gap: 12px;
+  }
+
+  .refund-row.header {
+    display: none;
+  }
+
+  .refund-row div {
+    text-align: left !important;
+  }
+}

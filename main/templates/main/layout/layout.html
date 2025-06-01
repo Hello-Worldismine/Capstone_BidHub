@@ -28,7 +28,7 @@
               <li><a href="#">오늘의경매</a></li>
               <li><a href="#">주간경매공고</a></li>
               <li><a href="{% url 'fsearch' %}">빠른검색</a></li>
-              <li><a href="{%url 'csearch' %}">조건검색</a></li>
+              <li><a href="{% url 'csearch' %}">조건검색</a></li>
             </ul>
           </li>
           <li class="menu-item">
@@ -55,10 +55,9 @@
           <li class="menu-item">
             <a href="#">나의경매</a>
             <ul class="submenu">
-              <li><a href="#">나의입찰내역</a></li>
-              <li><a href="#">보증금반환현황조회</a></li>
-              <li><a href="#">즐겨찾기목록</a></li>
-              <li><a href="{% url 'auto_bid' %}">자동입찰설정</a></li>
+              <li><a href="{% url 'bid_history' %}">나의입찰내역</a></li>
+              <li><a href="{% url 'favlist' %}">관심목록</a></li>
+              <li><a href="{% url 'auto_bid' %}">자동입찰예약</a></li>
               <li><a href="{% url 'mypage' %}">마이페이지 →</a></li>
             </ul>
           </li>
@@ -71,13 +70,13 @@
           <span>{{ user.username }}님</span>
           <span class="wallet"><i class="fa-solid fa-won-sign"></i> 예치금 {{ user.profile.balance|default:"0" }}원</span>
           <a href="{% url 'mypage' %}">마이페이지</a>
-          <form method="POST" action="{% url 'account_logout' %}" style="display:inline;">
+          <form method="POST" action="{% url 'logout' %}" style="display:inline;">
             {% csrf_token %}
             <button type="submit" class="logout-btn">로그아웃</button>
           </form>
         {% else %}
-          <a href="{% url 'account_signup' %}" class="btn signup-btn">회원가입</a>
-          <a href="{% url 'account_login' %}"><button class="btn login-btn">로그인</button></a>
+          <a href="{% url 'join' %}" class="btn signup-btn">회원가입</a>
+          <a href="{% url 'login' %}"><button class="btn login-btn">로그인</button></a>
         {% endif %}
       </div>
     </nav>
@@ -97,8 +96,8 @@
         <ul>
           <li><a href="#">오늘의경매</a></li>
           <li><a href="#">주간경매공고</a></li>
-          <li><a href="#">빠른검색</a></li>
-          <li><a href="#">조건검색</a></li>
+          <li><a href="{% url 'fsearch' %}">빠른검색</a></li>
+          <li><a href="{% url 'csearch' %}">조건검색</a></li>
         </ul>
       </div>
       <div class="footer-group">
@@ -111,8 +110,8 @@
       <div class="footer-group">
         <h4>입찰준비</h4>
         <ul>
-          <li><a href="#">입찰표작성</a></li>
-          <li><a href="#">예치금충전</a></li>
+          <li><a href="{% url 'bidform' %}">입찰표작성</a></li>
+          <li><a href="{% url 'charge' %}">예치금충전</a></li>
         </ul>
       </div>
       <div class="footer-group">
@@ -126,19 +125,15 @@
         <h4>나의경매</h4>
         <ul>
           <li><a href="#">나의입찰내역</a></li>
-          <li><a href="#">보증금반환현황조회</a></li>
-          <li><a href="#">즐겨찾기목록</a></li>
-          <li><a href="#">자동입찰설정</a></li>
-          <li><a href="#">마이페이지 →</a></li>
+          <li><a href="{% url 'favlist' %}">관심목록</a></li>
+          <li><a href="{% url 'auto_bid' %}">자동입찰예약</a></li>
+          <li><a href="{% url 'mypage' %}">마이페이지 →</a></li>
         </ul>
       </div>
     </div>
     <hr>
     <div class="footer-bottom">
-      <p>© 2025 dgu ice</p>
-      <p><a href="#">Terms of Service</a></p>
-      <p><a href="#">Privacy Policy</a></p>
-      <p>TEAM 5</p>
+      <p>© 2025 dgu ice | <a href="#">Terms of Service</a> | <a href="#">Privacy Policy</a> | TEAM 5</p>
     </div>
   </footer>
 

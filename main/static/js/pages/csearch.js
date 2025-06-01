@@ -2,18 +2,12 @@
 let minPrice = null;
 let maxPrice = null;
 let priceButtonsClicked = [];
-<<<<<<< Updated upstream
-
-// DOM 로드 완료 시 초기화
-document.addEventListener("DOMContentLoaded", function () {
-=======
 let searchTimeout = null;
 
 // DOM 로드 완료 시 초기화
 document.addEventListener("DOMContentLoaded", function () {
     console.log('조건검색 페이지 로드 완료');
     
->>>>>>> Stashed changes
     // 기본적으로 물건종류 탭 활성화
     const typeButton = document.querySelector('button[onclick="toggleFilter(\'type\')"]');
     if (typeButton) {
@@ -32,14 +26,11 @@ document.addEventListener("DOMContentLoaded", function () {
     
     if (priceGroup) priceGroup.classList.add('hidden');
     if (failGroup) failGroup.classList.add('hidden');
-<<<<<<< Updated upstream
-=======
     
     // 초기 로드 시 전체 목록 표시
     setTimeout(() => {
         executeSearch();
     }, 500);
->>>>>>> Stashed changes
 });
 
 // 필터 탭 토글 함수
@@ -79,11 +70,6 @@ function toggleFilter(id) {
 // 일반 필터 선택 함수
 function selectFilter(btn) {
     if (btn) {
-<<<<<<< Updated upstream
-        btn.classList.toggle('selected');
-        // 필터 변경 시 자동으로 검색 실행
-        executeSearch();
-=======
         // 토글 방식으로 선택/해제
         if (btn.classList.contains('selected')) {
             btn.classList.remove('selected');
@@ -98,7 +84,6 @@ function selectFilter(btn) {
         searchTimeout = setTimeout(() => {
             executeSearch();
         }, 500); // 0.5초 후 실행
->>>>>>> Stashed changes
     }
 }
 
@@ -122,35 +107,9 @@ function resetFilters() {
         if (minPriceLabel) minPriceLabel.innerText = "최소";
         if (maxPriceLabel) maxPriceLabel.innerText = "최대";
         
-<<<<<<< Updated upstream
-        // AJAX로 전체 목록 가져오기
-        fetch('/csearch/', {
-            method: 'GET',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-        .then(response => response.text())
-        .then(html => {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
-            const newResults = doc.querySelector('.search-results');
-            
-            if (newResults) {
-                const currentResults = document.querySelector('.search-results');
-                if (currentResults) {
-                    currentResults.innerHTML = newResults.innerHTML;
-                }
-            }
-        })
-        .catch(error => {
-            console.error('Error resetting filters:', error);
-        });
-=======
         // 전체 목록으로 리셋
         console.log('Resetting filters');
         executeSearch();
->>>>>>> Stashed changes
         
     } catch (error) {
         console.error('Error resetting filters:', error);
@@ -177,11 +136,7 @@ function parsePriceToNumber(priceText) {
     }
 }
 
-<<<<<<< Updated upstream
-// 가격 버튼 선택 함수 - 자동 검색 추가
-=======
 // 가격 버튼 선택 함수
->>>>>>> Stashed changes
 function selectPrice(button) {
     if (!button) return;
     
@@ -227,10 +182,6 @@ function selectPrice(button) {
             updatePriceLabels();
         }
         
-<<<<<<< Updated upstream
-        // 가격 필터 변경 시 자동으로 검색 실행
-        executeSearch();
-=======
         // 디바운스를 이용한 검색 실행
         if (searchTimeout) {
             clearTimeout(searchTimeout);
@@ -238,7 +189,6 @@ function selectPrice(button) {
         searchTimeout = setTimeout(() => {
             executeSearch();
         }, 500); // 0.5초 후 실행
->>>>>>> Stashed changes
         
     } catch (error) {
         console.error('Error selecting price:', error);
@@ -280,11 +230,7 @@ function formatKoreanPrice(num) {
     }
 }
 
-<<<<<<< Updated upstream
-// 가격 조정 함수 - 자동 검색 추가
-=======
 // 가격 조정 함수
->>>>>>> Stashed changes
 function adjustPrice(type, direction) {
     if (type !== "min" && type !== "max") return;
     if (direction !== "up" && direction !== "down") return;
@@ -321,10 +267,6 @@ function adjustPrice(type, direction) {
         updatePriceLabels();
         updatePriceButtonStyles();
         
-<<<<<<< Updated upstream
-        // 가격 조정 시 자동으로 검색 실행
-        executeSearch();
-=======
         // 디바운스를 이용한 검색 실행
         if (searchTimeout) {
             clearTimeout(searchTimeout);
@@ -332,7 +274,6 @@ function adjustPrice(type, direction) {
         searchTimeout = setTimeout(() => {
             executeSearch();
         }, 500); // 0.5초 후 실행
->>>>>>> Stashed changes
         
     } catch (error) {
         console.error('Error adjusting price:', error);
@@ -386,87 +327,6 @@ function updatePriceButtonStyles() {
     }
 }
 
-<<<<<<< Updated upstream
-// 디바운스 함수 추가 (너무 빈번한 요청 방지)
-let searchTimeout = null;
-
-// 검색 실행 함수 - AJAX로 변경
-function executeSearch() {
-    try {
-        // 이전 타이머 취소
-        if (searchTimeout) {
-            clearTimeout(searchTimeout);
-        }
-        
-        // 300ms 후에 검색 실행 (디바운스)
-        searchTimeout = setTimeout(() => {
-            const params = new URLSearchParams();
-            
-            // 선택된 물건종류 수집
-            const selectedTypes = [];
-            document.querySelectorAll('#filter-type .selected').forEach(btn => {
-                selectedTypes.push(btn.innerText.trim());
-            });
-            
-            selectedTypes.forEach(type => {
-                params.append('item_types', type);
-            });
-            
-            // 가격 필터 추가
-            if (minPrice !== null) {
-                params.append('min_price', minPrice);
-            }
-            if (maxPrice !== null) {
-                params.append('max_price', maxPrice);
-            }
-            
-            // 유찰횟수 필터 추가
-            const selectedFailure = document.querySelector('#filter-fail .selected');
-            if (selectedFailure) {
-                params.append('failure_count', selectedFailure.innerText.trim());
-            }
-            
-            // 디버깅용 콘솔 로그
-            console.log('Search parameters:', {
-                minPrice: minPrice,
-                maxPrice: maxPrice,
-                selectedTypes: selectedTypes,
-                selectedFailure: selectedFailure?.innerText?.trim(),
-                queryString: params.toString()
-            });
-            
-            // AJAX 요청으로 검색 결과 가져오기
-            fetch(`/csearch/?${params.toString()}`, {
-                method: 'GET',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => response.text())
-            .then(html => {
-                console.log('Search response received');
-                // HTML 파싱하여 검색 결과 영역만 추출
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                const newResults = doc.querySelector('.search-results');
-                
-                if (newResults) {
-                    // 기존 검색 결과를 새로운 결과로 교체
-                    const currentResults = document.querySelector('.search-results');
-                    if (currentResults) {
-                        currentResults.innerHTML = newResults.innerHTML;
-                        console.log('Search results updated');
-                    }
-                } else {
-                    console.log('No search results found in response');
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching search results:', error);
-            });
-            
-        }, 300);
-=======
 // 로딩 상태 표시 함수
 function showLoading() {
     const resultList = document.querySelector('.result-list');
@@ -593,13 +453,8 @@ function executeSearch(page = 1) {
                 `;
             }
         });
->>>>>>> Stashed changes
         
     } catch (error) {
         console.error('Error executing search:', error);
     }
-<<<<<<< Updated upstream
 }
-=======
-}
->>>>>>> Stashed changes
