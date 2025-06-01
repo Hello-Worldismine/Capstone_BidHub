@@ -10,9 +10,319 @@
 
 .filter-group {
     display: block;
+<<<<<<< Updated upstream
     margin-top: 20px;
     padding: 20px;
     border: 1px solid #ddd;
     border-radius: 5px;
     background-color: #f9f9f9;
 }
+=======
+    width: 100%;
+    margin-bottom: 24px;
+}
+
+.filter-category strong {
+    display: block;
+    font-size: 16px;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.filter-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.filter-buttons button {
+    padding: 8px 16px;
+    background: #f2f4f8;
+    border: 1px solid #ccd1d8;
+    border-radius: 20px;
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.filter-buttons button.selected {
+    background: #007bff;
+    border-color: #0056b3;
+    color: #fff;
+}
+
+.filter-buttons button:hover {
+    background: #e6e9ef;
+}
+
+/* 입찰금액 필터 부분 */
+.price-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  
+  .price-button {
+    padding: 10px 0;
+    background: #f2f2f2;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  
+  .price-button.selected-min {
+    background: #007bff;
+    color: white;
+    border-color: #0056b3;
+  }
+  
+  .price-button.selected-max {
+    background: #28a745;
+    color: white;
+    border-color: #1e7e34;
+  }
+  
+  .price-range {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    align-items: center;
+  }
+  
+  .range-box {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    padding: 6px 12px;
+    background: #fff;
+  }
+  
+  .range-box span {
+    min-width: 50px;
+    text-align: center;
+    font-weight: 600;
+  }
+
+/* === Favlist 스타일 추가 === */
+.fav-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 1000px;
+  margin-top: 40px;
+}
+
+/* 카드 전체 */
+.fav-card {
+  position: relative; /* 하트의 절대 위치 기준 */
+  display: flex;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 15px;
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  gap: 20px;
+  transition: box-shadow 0.2s ease;
+}
+
+.fav-card:hover {
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* 이미지 */
+.fav-image img {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 10px;
+  background: #f0f0f0;
+}
+
+/* 텍스트 정보 묶음 */
+.fav-details {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* 상단: 타입 뱃지 + 주소 + NEW */
+.fav-top {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 5px;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.badge {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: white;
+  font-weight: bold;
+}
+
+.address {
+  color: #333;
+  font-weight: 600;
+}
+
+.new-label {
+  color: red;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+/* 감정가 강조 */
+.fav-price {
+  font-size: 18px;
+  font-weight: bold;
+  color: #d94a38;
+  margin: 6px 0;
+}
+
+/* 하단: 경매일, 거리, 주소 등 */
+.fav-bottom {
+  font-size: 13px;
+  color: #555;
+  line-height: 1.4;
+}
+
+/* 하트 아이콘: 오른쪽 상단 */
+.fav-heart {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  font-size: 20px;
+  color: #e74c3c;
+  cursor: pointer;
+  z-index: 10;
+  margin-right: 30px;
+  transition: opacity 0.2s ease;
+}
+
+.fav-heart:hover {
+  opacity: 0.7;
+}
+
+.fav-heart .far {
+  color: #ccc;
+}
+
+.fav-heart .fas {
+  color: #e74c3c;
+}
+
+/* 물건 타입별 배지 색상 */
+.property-type {
+  padding: 4px 8px;
+  font-size: 12px;
+  color: white;
+  border-radius: 4px;
+  font-weight: bold;
+  display: inline-block;
+}
+
+/* 아파트주택 */
+.property-type.apt {
+  background-color: #8c5ae3;
+}
+
+/* 상가 */
+.property-type.store {
+  background-color: #2b7cff;
+}
+
+/* 건물기타 */
+.property-type.etc-building {
+  background-color: #47c880;
+}
+
+/* 토지 */
+.property-type.land {
+  background-color: #f48024;
+}
+
+/* 토지기타 */
+.property-type.etc-land {
+  background-color: #888;
+}
+
+/* 검색 요약 */
+.search-summary {
+  margin-bottom: 20px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 5px;
+  border-left: 4px solid #007bff;
+}
+
+.search-summary p {
+  margin: 0;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 검색 안내 */
+.search-instruction {
+  text-align: center;
+  padding: 50px 20px;
+  color: #666;
+}
+
+.search-instruction p {
+  margin: 10px 0;
+}
+
+/* 결과 없음 메시지 */
+.no-result {
+  text-align: center;
+  padding: 50px;
+  color: #666;
+  font-size: 16px;
+}
+
+/* 에러 메시지 */
+.error-message {
+  text-align: center;
+  padding: 50px;
+  color: #e74c3c;
+  background-color: #ffeaea;
+  border-radius: 5px;
+  margin: 20px 0;
+}
+
+/* 페이징 버튼 스타일 */
+.pagination .btn {
+  padding: 8px 16px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.pagination .btn:hover {
+  background-color: #0056b3;
+}
+
+.pagination .btn-secondary {
+  background-color: #6c757d;
+}
+
+.pagination .btn-secondary:hover {
+  background-color: #545b62;
+}
+>>>>>>> Stashed changes

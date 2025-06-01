@@ -501,8 +501,16 @@ def bid_history(request):
 def refund(request):
     return render(request, 'main/pages/refund.html')
 
+<<<<<<< Updated upstream
 def favorites(request):
     return render(request, 'main/pages/favorites.html')
+=======
+
+def join(request):
+    return render(request, 'account/signup.html')
+def login(request):
+    return render(request, 'account/login.html')
+>>>>>>> Stashed changes
 
 def update_wallet(request):
     if request.method == 'POST':
@@ -675,7 +683,11 @@ def csearch(request):
     # 기본 쿼리셋
     auction_cases = AuctionCase.objects.select_related().prefetch_related('auctionitem_set').all()
     
+<<<<<<< Updated upstream
     # 필터 파라미터 받기
+=======
+    # 필터 파라미터 받기 (AJAX 요청에서도 제대로 받을 수 있도록)
+>>>>>>> Stashed changes
     item_types = request.GET.getlist('item_types')  # 복수 선택 가능
     min_price = request.GET.get('min_price')
     max_price = request.GET.get('max_price')
@@ -683,6 +695,12 @@ def csearch(request):
     
     # 디버깅용 로그
     print(f"Received filters - item_types: {item_types}, min_price: {min_price}, max_price: {max_price}, failure_count: {failure_count}")
+<<<<<<< Updated upstream
+=======
+    print(f"Request method: {request.method}")
+    print(f"Request headers: {dict(request.headers)}")
+    print(f"Query string: {request.GET}")
+>>>>>>> Stashed changes
     
     # 필터 적용 여부 확인
     filters_applied = bool(item_types or min_price or max_price or failure_count)
@@ -693,10 +711,17 @@ def csearch(request):
     
     # 물건 종류 필터
     if item_types:
+<<<<<<< Updated upstream
         # AuctionItem의 item_purpose 필드로 필터링
         type_query = Q()
         for item_type in item_types:
             type_query |= Q(auctionitem__item_purpose__icontains=item_type)
+=======
+        # AuctionItem의 property_type 필드로 필터링
+        type_query = Q()
+        for item_type in item_types:
+            type_query |= Q(auctionitem__property_type__icontains=item_type)
+>>>>>>> Stashed changes
         auction_cases = auction_cases.filter(type_query).distinct()
         print(f"After item type filter: {auction_cases.count()}")
     
@@ -770,6 +795,7 @@ def csearch(request):
     
     # 페이징 처리
     paginator = Paginator(auction_cases, 20)  # 페이지당 20개
+<<<<<<< Updated upstream
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
@@ -777,6 +803,22 @@ def csearch(request):
         'auction_cases': page_obj,
         'total_count': paginator.count,
         'filters_applied': filters_applied,
+=======
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        # 올바른 변수명으로 전달
+        'search_results': page_obj.object_list,  # 실제 객체 리스트
+        'page_obj': page_obj,  # 페이지 객체
+        'total_count': paginator.count,  # 전체 개수
+        'current_page': page_obj.number,
+        'total_pages': paginator.num_pages,
+        'has_previous': page_obj.has_previous(),
+        'has_next': page_obj.has_next(),
+        'filters_applied': filters_applied,
+        'search_performed': True,
+>>>>>>> Stashed changes
         'filter_params': {
             'item_types': ', '.join(item_types) if item_types else None,
             'min_price': min_price,
@@ -785,4 +827,8 @@ def csearch(request):
         }
     }
     
+<<<<<<< Updated upstream
     return render(request, 'main/pages/csearch.html', context)
+=======
+    return render(request, 'main/pages/csearch.html', context)
+>>>>>>> Stashed changes
