@@ -4,14 +4,10 @@
 {% block extra_css %}
 {{ block.super }}
 <link rel="stylesheet" href="{% static 'css/pages/csearch.css' %}">
+{% endblock %}
 
-<style>
-    /* footer가 항상 하단에 고정되도록 콘텐츠 높이 확보 */
-    .main-content {
-      min-height: calc(100vh - 300px); /* header+footer 대략 높이 보정 */
-    }
-  </style>
-
+{% block extra_head %}
+<meta name="csrf-token" content="{{ csrf_token }}">
 {% endblock %}
 
 {% block sidebar_menu %}
@@ -99,7 +95,6 @@
     </div>
 </div>
 
-
 <div id="filter-price" class="filter-group hidden">
     <div class="price-grid">
       <button class="price-button" onclick="selectPrice(this)">5천</button>
@@ -142,178 +137,174 @@
       
   </div>
   
-
 <div id="filter-fail" class="filter-group hidden">
     <button onclick="selectFilter(this)">최초경매</button>
     <button onclick="selectFilter(this)">유찰 1회</button>
     <button onclick="selectFilter(this)">유찰 2회</button>
     <button onclick="selectFilter(this)">3회 이상</button>
 </div>
+
+<!-- 검색 결과 리스트 -->
+<div class="result-list">
+    {% if search_error %}
+        <div class="error-message">
+            <p>{{ search_error }}</p>
+        </div>
+    {% elif search_results %}
+        <div class="search-summary">
+            <p>검색 결과: 총 {{ total_count }}건 ({{ current_page }}/{{ total_pages }} 페이지)</p>
+        </div>
+        
+        <!-- fav-container 클래스 사용 -->
+        <div class="fav-container">
+            {% for case in search_results %}
+            <div class="fav-card" data-case-id="{{ case.case_number }}">
+                <div class="fav-image">
+                    <img src="{% static 'img/bidhub-logo.png' %}" 
+                         alt="물건 이미지" 
+                         onerror="this.src='{% static 'img/choonsik/choonsik-main.jfif' %}';">
+                </div>
+                <div class="fav-details">
+                    <!-- 하트 아이콘 (즐겨찾기) -->
+                    <div class="fav-heart" onclick="toggleFavorite('{{ case.case_number }}', this)">
+                        <i class="far fa-heart heart-icon"></i>
+                    </div>
+                    
+                    <div class="fav-top">
+                        {% with auction_item=case.auctionitem_set.first %}
+                        {% if auction_item %}
+                            <!-- 물건 종류에 따른 배지 색상 -->
+                            {% if auction_item.property_type %}
+                                {% if "아파트" in auction_item.property_type or "연립주택" in auction_item.property_type or "오피스텔" in auction_item.property_type or "단독주택" in auction_item.property_type or "다세대주택" in auction_item.property_type or "주상복합" in auction_item.property_type or "다가구주택" in auction_item.property_type or "주거기타" in auction_item.property_type %}
+                                    <span class="badge property-type apt">{{ auction_item.property_type }}</span>
+                                {% elif "근린생활시설" in auction_item.property_type or "주/상용건물" in auction_item.property_type or "판매시설" in auction_item.property_type or "위락시설" in auction_item.property_type or "상가기타" in auction_item.property_type %}
+                                    <span class="badge property-type store">{{ auction_item.property_type }}</span>
+                                {% elif "업무시설" in auction_item.property_type or "종교시설" in auction_item.property_type or "공장" in auction_item.property_type or "창고시설" in auction_item.property_type or "숙박시설" in auction_item.property_type or "건물기타" in auction_item.property_type %}
+                                    <span class="badge property-type etc-building">{{ auction_item.property_type }}</span>
+                                {% elif "대지" in auction_item.property_type or "임야" in auction_item.property_type or "답" in auction_item.property_type or "잡종지" in auction_item.property_type or "전" in auction_item.property_type %}
+                                    <span class="badge property-type land">{{ auction_item.property_type }}</span>
+                                {% else %}
+                                    <span class="badge property-type etc-land">{{ auction_item.property_type }}</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="badge property-type etc-land">정보없음</span>
+                            {% endif %}
+                        {% endif %}
+                        {% endwith %}
+                        
+                        <!-- 사건번호를 링크로 -->
+                        <span class="address">
+                            <a href="{% url 'tender_detail' case_number=case.case_number %}" style="text-decoration: none; color: inherit;">
+                                {{ case.case_number }}
+                            </a>
+                        </span>
+                        
+                        <!-- 법원 정보 -->
+                        <span style="font-size: 12px; color: #666;">{{ case.court_name }}</span>
+                    </div>
+                    
+                    <!-- 감정평가액 -->
+                    <div class="fav-price">
+                        {% with auction_item=case.auctionitem_set.first %}
+                        {% if auction_item and auction_item.valuation_amount %}
+                            {% if auction_item.valuation_amount >= 100000000 %}
+                                {{ auction_item.valuation_amount|floatformat:0|slice:":-8" }}억
+                                {% if auction_item.valuation_amount|floatformat:0|slice:"-8:" != "00000000" %}
+                                    {{ auction_item.valuation_amount|floatformat:0|slice:"-8:-4"|add:"0000"|slice:":4" }}만원
+                                {% else %}
+                                    원
+                                {% endif %}
+                            {% elif auction_item.valuation_amount >= 10000 %}
+                                {{ auction_item.valuation_amount|floatformat:0|slice:":-4" }}만원
+                            {% else %}
+                                {{ auction_item.valuation_amount|floatformat:0 }}원
+                            {% endif %}
+                        {% else %}
+                            정보없음
+                        {% endif %}
+                        {% endwith %}
+                    </div>
+                    
+                    <!-- 하단 정보 -->
+                    <div class="fav-bottom">
+                        {% with auction_item=case.auctionitem_set.first %}
+                        {% if auction_item %}
+                            <span>
+                                {% if auction_item.auction_failures == 0 %}
+                                    첫 경매
+                                {% else %}
+                                    유찰 {{ auction_item.auction_failures }}회
+                                {% endif %}
+                                {% if auction_item.auction_date %}
+                                    · {{ auction_item.auction_date|date:"Y-m-d(D)" }}
+                                {% endif %}
+                            </span><br>
+                            <span>{{ auction_item.item_note|default:"주소 정보 없음" }}</span>
+                        {% else %}
+                            <span>물건 정보가 없습니다.</span>
+                        {% endif %}
+                        {% endwith %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- 페이징 네비게이션 -->
+        {% if total_pages > 1 %}
+        <div class="pagination" style="text-align: center; margin: 30px 0;">
+            {% if has_previous %}
+                <button onclick="goToPage({{ page_obj.previous_page_number }})" class="btn btn-secondary">이전</button>
+            {% endif %}
+            
+            <span style="margin: 0 15px;">
+                {{ current_page }} / {{ total_pages }} 페이지
+            </span>
+            
+            {% if has_next %}
+                <button onclick="goToPage({{ page_obj.next_page_number }})" class="btn btn-secondary">다음</button>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+    {% else %}
+        <!-- 초기 로드 시 또는 검색 결과가 없을 때 -->
+        {% if request.GET %}
+            <p class="no-result">검색 조건에 맞는 결과가 없습니다.</p>
+        {% else %}
+            <div class="search-instruction">
+                <p>조건을 선택하여 검색하세요.</p>
+                <p><small>💡 팁: 물건종류, 입찰금, 유찰수 등의 조건을 조합하여 검색할 수 있습니다.</small></p>
+            </div>
+        {% endif %}
+    {% endif %}
 </div>
 
 {% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'js/pages/csearch.js' %}"></script>
 <script>
-
-document.addEventListener("DOMContentLoaded", function () {
-  toggleFilter('type');
-});
-
-    function toggleFilter(id) {
-  // 필터 그룹 토글
-  document.querySelectorAll('.filter-group').forEach(g => g.classList.add('hidden'));
-  const target = document.getElementById('filter-' + id);
-
-  // 탭 버튼 active 표시 조절
-  document.querySelectorAll('.filter-toggle').forEach(btn => btn.classList.remove('active'));
-  
-  if (target.classList.contains('hidden')) {
-    target.classList.remove('hidden');
-    // 선택된 탭에 active 클래스 부여
-    document.querySelector(`.filter-toggle[onclick="toggleFilter('${id}')"]`).classList.add('active');
-  } else {
-    target.classList.add('hidden');
-    // 토글해서 닫히면 active 제거
-  }
-}
-
-
-    function selectFilter(btn) {
-        btn.classList.toggle('selected');
-    }
-
-    function resetFilters() {
-    // 모든 필터 버튼의 스타일 초기화
-    document.querySelectorAll('.filter-group button').forEach(b => {
-        b.classList.remove('selected', 'selected-min', 'selected-max');
-    });
-
-    // 물건종류, 유찰횟수 같은 상태값은 UI만 초기화하면 충분
-
-    // 입찰금 관련 상태값 초기화
-    minPrice = null;
-    maxPrice = null;
-    priceButtonsClicked = [];
-
-    // UI에 표시된 금액 초기화
-    document.getElementById("minPriceLabel").innerText = "최소";
-    document.getElementById("maxPriceLabel").innerText = "최대";
-}
-
-
-    let priceButtonsClicked = [];
-
-    function parsePriceToNumber(priceText) {
-        if (priceText.includes("천")) {
-            return parseInt(priceText.replace("천", "")) * 10000000;  // 5천 → 50,000,000
-        } else if (priceText.includes("억")) {
-            return priceText === "18억~" ? 1800000001 : parseInt(priceText.replace("억", "")) * 100000000;
-        }
-        return 0;
-    }
-
-    function selectPrice(button) {
-    // 모든 버튼에서 기존 클래스 제거
-    document.querySelectorAll('.price-button').forEach(b => {
-        b.classList.remove('selected', 'selected-min', 'selected-max');
-    });
-
-    // 클릭 기록 저장 (최대 2개)
-    priceButtonsClicked.push(button);
-    if (priceButtonsClicked.length > 2) {
-        priceButtonsClicked.shift();
-    }
-
-    if (priceButtonsClicked.length === 1) {
-        // 하나만 클릭했을 경우: 기본 selected 표시
-        priceButtonsClicked[0].classList.add("selected");
-        const val = parsePriceToNumber(priceButtonsClicked[0].innerText);
-        minPrice = val;
-        maxPrice = null;
-        document.getElementById("minPriceLabel").innerText = formatKoreanPrice(minPrice);
-        document.getElementById("maxPriceLabel").innerText = "최대";
-    } else if (priceButtonsClicked.length === 2) {
-        const [btn1, btn2] = priceButtonsClicked;
-        const val1 = parsePriceToNumber(btn1.innerText);
-        const val2 = parsePriceToNumber(btn2.innerText);
-
-        let minBtn, maxBtn;
-        if (val1 <= val2) {
-            minBtn = btn1;
-            maxBtn = btn2;
-            minPrice = val1;
-            maxPrice = val2;
-        } else {
-            minBtn = btn2;
-            maxBtn = btn1;
-            minPrice = val2;
-            maxPrice = val1;
-        }
-
-        minBtn.classList.add("selected-min");
-        maxBtn.classList.add("selected-max");
-
-        document.getElementById("minPriceLabel").innerText = formatKoreanPrice(minPrice);
-        document.getElementById("maxPriceLabel").innerText = formatKoreanPrice(maxPrice);
-    }
-}
-
-
-
-
-    function formatKoreanPrice(num) {
-    if (num === 0) {
-        return "0";
-    } else if (num >= 1800000000) {
-        return "18억~";
-    } else if (num >= 100000000) {
-        return (num / 100000000) + "억";
+// 즐겨찾기 토글 함수
+function toggleFavorite(caseNumber, iconElement) {
+    const heartIcon = iconElement.querySelector('.heart-icon');
+    const isFavorited = heartIcon.classList.contains('fas');
+    
+    // 임시로 UI만 변경 (실제 서버 연동은 나중에)
+    if (isFavorited) {
+        heartIcon.classList.remove('fas');
+        heartIcon.classList.add('far');
+        console.log(`Removed ${caseNumber} from favorites`);
     } else {
-        return (num / 10000000) + "천";
+        heartIcon.classList.remove('far');
+        heartIcon.classList.add('fas');
+        console.log(`Added ${caseNumber} to favorites`);
     }
 }
 
-
-
-    let minPrice = null;
-    let maxPrice = null;
-
-    function adjustPrice(type, direction) {
-    let price = (type === "min") ? minPrice : maxPrice;
-
-    if (price === null) return;
-
-    if (direction === "up") {
-        price += 50000000;
-        if (price > 1800000000) price = 1800000000;  // 상한선 고정
-    } else if (direction === "down") {
-        price -= 50000000;
-        if (price < 0) price = 0;
-    }
-
-    if (type === "min") {
-        minPrice = price;
-        document.getElementById("minPriceLabel").innerText = formatKoreanPrice(minPrice);
-    } else {
-        maxPrice = price;
-        document.getElementById("maxPriceLabel").innerText = formatKoreanPrice(maxPrice);
-    }
-
-    // 최소값이 최대값보다 크면 초기화
-    if (minPrice !== null && maxPrice !== null && minPrice > maxPrice) {
-        alert("최소 금액이 최대 금액보다 클 수 없습니다.");
-        minPrice = null;
-        maxPrice = null;
-        document.getElementById("minPriceLabel").innerText = "최소";
-        document.getElementById("maxPriceLabel").innerText = "최대";
-        document.querySelectorAll('.price-button').forEach(b => {
-            b.classList.remove("selected-min", "selected-max");
-        });
-        priceButtonsClicked = [];
-    }
+// CSRF 토큰 가져오기
+function getCSRFToken() {
+    return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 }
-
-
 </script>
 {% endblock %}

@@ -249,7 +249,13 @@ def bidform(request):
                 # 감정평가액 (기준 가격)
                 valuation_amount = 0
                 if item_details.valuation_amount:
-                    valuation_amount = int(item_details.valuation_amount.replace(',', '')) if isinstance(item_details.valuation_amount, str) else item_details.valuation_amount
+                    try:
+                        if isinstance(item_details.valuation_amount, str):
+                            valuation_amount = int(item_details.valuation_amount.replace(',', ''))
+                        else:
+                            valuation_amount = int(item_details.valuation_amount)
+                    except (ValueError, TypeError):
+                        valuation_amount = 0
                 
                 # 현재 진행중인 매각기일의 최저매각가격 찾기
                 current_min_price = valuation_amount  # 기본값
@@ -495,8 +501,6 @@ def bid_history(request):
 def favlist(request):
     return render(request, 'main/pages/favlist.html') #수정 (favorites -> favlist)
 
-def csearch(request):
-    return render(request, 'main/pages/csearch.html')
 
 def join(request):
     return render(request, 'account/signup.html')
@@ -661,3 +665,137 @@ def fsearch(request):
             })
     
     return render(request, 'main/pages/fsearch.html', context)
+
+
+def csearch(request):
+    """조건검색 페이지 및 필터링 처리"""
+    from django.core.paginator import Paginator
+    from django.db.models import Q
+    import logging
+    
+    logger = logging.getLogger(__name__)
+    
+    # 기본 쿼리셋
+    auction_cases = AuctionCase.objects.select_related().prefetch_related('auctionitem_set').all()
+    
+    # 필터 파라미터 받기 (AJAX 요청에서도 제대로 받을 수 있도록)
+    item_types = request.GET.getlist('item_types')  # 복수 선택 가능
+    min_price = request.GET.get('min_price')
+    max_price = request.GET.get('max_price')
+    failure_count = request.GET.get('failure_count')
+    
+    # 디버깅용 로그
+    print(f"Received filters - item_types: {item_types}, min_price: {min_price}, max_price: {max_price}, failure_count: {failure_count}")
+    print(f"Request method: {request.method}")
+    print(f"Request headers: {dict(request.headers)}")
+    print(f"Query string: {request.GET}")
+    
+    # 필터 적용 여부 확인
+    filters_applied = bool(item_types or min_price or max_price or failure_count)
+    
+    # 초기 매물 수
+    initial_count = auction_cases.count()
+    print(f"Initial auction cases count: {initial_count}")
+    
+    # 물건 종류 필터
+    if item_types:
+        # AuctionItem의 property_type 필드로 필터링
+        type_query = Q()
+        for item_type in item_types:
+            type_query |= Q(auctionitem__property_type__icontains=item_type)
+        auction_cases = auction_cases.filter(type_query).distinct()
+        print(f"After item type filter: {auction_cases.count()}")
+    
+    # 가격 필터 (감정평가액 기준) - Python에서 직접 필터링
+    if min_price or max_price:
+        try:
+            min_price_val = int(min_price) if min_price else 0
+            max_price_val = int(max_price) if max_price else float('inf')
+            
+            print(f"Applying price filter: {min_price_val} <= price <= {max_price_val}")
+            
+            # 18억 이상인 경우 상한선 제거
+            if max_price_val >= 1800000000:
+                max_price_val = float('inf')
+            
+            filtered_cases = []
+            for case in auction_cases:
+                case_items = case.auctionitem_set.all()
+                for item in case_items:
+                    if item.valuation_amount:
+                        try:
+                            # 문자열에서 쉼표 제거 후 정수 변환
+                            if isinstance(item.valuation_amount, str):
+                                amount = int(item.valuation_amount.replace(',', ''))
+                            else:
+                                amount = int(item.valuation_amount)
+                            
+                            # 범위 내에 있으면 케이스 추가
+                            if min_price_val <= amount <= max_price_val:
+                                if case not in filtered_cases:
+                                    filtered_cases.append(case)
+                                break  # 한 아이템이라도 조건에 맞으면 케이스 포함
+                        except (ValueError, TypeError):
+                            continue
+            
+            # 필터링된 케이스들의 ID로 쿼리셋 재구성
+            case_ids = [case.case_number for case in filtered_cases]
+            auction_cases = AuctionCase.objects.filter(case_number__in=case_ids).select_related().prefetch_related('auctionitem_set')
+            
+            print(f"After price filter: {auction_cases.count()}")
+            
+        except (ValueError, TypeError) as e:
+            print(f"Error in price filtering: {e}")
+    
+    # 유찰횟수 필터
+    if failure_count:
+        print(f"Applying failure_count filter: {failure_count}")
+        if failure_count == "최초경매":
+            auction_cases = auction_cases.filter(auctionitem__auction_failures=0)
+        elif failure_count == "유찰 1회":
+            auction_cases = auction_cases.filter(auctionitem__auction_failures=1)
+        elif failure_count == "유찰 2회":
+            auction_cases = auction_cases.filter(auctionitem__auction_failures=2)
+        elif failure_count == "3회 이상":
+            auction_cases = auction_cases.filter(auctionitem__auction_failures__gte=3)
+        print(f"After failure_count filter: {auction_cases.count()}")
+    
+    # 중복 제거 및 정렬 - filing_date로 정렬 (최신순)
+    auction_cases = auction_cases.distinct().order_by('-filing_date', '-case_number')
+    
+    final_count = auction_cases.count()
+    print(f"Final count after distinct and ordering: {final_count}")
+    
+    # 실제 데이터 샘플 확인 (처음 5개)
+    if final_count > 0:
+        sample_cases = auction_cases[:5]
+        for case in sample_cases:
+            items = case.auctionitem_set.all()
+            for item in items:
+                print(f"Case: {case.case_number}, Valuation: {item.valuation_amount}")
+    
+    # 페이징 처리
+    paginator = Paginator(auction_cases, 20)  # 페이지당 20개
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        # 올바른 변수명으로 전달
+        'search_results': page_obj.object_list,  # 실제 객체 리스트
+        'page_obj': page_obj,  # 페이지 객체
+        'total_count': paginator.count,  # 전체 개수
+        'current_page': page_obj.number,
+        'total_pages': paginator.num_pages,
+        'has_previous': page_obj.has_previous(),
+        'has_next': page_obj.has_next(),
+        'filters_applied': filters_applied,
+        'search_performed': True,
+        'filter_params': {
+            'item_types': ', '.join(item_types) if item_types else None,
+            'min_price': min_price,
+            'max_price': max_price,
+            'failure_count': failure_count,
+        }
+    }
+    
+    return render(request, 'main/pages/csearch.html', context)
