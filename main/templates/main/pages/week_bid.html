@@ -8,8 +8,8 @@
 {% endblock %}
 
 {% block sidebar_menu %}
-<li><a href="#">오늘의경매</a></li>
-<li class="active"><a href="#">주간경매공고</a></li>
+<li><a href="{% url 'today_bid' %}">오늘의경매</a></li>
+<li class="active"><a href="{% url 'week_bid' %}">주간경매공고</a></li>
 <li><a href="{% url 'fsearch' %}">빠른검색</a></li>
 <li><a href="{% url 'csearch' %}">조건검색</a></li>
 {% endblock %}
@@ -32,6 +32,34 @@
         <i class="fas fa-heart heart-icon"></i>
       </div>
       <div class="fav-top">
+        {# 물건 종류 표시 - badge #}
+        {% if item.building_type in "아파트,연립주택,오피스텔,단독주택,다세대주택,주상복합,다가구주택,주거기타" %}
+          <span class="badge property-type apt">{{ item.building_type }}</span>
+        {% elif item.building_type in "근링생활시설,주/상용건물,판매시설,위락시설,상가기타" %}
+          <span class="badge property-type store">{{ item.building_type }}</span>
+        {% elif item.building_type in "업무시설,종교시설,공장,창고시설,숙박시설,건물기타" %}
+          <span class="badge property-type etc-building">{{ item.building_type }}</span>
+        {% elif item.building_type in "대지,임야,답,잡종지,전" %}
+          <span class="badge property-type land">{{ item.building_type }}</span>
+        {% else %}
+          <span class="badge property-type etc-land">정보없음</span>
+        {% endif %}
+      
+        {# 사건번호 표시 - 링크 형태로 #}
+        <span class="address">
+          <a href="{% url 'tender_detail' case_number=item.case_number.case_number %}" style="text-decoration: none; color: inherit;">
+            {{ item.case_number.case_number }}
+          </a>
+        </span>
+      
+        {# 법원 이름 표시 #}
+        <span style="font-size: 12px; color: #666;">
+          {{ item.case_number.court_name }}
+        </span>
+      </div>
+      
+      <!--
+      <div class="fav-top">
         {% if item.building_type in "아파트,연립주택,오피스텔,단독주택,다세대주택,주상부합,다가구주택,주거기타" %}
           <span class="badge property-type apt">{{ item.building_type }}</span>
         {% elif item.building_type in "근링생활시설,주/상용건물,판매시설,위락시설,상가기타" %}
@@ -45,11 +73,28 @@
         {% endif %}
         <span class="address">{{ item.address }}</span>
         {% if item.is_new %}<span class="new-label">NEW</span>{% endif %}
+      </div>-->
+      <div class="fav-price">
+        {% if item.valuation_amount %}
+          {{ item.valuation_amount }}원
+        {% else %}
+          정보없음
+        {% endif %}
       </div>
-      <div class="fav-price">6억 5000만원</div>
       <div class="fav-bottom">
-        <span>첫 경매 · 2025-06-12(수) · D-13</span><br>
-        <span>서울특별시 서초구 반포대로 222, 101동 102호</span>
+        <span>
+          {% if item.auction_failures == 0 %}
+            첫 경매
+          {% else %}
+            유찰 {{ item.auction_failures }}회
+          {% endif %}
+          {% if item.auction_date %}
+            · {{ item.auction_date|date:"Y-m-d(D)" }}
+          {% endif %}
+        </span><br>
+        <span>
+          {{ item.item_note|default:"주소 정보 없음" }}
+        </span>
       </div>
     </div>
   </div>
@@ -75,6 +120,7 @@
   </div>
 
   <!-- 예시 카드들 -->
+   <!--
   <div class="fav-card" data-item-id="demo1">
     <div class="fav-heart" onclick="removeFavorite('demo1', this)">
         <i class="fas fa-heart heart-icon"></i>
@@ -137,7 +183,7 @@
         <span>인천 남동구 백범로 112</span>
       </div>
     </div>
-  </div>
+  </div> -->
 </div>
 
 <script>

@@ -24,8 +24,8 @@
           <li class="menu-item">
             <a href="#">경매검색</a>
             <ul class="submenu">
-              <li><a href="#">오늘의경매</a></li>
-              <li><a href="#">주간경매공고</a></li>
+              <li><a href="{% url 'today_bid' %}">오늘의경매</a></li>
+              <li><a href="{% url 'week_bid' %}">주간경매공고</a></li>
               <li><a href="{% url 'fsearch' %}">빠른검색</a></li>
               <li><a href="{% url 'csearch' %}">조건검색</a></li>
             </ul>
