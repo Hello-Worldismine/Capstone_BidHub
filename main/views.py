@@ -12,6 +12,9 @@ from django.conf import settings # Import settings
 from app.models import AuctionItem, AuctionCase, ClaimDistribution, PropertyListing, AuctionParty, BuildingDetail
 from django.utils import timezone # Add timezone import
 from django.db.models import Q, Prefetch
+from allauth.account.forms import LoginForm
+from django.template.response import TemplateResponse
+from accounts.models import User
 
 def index(request):
     # Fetch auction items
@@ -501,17 +504,38 @@ def bid_history(request):
 def favlist(request):
     return render(request, 'main/pages/favlist.html') #수정 (favorites -> favlist)
 
-
+#로그인관련view
 def join(request):
     return render(request, 'account/signup.html')
 def login(request):
-    return render(request, 'account/login.html')
+    form = LoginForm()
+    return TemplateResponse(request, 'account/login.html', {'form': form})
 
 def update_wallet(request):
     if request.method == 'POST':
         # Handle wallet update logic
         return redirect('mypage')
     return redirect('mypage')
+
+#아이디찾기 관련 views
+def find_id(request):
+    found_username = None
+    error_message = None
+
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        phone = request.POST.get('phone', '').strip()
+
+        try:
+            user = User.objects.get(name=name, phone=phone)
+            found_username = user.username  # 또는 user.email 도 가능
+        except User.DoesNotExist:
+            error_message = '입력하신 정보와 일치하는 계정을 찾을 수 없습니다.'
+
+    return render(request, 'account/find_id.html', {
+        'found_username': found_username,
+        'error_message': error_message
+    })
 
 def search_cases_api(request):
     """사건 검색 API (AJAX용) - 법원 필수, 연도/번호 선택"""

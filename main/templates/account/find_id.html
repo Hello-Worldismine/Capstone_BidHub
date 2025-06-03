@@ -1,0 +1,35 @@
+{% extends "account/base.html" %}
+{% block content %}
+<div class="login-container">
+  <div class="login-box">
+    <h2>아이디 찾기</h2>
+    <form method="POST">
+      {% csrf_token %}
+      <div class="form-group">
+        <label for="name">이름</label>
+        <input type="text" id="name" name="name" required>
+      </div>
+      <div class="form-group">
+        <label for="phone">전화번호</label>
+        <input type="text" id="phone" name="phone" placeholder="010-1234-5678" required>
+      </div>
+      <button type="submit" class="btn-primary">아이디 찾기</button>
+    </form>
+
+    {% if found_username %}
+      <p style="margin-top:15px; color:green;">
+        회원님의 아이디는 <strong>{{ found_username }}</strong> 입니다.
+      </p>
+    {% elif error_message %}
+      <p style="margin-top:15px; color:red;">
+        {{ error_message }}
+      </p>
+    {% endif %}
+
+    <div class="extra-links" style="margin-top: 20px;">
+      <a href="{% url 'account_login' %}">로그인하기</a> |
+      <a href="{% url 'account_reset_password' %}">비밀번호 찾기</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
