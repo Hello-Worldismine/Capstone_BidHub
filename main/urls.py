@@ -27,5 +27,8 @@ urlpatterns = [
     # API 엔드포인트들
     path('api/get-favorite-properties/', views.get_favorite_properties, name='get_favorite_properties'),
     path('api/search-cases/', views.search_cases_api, name='search_cases_api'),
+
+    #아이디 찾기
+    path('find-id/', views.find_id, name='find_id'),
 ]
 
