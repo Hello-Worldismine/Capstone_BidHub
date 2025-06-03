@@ -19,6 +19,11 @@ from django.template.response import TemplateResponse
 from django.contrib.auth import get_user_model
 User = get_user_model()
 
+#검색 관련 추가
+from datetime import date, timedelta
+from .models import AuctionItem  # 실제 모델명에 맞게 수정하세요
+from django.core.paginator import Paginator
+
 def index(request):
     # Fetch auction items
     # You might want to add filtering here, e.g., by date or status
@@ -539,6 +544,39 @@ def find_id(request):
         'found_username': found_username,
         'error_message': error_message
     })
+
+
+#오늘의경매 관련 Views
+def today_bid(request):
+    today = date.today()
+    items = AuctionItem.objects.filter(auction_date__date=today).order_by('auction_date')
+
+    paginator = Paginator(items, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'favorite_list': page_obj,
+        'page_obj': page_obj,
+    }
+    return render(request, 'main/pages/today_bid.html', context)
+
+#주간경매공고 관련 views
+def week_bid(request):
+    today = date.today()
+    end_date = today + timedelta(days=7)
+    items = AuctionItem.objects.filter(auction_date__date__range=(today, end_date)).order_by('auction_date')
+
+    paginator = Paginator(items, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'favorite_list': page_obj,
+        'page_obj': page_obj,
+    }
+    return render(request, 'main/pages/week_bid.html', context)
+
 
 def search_cases_api(request):
     """사건 검색 API (AJAX용) - 법원 필수, 연도/번호 선택"""

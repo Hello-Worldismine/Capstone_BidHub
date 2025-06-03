@@ -30,5 +30,9 @@ urlpatterns = [
 
     #아이디 찾기
     path('find-id/', views.find_id, name='find_id'),
+
+    #오늘의 경매, 주간경매공고 페이지
+    path('today-bid/', views.today_bid, name='today_bid'),
+    path('week-bid/', views.week_bid, name='week_bid'),
 ]
 
