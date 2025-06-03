@@ -14,7 +14,10 @@ from django.utils import timezone # Add timezone import
 from django.db.models import Q, Prefetch
 from allauth.account.forms import LoginForm
 from django.template.response import TemplateResponse
-from accounts.models import User
+
+#아이디 찾기 관련 추가
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 def index(request):
     # Fetch auction items
@@ -527,8 +530,8 @@ def find_id(request):
         phone = request.POST.get('phone', '').strip()
 
         try:
-            user = User.objects.get(name=name, phone=phone)
-            found_username = user.username  # 또는 user.email 도 가능
+            user = User.objects.get(username=name, phone=phone) 
+            found_username = user.username
         except User.DoesNotExist:
             error_message = '입력하신 정보와 일치하는 계정을 찾을 수 없습니다.'
 
