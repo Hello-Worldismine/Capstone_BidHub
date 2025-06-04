@@ -88,7 +88,8 @@ def get_nonce(user_address, action_index):
     return contract.functions.getNonce(user_address, action_index).call()
 
 def view_deposits(user_address):
-    return contract.functions.viewMyDeposits(user_address).call()
+    checksum_address = Web3.to_checksum_address(user_address)
+    return contract.functions.viewMyDeposits(checksum_address).call()
 
 def get_balance():
     return contract.functions.getBalance().call()
