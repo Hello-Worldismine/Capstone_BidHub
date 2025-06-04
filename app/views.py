@@ -310,13 +310,31 @@ def decode_and_input_decrypt_api(request):
 
 def view_deposits_api(request):
     if request.method == 'GET':
-        user = request.GET.get('user')
-        result = view_deposits(user)
-        return JsonResponse({"deposits": result})
-
-
+        user = request.GET.get('user')  # 지갑 주소
+        result_wei = view_deposits(user)  # 이더 입금량(wei 단위)
+        krw = int(result_wei) * 10000000000 / 1e18  # 1 ETH = 100억 원
+        return JsonResponse({
+            "deposits_wei": result_wei,
+            "deposits_krw": round(krw)
+        })
 
 def get_balance_api(request):
     if request.method == 'GET':
         result = get_balance()
         return JsonResponse({"balance_wei": result})
+    
+def escrow_withdraw_api(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            trade_num = int(data.get("trade_num"))
+            result = escrow_refund(trade_num)
+            return JsonResponse(result)
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=400)
+
+    return JsonResponse({"error": "Invalid request"}, status=405)
+
+#임시 더미
+def dummy_view(request):
+    return JsonResponse({"message": "미구현된 API입니다."})
