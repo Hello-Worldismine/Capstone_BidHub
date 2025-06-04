@@ -12,7 +12,7 @@
   {% endblock %}
 </head>
 
-<body>
+<body data-wallet="{{ user.profile.wallet_address|default:'' }}">
   <!-- Header -->
   <header class="header">
     <nav class="navbar">
@@ -67,7 +67,9 @@
       <div class="user-actions">
         {% if user.is_authenticated %}
           <span>{{ user.username }}님</span>
-          <span class="wallet"><i class="fa-solid fa-won-sign"></i> 예치금 {{ user.profile.balance|default:"0" }}원</span>
+          <span class="wallet" id="wallet-display">
+            <i class="fa-solid fa-won-sign"></i> 예치금 조회 중...
+          </span>
           <a href="{% url 'mypage' %}">마이페이지</a>
           <form method="POST" action="{% url 'account_logout' %}" style="display:inline;">
             {% csrf_token %}
@@ -137,8 +139,8 @@
   </footer>
 
   <script src="{% static 'js/main.js' %}"></script>
-  <script src="{% static 'js/charge.js' %}"></script>
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <script src="{% static 'js/pages/charge_2.js' %}"></script>
   {% block extra_js %}{% endblock %}
 </body>
 </html>

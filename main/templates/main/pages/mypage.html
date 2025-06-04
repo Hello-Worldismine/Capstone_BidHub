@@ -9,7 +9,7 @@
       <ul class="side-menu">
         <li><a href="{% url 'bid_history' %}">나의입찰내역</a></li>
         <li><a href="{% url 'refund' %}">보증금반환현황조회</a></li>
-        <li><a href="{% url 'favorites' %}">즐겨찾기목록</a></li>
+        <li><a href="{% url 'favlist' %}">즐겨찾기목록</a></li>
         <li><a href="{% url 'auto_bid' %}">자동입찰설정</a></li>
         <li class="active"><a href="{% url 'mypage' %}">마이페이지</a></li>
       </ul>
@@ -31,7 +31,7 @@
         <h4>Metamask 지갑 주소</h4>
         <form method="post" action="{% url 'update_wallet' %}">
           {% csrf_token %}
-          <input type="text" name="wallet_address" value="{{ profile.wallet_address }}" class="input-field" placeholder="0x1234abcd5678fgh..." />
+          <input type="text" id="walletInput" name="wallet_address" class="input-field" placeholder="0x1234abcd5678fgh..." />
           <button class="btn-primary" type="submit" style="margin-top: 10px;">저장</button>
         </form>
       </div>
@@ -64,16 +64,36 @@
 </main>
 
 <script>
+  // Metamask 지갑 주소 자동입력
+  window.addEventListener('DOMContentLoaded', async () => {
+    if (typeof window.ethereum !== 'undefined') {
+      try {
+        let accounts = await window.ethereum.request({ method: 'eth_accounts' });
+        if (accounts.length === 0) {
+          // 사용자가 연결을 아직 허용하지 않은 경우
+          await window.ethereum.request({ method: 'eth_requestAccounts' });
+          accounts = await window.ethereum.request({ method: 'eth_accounts' });
+        }
+        if (accounts.length > 0) {
+          document.getElementById('walletInput').value = accounts[0];
+        }
+      } catch (err) {
+        console.error("Metamask 주소 자동 입력 실패:", err);
+      }
+    } else {
+      console.warn("Metamask가 설치되어 있지 않습니다.");
+    }
+  });
+
+  // 기본 정보 수정 기능
   const editBtn = document.getElementById('editBtn');
   let isEditing = false;
-
   const fields = ['name', 'id', 'phone', 'addr'];
 
   editBtn.addEventListener('click', () => {
     fields.forEach(field => {
       const input = document.getElementById(field + 'Input');
       const view = document.getElementById(field + 'View');
-
       if (!isEditing) {
         input.style.display = 'block';
         view.style.display = 'none';
@@ -83,7 +103,6 @@
         view.style.display = 'block';
       }
     });
-
     editBtn.textContent = isEditing ? '정보 수정' : '확인';
     isEditing = !isEditing;
   });
