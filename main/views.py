@@ -519,12 +519,14 @@ def login(request):
     form = LoginForm()
     return TemplateResponse(request, 'account/login.html', {'form': form})
 
+
 def update_wallet(request):
     if request.method == 'POST':
-        # Handle wallet update logic
-        return redirect('mypage')
-    return redirect('mypage')
-
+        wallet = request.POST.get('wallet_address', '')
+        profile = request.user.profile
+        profile.wallet_address = wallet
+        profile.save()
+    return redirect('mypage')  # 저장 후 마이페이지로 리디렉션
 #아이디찾기 관련 views
 def find_id(request):
     found_username = None
