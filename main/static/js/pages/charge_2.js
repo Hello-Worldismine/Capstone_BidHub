@@ -1,5 +1,5 @@
 // ✅ 필요한 상수들 먼저 정의
-const contractAddress = "0xb06D2548C61486c1BF1f216d36984A7b253576C8";
+const contractAddress = "0x2cA151157c7D5e99e48f043733B1Ea81e9126c94";
 const contractABI = [
   "function EscrowDeposit(uint256 amount) external payable",
   "function viewMyDeposits() external view returns (uint256)",
@@ -29,6 +29,7 @@ async function depositETH(event) {
 
     const provider = new ethers.providers.Web3Provider(window.ethereum);
     const signer = provider.getSigner();
+    const userAddress = await signer.getAddress();
     const contract = new ethers.Contract(contractAddress, contractABI, signer);
 
     const KRW_PER_ETH = 10000000000; // 1 ETH = 100억 원
@@ -53,6 +54,19 @@ async function depositETH(event) {
     await tx.wait();
     clearTimeout(timeout);
     status.innerText = `✅ 입금 완료! Tx Hash: ${tx.hash}`;
+    setTimeout(async () => {
+      try {
+        const updated = await fetch(`/api/view_deposits/?user=${await signer.getAddress()}`);
+        const updatedData = await updated.json();
+        const updatedKrw = Number(updatedData.deposits_krw).toLocaleString();
+        document.getElementById("wallet-display").innerHTML =
+        `<i class="fa-solid fa-won-sign"></i> 예치금 ${updatedKrw}원`;
+      } catch (fetchErr) {
+        console.error("예치금 업데이트 실패", fetchErr);
+      }
+    }, 1000);
+
+
   } catch (err) {
     console.error(err);
     let errorMsg = "❌ 트랜잭션 실패";
@@ -88,4 +102,26 @@ document.addEventListener("DOMContentLoaded", async () => {
   } catch (err) {
     console.error("예치금 조회 실패", err);
   }
+});
+
+async function refreshWalletBalance() {
+  const userAddress = document.body.dataset.wallet;
+  if (!userAddress) return;
+
+  try {
+    const res = await fetch(`/api/view_deposits/?user=${userAddress}`);
+    const data = await res.json();
+    const krw = Number(data.deposits_krw).toLocaleString();
+    document.getElementById("wallet-display").innerHTML =
+      `<i class="fa-solid fa-won-sign"></i> 예치금 ${krw}원`;
+  } catch (err) {
+    console.error("예치금 조회 실패", err);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+  await refreshWalletBalance();
+
+  // 🔁 주기적 자동 갱신 (10초 간격)
+  setInterval(refreshWalletBalance, 10000);
 });

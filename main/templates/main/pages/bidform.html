@@ -4,6 +4,7 @@
 {% block extra_css %}
 {{ block.super }}
 <link rel="stylesheet" href="{% static 'css/pages/bidform.css' %}">
+<script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
 {% endblock %}
 
 {% block sidebar_menu %}
@@ -16,7 +17,7 @@
 <br>
 <hr style="width: 1000px; margin: 0;">
 
-<form class="bidform-section" id="bidForm" method="POST" action="{% url 'bid_submit' %}">
+<form class="bidform-section" id="bidForm">
   {% csrf_token %}
   <h4 class="section-title">기본 정보 <span style="font-size: 16px;">(<a href="{% url 'mypage' %}">마이페이지</a>에서 수정 가능)</span>
   </h4>
@@ -151,213 +152,11 @@
 </form>
 
 <script>
-  // 페이지 로드 시 케이스 정보가 있다면 법원 정보 자동 설정
-  document.addEventListener('DOMContentLoaded', function() {
-    {% if case_info %}
-    // 법원 정보 설정
-    const courtName = "{{ case_info.court_name|default:'' }}";
-    if (courtName) {
-      // 지역 먼저 설정
-      if (courtName.includes("서울")) {
-        document.getElementById('region').value = 'seoul';
-        updateCourtOptions('seoul');
-      } else if (courtName.includes("수원")) {
-        document.getElementById('region').value = 'gyeonggi';
-        updateCourtOptions('gyeonggi');
-      }
-      
-      // 법원 설정
-      setTimeout(function() {
-        const courtSelect = document.getElementById('court');
-        for (let option of courtSelect.options) {
-          if (option.value === courtName || option.textContent === courtName) {
-            option.selected = true;
-            break;
-          }
-        }
-      }, 100);
-    }
-    
-    // 보증금 자동 계산된 경우 readonly 스타일 적용
-    const depositField = document.getElementById('deposit');
-    if (depositField.value) {
-      depositField.style.backgroundColor = '#f8f9fa';
-      depositField.readOnly = true;
-    }
-    {% endif %}
-  });
-
-  // 사건번호 검색 기능
-  function searchCase() {
-    const year = document.getElementById('year-input').value;
-    const sequence = document.getElementById('case-sequence').value;
-    
-    if (!year || !sequence) {
-      alert('연도와 사건번호를 모두 입력해주세요.');
-      return;
-    }
-    
-    const caseNumber = year + '타경' + sequence;
-    const currentUrl = new URL(window.location.href);
-    currentUrl.searchParams.set('case_number', caseNumber);
-    
-    // 페이지 새로고침으로 검색 결과 표시
-    window.location.href = currentUrl.toString();
-  }
-
-  // Enter 키로 검색
-  document.getElementById('year-input').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      searchCase();
-    }
-  });
-  
-  document.getElementById('case-sequence').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      searchCase();
-    }
-  });
-
-  const courtSelect = document.getElementById("court");
-  const regionSelect = document.getElementById("region");
-
-  const courtOptions = {
-    all: [
-      "서울중앙지방법원",
-      "서울동부지방법원",
-      "서울남부지방법원",
-      "서울서부지방법원",
-      "수원지방법원"
-    ],
-    seoul: [
-      "서울중앙지방법원",
-      "서울동부지방법원",
-      "서울남부지방법원",
-      "서울서부지방법원"
-    ],
-    gyeonggi: [
-      "수원지방법원"
-    ]
-  };
-
-  function updateCourtOptions(region) {
-    courtSelect.innerHTML = ""; // 기존 옵션 제거
-
-    courtOptions[region].forEach(court => {
-      const option = document.createElement("option");
-      option.value = court;
-      option.textContent = court;
-      courtSelect.appendChild(option);
-    });
-  }
-
-  // 초기 로드 시 전체 법원 표시
-  updateCourtOptions("all");
-
-  // 시/도 변경 시 법원 목록 갱신
-  regionSelect.addEventListener("change", function () {
-    const selectedRegion = this.value;
-    updateCourtOptions(selectedRegion);
-  });
-
-  // 입찰가 확인 기능
-  document.getElementById('bidAmount1').addEventListener('input', function() {
-    const bidAmount2 = document.getElementById('bidAmount2');
-    bidAmount2.value = ''; // 입찰가가 변경되면 확인란 초기화
-  });
-
-  // 입찰가 일치 확인
-  document.getElementById('bidAmount2').addEventListener('input', function() {
-    const bidAmount1 = document.getElementById('bidAmount1').value;
-    const bidAmount2 = this.value;
-    
-    if (bidAmount1 && bidAmount2 && bidAmount1 !== bidAmount2) {
-      this.style.borderColor = '#e74c3c';
-    } else {
-      this.style.borderColor = '';
-    }
-  });
-
-  // 비밀번호 확인 기능
-  document.getElementById('password2').addEventListener('input', function() {
-    const password1 = document.getElementById('password1').value;
-    const password2 = this.value;
-    
-    if (password1 && password2 && password1 !== password2) {
-      this.style.borderColor = '#e74c3c';
-    } else {
-      this.style.borderColor = '';
-    }
-  });
-
-  // 폼 제출 시 유효성 검사
-  document.getElementById('bidForm').addEventListener('submit', function(e) {
-    const bidAmount1 = document.getElementById('bidAmount1').value;
-    const bidAmount2 = document.getElementById('bidAmount2').value;
-    const password1 = document.getElementById('password1').value;
-    const password2 = document.getElementById('password2').value;
-    
-    if (bidAmount1 !== bidAmount2) {
-      alert('입찰가가 일치하지 않습니다.');
-      e.preventDefault();
-      return;
-    }
-    
-    if (password1 !== password2) {
-      alert('비밀번호가 일치하지 않습니다.');
-      e.preventDefault();
-      return;
-    }
-  });
-
-  // 케이스 정보 자동 입력 시 입찰가 필드 포커스
-  {% if case_info %}
-  document.addEventListener('DOMContentLoaded', function() {
-    // 입찰가 필드에 포커스
-    const bidAmount1 = document.getElementById('bidAmount1');
-    if (bidAmount1.value) {
-      // 값이 이미 있다면 선택 상태로
-      bidAmount1.select();
-    } else {
-      bidAmount1.focus();
-    }
-  });
-  {% endif %}
-
-  // 입찰가 필드에 쉼표 포맷팅 추가
-  function formatNumber(input) {
-    input.addEventListener('input', function() {
-        let value = this.value.replace(/[^0-9]/g, '');
-        let numValue = parseInt(value) || 0;
-        
-        // 표시용 (쉼표 포함)이 아닌 숫자값 유지
-        this.value = numValue;
-    });
-    
-    // 포커스 아웃 시 쉼표 포맷팅 표시 (선택사항)
-    input.addEventListener('blur', function() {
-        if (this.value) {
-            let numValue = parseInt(this.value) || 0;
-            // 일시적으로 쉼표 포맷 표시
-            this.setAttribute('data-formatted', numValue.toLocaleString());
-        }
-    });
-  }
-  
-  // 보증금과 입찰가 필드에 포맷팅 적용
-  const depositField = document.getElementById('deposit');
-  const bidAmount1 = document.getElementById('bidAmount1');
-  const bidAmount2 = document.getElementById('bidAmount2');
-  
-  if (depositField && depositField.value) {
-      depositField.style.backgroundColor = '#f8f9fa';
-      depositField.readOnly = true;
-  }
-  
-  formatNumber(bidAmount1);
-  formatNumber(bidAmount2);
+window.BIDFORM_CONTEXT = {
+    csrfToken: "{{ csrf_token }}",
+    bidder: "{{ user.profile.wallet_address }}",
+    tradeNum: "{{ case_info.case_number|default:'0'|cut:'타경' }}"
+};
 </script>
-
+<script src="{% static 'js/pages/bidform.js' %}"></script>
 {% endblock %}

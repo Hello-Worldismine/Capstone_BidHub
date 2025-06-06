@@ -7,7 +7,6 @@ urlpatterns = [
     path('properties/<int:item_id>/upload-image/', views.upload_property_image, name='upload_property_image'),
     path('properties/<int:item_id>/upload-images/', views.bulk_upload_images, name='bulk_upload_images'),
     path('api/refund/', views.dummy_view, name='refund'),
-    path('encrypt_and_put_cryptogram/', views.encrypt_and_put_cryptogram_api, name='encrypt_and_put'),
     path('pay_for_award/', views.pay_for_award_api),
     path('mark_additional_bid/', views.mark_additional_bid_api),
     path('withdraw/', views.withdraw_api),
@@ -18,4 +17,6 @@ urlpatterns = [
     path('view_deposits/', views.view_deposits_api),
     path('get_balance/', views.get_balance_api),
     path('escrow_withdraw/', views.escrow_withdraw_api),
+    path('put_cryptogram/', views.put_cryptogram_api),
+    path('encrypt_bid/', views.encrypt_bid_api),
 ]
