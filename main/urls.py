@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from . import views
 
 urlpatterns = [
@@ -34,5 +34,8 @@ urlpatterns = [
     #오늘의 경매, 주간경매공고 페이지
     path('today-bid/', views.today_bid, name='today_bid'),
     path('week-bid/', views.week_bid, name='week_bid'),
+    
+    #입찰
+    path("api/", include("app.urls"))
 ]
 
