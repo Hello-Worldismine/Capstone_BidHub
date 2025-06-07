@@ -325,3 +325,11 @@ class PropertyDocument(models.Model):
     class Meta:
         managed = True
         db_table = 'property_document'
+
+class BidLog(models.Model):
+    trade_num = models.BigIntegerField()
+    bidder_address = models.CharField(max_length=42)
+    bid_amount = models.BigIntegerField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ('trade_num', 'bidder_address')

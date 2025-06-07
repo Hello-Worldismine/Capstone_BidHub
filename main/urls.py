@@ -1,5 +1,6 @@
 from django.urls import path, include
 from . import views
+from app.views import load_bid_history
 
 urlpatterns = [
     # 기존 페이지들

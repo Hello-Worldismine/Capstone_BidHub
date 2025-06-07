@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',  # allauth를 위해 필요
+    'django_extensions',
     
     # Third-party apps (allauth를 accounts보다 먼저)
     'allauth',
@@ -53,7 +54,7 @@ INSTALLED_APPS = [
     'accounts',  # Custom user model app
     'auth_api',
     'main',
-    'app',
+    'app.apps.AuctionAppConfig',
 ]
 
 AUTH_USER_MODEL = 'accounts.User'
@@ -225,3 +226,4 @@ SOCIALACCOUNT_PROVIDERS = {
 ACCOUNT_FORMS = {
     'signup': 'main.forms.CustomSignupForm',
 }
+

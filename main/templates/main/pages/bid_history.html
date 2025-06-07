@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block sidebar_menu %}
-<li class="active"><a href="{% url 'bid_history' %}">나의입찰내역</a></li>
+<li class="active"><a href="/api/load_bid_history/">나의입찰내역</a>
 <li><a href="#">관심목록</a></li>
 <li><a href="#">자동입찰설정</a></li>
 <li><a href="#">마이페이지</a></li>
@@ -26,8 +26,8 @@
   </div>
 </div>
 
-  <div class="refund-container">
-    <div class="refund-box">
+<div class="refund-container">
+  <div class="refund-box">
     <div class="refund-row header">
       <div>사건번호</div>
       <div>입찰금액</div>
@@ -36,21 +36,27 @@
       <div>반환일자</div>
     </div>
 
+    {% for row in bid_rows %}
     <div class="refund-row">
-      <div><a href="#">2024타경12345</a></div>
-      <div>510,000,000원</div>
-      <div>51,000,000원</div>
-      <div><span class="status pending">처리중</span></div>
-      <div>-</div>
+      <div><a href="#">{{ row.case_number }}</a></div>
+      <div>{{ row.bid_amount }}</div>
+      <div>{{ row.security }}</div>
+      <div>
+        {% if row.refund_status == "완료" %}
+          <span class="status done">완료</span>
+        {% else %}
+          <span class="status pending">처리중</span>
+        {% endif %}
+      </div>
+      <div>{{ row.refund_date }}</div>
     </div>
+    {% empty %}
+    <div class="refund-row">
+      <div colspan="5">입찰 내역이 없습니다.</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
 
-    <div class="refund-row">
-      <div><a href="#">2024타경67890</a></div>
-      <div>620,000,000원</div>
-      <div>62,000,000원</div>
-      <div><span class="status done">완료</span></div>
-      <div>2025-04-18</div>
-    </div>
-  </div>
-  </div>
+
 {% endblock %}

@@ -14,6 +14,9 @@ from django.utils import timezone # Add timezone import
 from django.db.models import Q, Prefetch
 from allauth.account.forms import LoginForm
 from django.template.response import TemplateResponse
+from app.models import BidLog  # 필요한 모델 import
+import requests
+from datetime import datetime
 
 #아이디 찾기 관련 추가
 from django.contrib.auth import get_user_model
@@ -23,6 +26,9 @@ User = get_user_model()
 from datetime import date, timedelta
 from .models import AuctionItem  # 실제 모델명에 맞게 수정하세요
 from django.core.paginator import Paginator
+
+
+GRAPHQL_URL = "https://api.studio.thegraph.com/query/111711/capstone/version/latest"
 
 def index(request):
     # Fetch auction items
@@ -866,3 +872,71 @@ def csearch(request):
     }
     
     return render(request, 'main/pages/csearch.html', context)
+
+
+def bid_history(request):
+    user_address = request.user.profile.wallet_address.lower()
+    
+    bid_logs = BidLog.objects.filter(bidder_address__iexact=user_address)
+    bid_rows = []
+    
+    for log in bid_logs:
+        trade_num = log.trade_num
+        bid_amount = log.bid_amount or "경매 마감 후 공개"
+
+        trade_str = str(trade_num)
+        year = trade_str[:4]
+        suffix = trade_str[4:]
+        case_number = f"{year}타경{suffix}"
+
+        graphql_query = f"""
+        {{
+          putCrypts(where: {{tradeNum: "{trade_num}", bidder: "{user_address}"}}) {{
+            security
+          }}
+          refundSecurities(where: {{tradeNum: "{trade_num}", bidder: "{user_address}"}}) {{
+            blockTimestamp
+          }}
+        }}
+        """
+        headers = {"Content-Type": "application/json"}
+        res = requests.post(GRAPHQL_URL, json={'query': graphql_query}, headers=headers)
+
+        data = res.json().get("data", {})
+        print("GraphQL Query:\n", graphql_query)
+        print("response status:", res.status_code)
+        print("response body:", res.text)
+        
+        security_data = data.get("putCrypts", [])
+        print("GraphQL Query:\n", graphql_query)
+        if security_data:
+            raw_wei = int(security_data[0]["security"])
+            eth = raw_wei / 1e18                      # float 연산
+            krw = eth * 1_000_000_000                 # 1 ETH = 10억 원
+            security = int(krw)  
+            print("원본 WEI:", raw_wei)
+            print("ETH:", eth)
+            print("KRW:", krw)
+            print("최종 security:", security)                       # 최종 정수 변환
+        else:
+            security = 0
+            print("ㄴㅇㅁ")
+      
+
+        refund_data = data.get("refundSecurities", [])
+        if refund_data:
+            refund_status = "완료"
+            refund_date = datetime.fromtimestamp(int(refund_data[0]["blockTimestamp"])).strftime("%Y-%m-%d")
+        else:
+            refund_status = "처리중"
+            refund_date = "-"
+
+        bid_rows.append({
+            "case_number": case_number,
+            "bid_amount": f"{bid_amount:,}" if isinstance(bid_amount, int) else bid_amount,
+            "security": f"{security:,}원",
+            "refund_status": refund_status,
+            "refund_date": refund_date
+        })
+
+    return render(request, "main/pages/bid_history.html", {"bid_rows": bid_rows})
