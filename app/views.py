@@ -1,14 +1,22 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .models import AuctionItem, AuctionCase
+from .models import AuctionItem, AuctionCase, BidLog
 from .serializers import AuctionItemSerializer, AuctionCaseSerializer
 from django.http import JsonResponse
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
+from django.db.models.functions import Lower
 from web3 import Web3
 from eth_account.messages import encode_defunct
 import os
 import json
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from django.http import HttpRequest
+import logging
+import requests
+logger = logging.getLogger(__name__)
+
 from blockchain.contracts import (
     put_cryptogram, input_decrypt, pay_for_award,
     mark_additional_bid, withdraw, escrow_deposit,
@@ -19,6 +27,8 @@ from blockchain.contracts import (
 from blockchain.crypto import (
     encrypt_bid_data, decrypt_aes, deserialize_decrypted_data
 )
+
+GRAPHQL_URL = "https://api.studio.thegraph.com/query/111711/capstone/version/latest"
 
 @api_view(['GET'])
 def all_cases(request):
@@ -355,6 +365,76 @@ def escrow_withdraw_api(request):
 
     return JsonResponse({"error": "Invalid request"}, status=405)
 
+
+def store_encrypted_bid(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        trade_num = int(data["trade_num"])
+        bidder = data["bidder"].lower()
+        amount = int(data["bid_amount"])
+        
+        BidLog.objects.update_or_create(
+            trade_num=trade_num,
+            bidder_address=bidder,
+            defaults={"bid_amount": amount}
+        )
+
+        return JsonResponse({"status": "success"})
+
+def load_bid_history(request):
+    user_address = request.user.profile.wallet_address.lower()
+    
+    logger.warning(f"로그인된 주소: {request.user.profile.wallet_address}")
+    logger.warning(f"소문자 주소: {user_address}")
+
+    bid_logs = BidLog.objects.filter(bidder_address__iexact=user_address)
+    logger.warning(f"조회된 BidLog 개수: {bid_logs.count()}")
+    bid_rows = []
+    for log in bid_logs:
+        trade_num = log.trade_num
+        bid_amount = log.bid_amount or "경매 마감 후 공개"
+
+        trade_str = str(trade_num)
+        year = trade_str[:4]
+        suffix = trade_str[4:]
+        case_number = f"{year}타경{suffix}"
+
+        graphql_query = f"""
+        {{
+          putCrypts(where: {{tradeNum: "{trade_num}", bidder: "{user_address}"}}) {{
+            security
+          }}
+          refundSecurities(where: {{tradeNum: "{trade_num}", bidder: "{user_address}"}}) {{
+            timestamp
+          }}
+        }}
+        """
+        res = requests.post(GRAPHQL_URL, json={'query': graphql_query})
+        data = res.json().get("data", {})
+
+        security_data = data.get("putCrypts", [])
+        security = int(security_data[0]["security"]) if security_data else 0
+
+        refund_data = data.get("refundSecurities", [])
+        if refund_data:
+            refund_status = "완료"
+            refund_date = datetime.fromtimestamp(int(refund_data[0]["timestamp"])).strftime("%Y-%m-%d")
+        else:
+            refund_status = "처리중"
+            refund_date = "-"
+
+        bid_rows.append({
+            "case_number": case_number,
+            "bid_amount": f"{bid_amount:,}" if isinstance(bid_amount, int) else bid_amount,
+            "security": f"{security:,}원",
+            "refund_status": refund_status,
+            "refund_date": refund_date
+        })
+        print(f"{log.trade_num=} {log.bid_amount=} {log.bidder_address=}")
+
+
+
+    return render(request, "main/pages/bid_history.html", {"bid_rows": bid_rows})
 #임시 더미
 def dummy_view(request):
     return JsonResponse({"message": "미구현된 API입니다."})

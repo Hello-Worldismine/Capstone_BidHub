@@ -19,4 +19,7 @@ urlpatterns = [
     path('escrow_withdraw/', views.escrow_withdraw_api),
     path('put_cryptogram/', views.put_cryptogram_api),
     path('encrypt_bid/', views.encrypt_bid_api),
+    path('store_encrypted_bid/', views.store_encrypted_bid, name='store_encrypted_bid'),
+    path("load_bid_history/", views.load_bid_history, name="load_bid_history")
+
 ]

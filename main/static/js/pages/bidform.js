@@ -155,8 +155,21 @@ document.getElementById("bidForm").addEventListener("submit", async function (e)
         });
         const result = await res.json(); 
         if (result.status === "success") {
-            alert("입찰 성공! TX Hash: " + result.tx_hash);
-            window.location.href = "/bid_history/";
+            await fetch("/api/store_encrypted_bid/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrfToken
+                },
+                body: JSON.stringify({
+                    trade_num: parseInt(tradeNum),
+                    bidder: bidder,
+                    bid_amount: parseInt(bidAmount1)  // or 암호화된 값
+                    })
+    }).then(() => {
+        alert("입찰 성공! TX Hash: " + result.tx_hash);
+        window.location.href = "/bid_history/";
+    });
         } else if (result.status === "revert") {
             alert("실패: " + result.message);  // ← 여기에 require 메시지 (예: Invalid Signature)
             } else {
