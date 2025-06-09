@@ -18,6 +18,7 @@ urlpatterns = [
     path('bid_history/', views.bid_history, name='bid_history'),
     path('favlist/', views.favlist, name='favlist'),
     path('update_wallet/', views.update_wallet, name='update_wallet'),
+    path('chat/', views.chat_view, name='chatbot'),
     
     # 빠른 검색 페이지
     path('fsearch/', views.fsearch, name='fsearch'),

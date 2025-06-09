@@ -940,3 +940,6 @@ def bid_history(request):
         })
 
     return render(request, "main/pages/bid_history.html", {"bid_rows": bid_rows})
+
+def chat_view(request):
+    return render(request, 'chatbot/chat.html') # 챗봇상담 페이지
