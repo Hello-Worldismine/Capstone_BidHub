@@ -53,6 +53,7 @@
     </p>
     
     <p class="case-title">
+      <p>서울동부지방법원</p>
       <a href="{% if document_urls.specification_url %}{{ document_urls.specification_url }}{% else %}#{% endif %}" target="_blank" rel="noopener noreferrer">
         {{ property_info.case_number|default:"사건번호" }}
       </a>
@@ -223,7 +224,7 @@
     </table>
   </div>
   {% else %}
-  <div class="auction-wrapper">
+  <div class="auction-wrapper" style="padding: 0;">
     <h2 class="section-title">목록내역</h2>
     <p style="text-align: center; padding: 20px; color: #666;">
       목록내역 데이터가 없습니다.

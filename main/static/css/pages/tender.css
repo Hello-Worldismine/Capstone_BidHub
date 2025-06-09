@@ -10,11 +10,11 @@ body {
   display: flex;
   flex-wrap: nowrap;
   flex-direction: row;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 40px;
-  max-width: 1200px;
-  margin: 40px auto;
-  padding: 40px 20px;
+  max-width: 1000px;
+  margin: 20px auto;
+  padding: 20px;
 }
 
 .left-section,
@@ -29,21 +29,22 @@ body {
 
 .right-section {
   background-color: #ffffff;
-  padding: 32px 36px;
   border-radius: 10px;
+  padding: 20px 40px;
   box-shadow: 0 6px 20px rgba(0,0,0,0.06);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  height: 570px;
   max-width: 60%;
   transition: box-shadow 0.3s ease;
+  width: 50%;
+  box-sizing: border-box;
 }
 
 .main-image-container {
   position: relative;
   width: 100%;
-  height: 458px;
+  max-width: 100%;
   border-radius: 10px;
   overflow: hidden;
   display: flex;
@@ -91,14 +92,16 @@ body {
 }
 
 .thumbnail-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
   gap: 8px;
   margin-top: 12px;
+  width: 100%;
 }
 
 .thumb {
-  width: 20%;
-  height: 100px;
+  width: 100%;            /* ✅ grid 셀 너비에 맞춤 */
+  height: 100px;           /* 필요시 고정 높이 */
   object-fit: cover;
   border-radius: 6px;
   cursor: pointer;
@@ -107,12 +110,6 @@ body {
 
 .thumb:hover {
   transform: scale(1.05);
-}
-
-.right-section {
-  width: 50%;
-  padding: 32px;
-  box-sizing: border-box;
 }
 
 h2 {
@@ -272,6 +269,7 @@ h2 {
   display: flex;
   justify-content: space-between;
   margin-top: 10px;
+  margin-bottom: 20px;
 }
 
 .actions button {
@@ -293,7 +291,7 @@ h2 {
 /* 상세정보 */
 .auction-wrapper {
   font-family: 'Pretendard', 'Segoe UI', sans-serif;
-  max-width: 1200px;
+  width: 1000px;
   margin: 40px auto;
   padding: 0 20px;
   color: #2c2c2c;
