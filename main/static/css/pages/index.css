@@ -122,13 +122,9 @@
 /* ===== 사이드바 ===== */
 .sidebar {
   position: fixed;
-  right: 20px;
   top: 200px;
-  background-color: white;
-  border: 1px solid #ddd;
+  right: 20px;
   border-radius: 12px;
-  padding: 10px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
 }
 
 .sidebar-menu {
@@ -137,6 +133,7 @@
   flex-direction: column;
   gap: 10px;
 }
+
 
 /* ===== 반응형 ===== */
 @media (max-width: 768px) {
