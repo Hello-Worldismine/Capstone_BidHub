@@ -100,8 +100,8 @@ body {
 }
 
 .thumb {
-  width: 100%;            /* ✅ grid 셀 너비에 맞춤 */
-  height: 100px;           /* 필요시 고정 높이 */
+  width: 100%;           
+  height: 100px;         
   object-fit: cover;
   border-radius: 6px;
   cursor: pointer;

@@ -38,6 +38,10 @@ urlpatterns = [
     path('week-bid/', views.week_bid, name='week_bid'),
     
     #입찰
-    path("api/", include("app.urls"))
+    path("api/", include("app.urls")),
+
+    #매각결과조회
+    path('result/', views.result, name='result'),
+    path('region_result/', views.region_result, name='region_result')
 ]
 

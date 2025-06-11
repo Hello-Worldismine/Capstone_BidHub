@@ -943,3 +943,9 @@ def bid_history(request):
 
 def chat_view(request):
     return render(request, 'chatbot/chat.html') # 챗봇상담 페이지
+
+def result(request):
+    return render(request, 'main/pages/result.html')
+
+def region_result(request):
+    return render(request, 'main/pages/region_result.html')

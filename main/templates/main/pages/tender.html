@@ -19,7 +19,8 @@
     <!-- 메인 이미지 + 좌우 화살표 -->
     <div class="main-image-container">
       <button class="arrow left" onclick="prevImage()">&#10094;</button>
-      <img id="mainImage" src="{% if image_paths %}{{ image_paths.0 }}{% else %}{% static 'img/ex/01.png' %}{% endif %}" alt="메인 이미지" />
+      <img id="mainImage" src="{% if image_paths %}{{ image_paths.0 }}{% else %}{% static 'img/ex/01.png' %}{% endif %}"
+        alt="메인 이미지" />
       <button class="arrow right" onclick="nextImage()">&#10095;</button>
       <div id="image-counter">1 / {{ image_paths|length|default:5 }}</div>
     </div>
@@ -27,19 +28,19 @@
     <!-- 썸네일 리스트 -->
     <div class="thumbnail-row">
       {% for image_path in image_paths %}
-        <img src="{{ image_path }}" class="thumb" onclick="setMainImage({{ forloop.counter0 }})" />
+      <img src="{{ image_path }}" class="thumb" onclick="setMainImage({{ forloop.counter0 }})" />
       {% empty %}
-        <img src="{% static 'img/ex/01.png' %}" class="thumb" onclick="setMainImage(0)" />
-        <img src="{% static 'img/ex/02.png' %}" class="thumb" onclick="setMainImage(1)" />
-        <img src="{% static 'img/ex/03.png' %}" class="thumb" onclick="setMainImage(2)" />
-        <img src="{% static 'img/ex/04.png' %}" class="thumb" onclick="setMainImage(3)" />
-        <img src="{% static 'img/ex/05.jpg' %}" class="thumb" onclick="setMainImage(4)" />
+      <img src="{% static 'img/ex/01.png' %}" class="thumb" onclick="setMainImage(0)" />
+      <img src="{% static 'img/ex/02.png' %}" class="thumb" onclick="setMainImage(1)" />
+      <img src="{% static 'img/ex/03.png' %}" class="thumb" onclick="setMainImage(2)" />
+      <img src="{% static 'img/ex/04.png' %}" class="thumb" onclick="setMainImage(3)" />
+      <img src="{% static 'img/ex/05.jpg' %}" class="thumb" onclick="setMainImage(4)" />
       {% endfor %}
     </div>
   </div>
 
   <div class="right-section">
-    
+
     <h2>{{ property_info.property_name|default:"매물명" }}
       <span class="badge green">일괄</span>
       <span class="badge brown">{{ item_details.property_type|default:"아파트" }}</span>
@@ -51,22 +52,24 @@
         <i class="fa-solid fa-map-location-dot"></i>&nbsp;지도보기
       </a>
     </p>
-    
+
     <p class="case-title">
-      <p>서울동부지방법원</p>
-      <a href="{% if document_urls.specification_url %}{{ document_urls.specification_url }}{% else %}#{% endif %}" target="_blank" rel="noopener noreferrer">
-        {{ property_info.case_number|default:"사건번호" }}
-      </a>
+    <p>서울동부지방법원</p>
+    <a href="{% if document_urls.specification_url %}{{ document_urls.specification_url }}{% else %}#{% endif %}"
+      target="_blank" rel="noopener noreferrer">
+      {{ property_info.case_number|default:"사건번호" }}
+    </a>
     </p>
     <div class="price">{{ property_info.min_bid_price|default:"3,210,000,000" }}
-  <span style="color:rgb(255, 110, 57); font-size: 12px; font-weight: 500;">
-    &nbsp; 감정가의 {{ property_info.price_ratio|default:100 }}% ({{ property_info.current_round|default:1 }}차)
-  </span>
-</div>
+      <span style="color:rgb(255, 110, 57); font-size: 12px; font-weight: 500;">
+        &nbsp; 감정가의 {{ property_info.price_ratio|default:100 }}% ({{ property_info.current_round|default:1 }}차)
+      </span>
+    </div>
 
     <div class="info">
       <p><strong>입찰 보증금 : <span class="highlight-deposit" id="deposit-amount">계산중...</span> (최저매각가격의 10%)</strong></p>
-      <p><strong>유찰 횟수: {{ item_details.auction_failures|default:0 }}회 {% if item_details.auction_failures == 0 %}(최초 경매){% endif %}</strong></p>
+      <p><strong>유찰 횟수: {{ item_details.auction_failures|default:0 }}회 {% if item_details.auction_failures == 0 %}(최초
+          경매){% endif %}</strong></p>
       <p><strong>매각기일: {{ item_details.auction_date|date:"Y.m.d"|default:"미정" }}</strong></p>
       <p><strong>남은 시간:</strong> <span class="countdown" id="countdown-timer">계산중...</span></p>
     </div>
@@ -75,9 +78,12 @@
       {% csrf_token %}
       <input type="hidden" name="case_number" value="{{ property_info.case_number }}">
       <label for="bid-price">입찰 금액 입력</label>
-      <input type="text" id="bid-price" name="bid_amount" placeholder="최저매각가격 : {{ property_info.min_bid_price|default:'510,000,000' }}원" data-min-price="{{ property_info.min_bid_price|default:'510000000' }}" />
+      <input type="text" id="bid-price" name="bid_amount"
+        placeholder="최저매각가격 : {{ property_info.min_bid_price|default:'510,000,000' }}원"
+        data-min-price="{{ property_info.min_bid_price|default:'510000000' }}" />
 
-      <button type="button" class="submit-btn" onclick="location.href='{% url 'bidform' %}?case_number={{ property_info.case_number }}'">입찰표 작성하기</button>
+      <button type="button" class="submit-btn"
+        onclick="location.href='{% url 'bidform' %}?case_number={{ property_info.case_number }}'">입찰표 작성하기</button>
       <div class="actions">
         <button type="button" onclick="location.href='{% url 'bid_history' %}'">입찰 내역 보기</button>
         <button type="button" onclick="addToFavorites('{{ property_info.case_number }}')">관심 목록 추가</button>
@@ -154,11 +160,11 @@
       <tr>
         <td>1<br>
           {% if document_urls.specification_url %}
-            <a href="{{ document_urls.specification_url }}" target="_blank">
-              <button>매각물건명세서</button>
-            </a>
+          <a href="{{ document_urls.specification_url }}" target="_blank">
+            <button>매각물건명세서</button>
+          </a>
           {% else %}
-            <button disabled>매각물건명세서</button>
+          <button disabled>매각물건명세서</button>
           {% endif %}
         </td>
         <td>{{ item_details.property_type|default:"정보 없음" }}</td>
@@ -232,39 +238,39 @@
   </div>
   {% endif %}
 
-  
+
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", function () {
+  document.addEventListener("DOMContentLoaded", function () {
     // 이미지 경로 설정
     const imagePaths = [
-        {% for image_path in image_paths %}
-            "{{ image_path }}"{% if not forloop.last %},{% endif %}
-        {% empty %}
-            "{% static 'img/ex/01.png' %}",
-            "{% static 'img/ex/02.png' %}",
-            "{% static 'img/ex/03.png' %}",
-            "{% static 'img/ex/04.png' %}",
-            "{% static 'img/ex/05.jpg' %}"
-        {% endfor %}
+      {% for image_path in image_paths %}
+            "{{ image_path }}"{% if not forloop.last %}, {% endif %}
+  {% empty %}
+  "{% static 'img/ex/01.png' %}",
+    "{% static 'img/ex/02.png' %}",
+    "{% static 'img/ex/03.png' %}",
+    "{% static 'img/ex/04.png' %}",
+    "{% static 'img/ex/05.jpg' %}"
+  {% endfor %}
     ];
 
-    // tender.js에서 정의한 함수들 호출
-    window.setImagePaths(imagePaths);
-    window.initializePage("{{ item_details.auction_date|date:'Y-m-d' }}");
+  // tender.js에서 정의한 함수들 호출
+  window.setImagePaths(imagePaths);
+  window.initializePage("{{ item_details.auction_date|date:'Y-m-d' }}");
 
-    // 즐겨찾기 버튼 이벤트 설정
-    const favoriteBtn = document.querySelector('button[onclick*="addToFavorites"]');
-    if (favoriteBtn) {
-        favoriteBtn.onclick = function() {
-            window.addToFavorites(
-                "{{ property_info.case_number }}",
-                "{{ property_info.min_bid_price }}",
-                "{{ item_details.auction_date|date:'Y-m-d' }}"
-            );
-        };
-    }
+  // 즐겨찾기 버튼 이벤트 설정
+  const favoriteBtn = document.querySelector('button[onclick*="addToFavorites"]');
+  if (favoriteBtn) {
+    favoriteBtn.onclick = function () {
+      window.addToFavorites(
+        "{{ property_info.case_number }}",
+        "{{ property_info.min_bid_price }}",
+        "{{ item_details.auction_date|date:'Y-m-d' }}"
+      );
+    };
+  }
 });
 </script>
 
