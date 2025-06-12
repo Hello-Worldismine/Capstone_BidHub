@@ -297,7 +297,7 @@ def extract_property_name(objects_info, dspsl_gds_info):
                 print(f"🏢 {field}에서 건물명 발견: '{property_name}'")
                 break
         
-        # 도로명주소에서 건물명 추출
+        # 도로명주소에서 건물명 추Extract
         if not property_name:
             rdnm_fields = ['rdnmRefcAddr', 'rdnmAddr', 'roadNameAddr']
             for field in rdnm_fields:
@@ -573,32 +573,70 @@ def parse_auction_data(json_file_path):
     print(f"📋 목록내역 개수: {len(building_details)}")
 
     if item_info:
+        # 주소 정보 추출 및 초기화
+        prop_addr_final = ""
+        prop_detail_addr_final = ""
+
+        if objects_info:
+            main_obj_info = objects_info[0]  # 일반적으로 첫 번째 객체 정보를 사용
+            
+            # 도로명 주소 구성 (예: "서울특별시 강남구 테헤란로 123")
+            road_address_parts = [
+                main_obj_info.get('rdnmSdNm', ''),
+                main_obj_info.get('rdnmSggNm', ''),
+                main_obj_info.get('rdnm', ''),
+                main_obj_info.get('rdnmBldNo', '')
+            ]
+            prop_addr_final = " ".join(filter(None, road_address_parts)).strip()
+            
+            # 상세 주소 (예: "2층204호", "101동 505호")
+            # main_obj_info.get('bldDtlDts')가 None을 반환할 경우를 대비하여 or '' 추가
+            prop_detail_addr_final = (main_obj_info.get('bldDtlDts') or '').strip()
+        else:
+            # objects_info가 없을 경우, item_info의 dspslGdsAddr 사용
+            # 이 경우, dspslGdsAddr 전체를 property_address에 할당하고, 
+            # property_detail_address는 비워두거나, 별도 파싱 로직 필요.
+            # extract_building_name 함수는 건물명 추출용이므로 여기서는 직접 사용하지 않음.
+            full_address_from_item_info = item_info.get('dspslGdsAddr', '')
+            prop_addr_final = full_address_from_item_info
+            prop_detail_addr_final = "" # 상세 주소 파싱 로직이 없다면 비워둠
+
+        auction_item_defaults = {
+            'property_name': property_name,
+            'valuation_amount': str(item_info.get('aeeEvlAmt', '')),
+            'auction_failures': item_info.get('flbdNcnt', 0),
+            'auction_date': safe_datetime_parse(
+                item_info.get('dspslDxdyYmd'), 
+                item_info.get('fstDspslHm')
+            ),
+            'item_status': item_info.get('auctnGdsStatCd'),
+            'building_area': building_area,
+            'property_type': property_type,
+            'property_address': prop_addr_final,  # 도로명 주소
+            'property_detail_address': prop_detail_addr_final,  # 상세 주소
+        }
+
         auction_item, created = AuctionItem.objects.get_or_create(
             item_number=item_info.get('dspslGdsSeq', 1),
             case_number=auction_case,
-            defaults={
-                'property_name': property_name,
-                'valuation_amount': str(item_info.get('aeeEvlAmt', '')),
-                'auction_failures': item_info.get('flbdNcnt', 0),
-                'auction_date': safe_datetime_parse(
-                    item_info.get('dspslDxdyYmd'), 
-                    item_info.get('fstDspslHm')
-                ),
-                'item_status': item_info.get('auctnGdsStatCd'),
-                'building_area': building_area,  # 건물면적
-                'property_type': property_type,  # 물건종류
-            }
+            defaults=auction_item_defaults
         )
         
         if created:
-            print(f"✓ Created auction item: {property_name} ({item_info.get('dspslGdsSeq', 1)})")
+            print(f"✓ Created auction item: {property_name} ({item_info.get('dspslGdsSeq', 1)}) with address: '{prop_addr_final}', '{prop_detail_addr_final}'")
         else:
             # 기존 항목이 있으면 정보 업데이트
-            auction_item.property_name = property_name
-            auction_item.building_area = building_area
-            auction_item.property_type = property_type
-            auction_item.save()
-            print(f"✓ Updated auction item: {property_name} with building area and property type")
+            update_fields = False
+            for field, value in auction_item_defaults.items():
+                if getattr(auction_item, field) != value:
+                    setattr(auction_item, field, value)
+                    update_fields = True
+            
+            if update_fields:
+                auction_item.save()
+                print(f"✓ Updated auction item: {property_name} ({auction_item.item_number}) with new data including address: '{prop_addr_final}', '{prop_detail_addr_final}'")
+            else:
+                print(f"✓ Auction item: {property_name} ({auction_item.item_number}) data is already up to date.")
         
         # 6. BuildingDetail 생성 (새로 추가)
         if building_details:
@@ -716,4 +754,13 @@ def parse_auction_data(json_file_path):
 
 if __name__ == "__main__":
     # 사용 예시
-    parse_auction_data('data.json')
+    json_file_to_parse = 'data.json'
+    parse_auction_data(json_file_to_parse)
+
+    # parse_auction_data 실행 후 data.json 파일 비우기
+    try:
+        with open(json_file_to_parse, 'w', encoding='utf-8') as f:
+            json.dump({}, f) # 빈 JSON 객체로 초기화
+        print(f"\n✓ '{json_file_to_parse}' 파일의 내용이 비워졌습니다.")
+    except Exception as e:
+        print(f"\n⚠️ '{json_file_to_parse}' 파일 비우기 실패: {e}")

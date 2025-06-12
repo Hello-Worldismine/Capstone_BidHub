@@ -238,7 +238,7 @@
                                     · {{ auction_item.auction_date|date:"Y-m-d(D)" }}
                                 {% endif %}
                             </span><br>
-                            <span>{{ auction_item.item_note|default:"주소 정보 없음" }}</span>
+                            <span>{{ auction_item.property_address|default:"주소 정보 없음" }}</span>
                         {% else %}
                             <span>물건 정보가 없습니다.</span>
                         {% endif %}
