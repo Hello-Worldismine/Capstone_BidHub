@@ -18,9 +18,9 @@ import requests
 logger = logging.getLogger(__name__)
 
 from blockchain.contracts import (
-    put_cryptogram, input_decrypt, pay_for_award,
+    putsec, inputbid, pay_for_award,
     mark_additional_bid, withdraw, escrow_deposit,
-    escrow_refund, confirm_bid, get_cryptogram,
+    escrow_refund, confirm_bid, 
     get_nonce, view_deposits, get_balance
 )
 
@@ -181,48 +181,44 @@ def bulk_upload_images(request, item_id):
 
 
 #블록체인 관련 api
-def decode_and_input_decrypt_api(request):
-    if request.method == "POST":
-        try:
-            data = json.loads(request.body)
+@api_view(['POST'])
+def inputbid_api(request):
+    try:
+        data = json.loads(request.body)
 
-            trade_num = int(data.get("trade_num"))
-            due_date = int(data.get("due_date"))  # 낙찰 마감일 (유닉스 타임)
+        trade_num = int(data.get("trade_num"))
+        amount = int(data.get("amount"))
+        security = int(data.get("security"))
+        bidder = data.get("bidder")
+        bid_time = int(data.get("bid_time"))
 
-            # 1. 암호화 데이터 가져오기
-            chunks = get_cryptogram(trade_num)
-            if len(chunks) < 3:
-                return JsonResponse({"status": "error", "message": "암호화 데이터 없음"}, status=404)
+        # 스마트 컨트랙트 트랜잭션 실행
+        tx_result = inputbid(trade_num, amount, security, bidder, bid_time)
 
-            # 2. 조립하여 복호화
-            iv_and_ciphertext = b''.join([
-                chunks[0].to_bytes(32, 'big'),
-                chunks[1].to_bytes(32, 'big'),
-                chunks[2].to_bytes(32, 'big'),
-            ])
-            decrypted = decrypt_aes(iv_and_ciphertext)
-            parsed = deserialize_decrypted_data(decrypted)
-
-            # 3. inputDecrypt 트랜잭션 실행
-            result = input_decrypt(
-                parsed["trade_num"],
-                parsed["amount"],
-                parsed["security"],
-                parsed["bidder"],
-                parsed["bid_time"],
-                due_date
+        if tx_result["status"] == "success":
+            # DB 저장
+            BidLog.objects.create(
+                trade_num=trade_num,
+                bidder_address=bidder,
+                bid_amount=amount,
+                bid_time=bid_time
             )
 
-            return JsonResponse({
-                "status": result.get("status"),
-                "tx_hash": result.get("tx_hash"),
-                **parsed
-            })
+        return JsonResponse({
+            "status": tx_result.get("status"),
+            "tx_hash": tx_result.get("tx_hash"),
+            "trade_num": trade_num,
+            "amount": amount,
+            "security": security,
+            "bidder": bidder,
+            "bid_time": bid_time
+        })
 
-        except Exception as e:
-            return JsonResponse({"status": "error", "message": str(e)}, status=400)
-
-
+    except Exception as e:
+        return JsonResponse({
+            "status": "error",
+            "message": str(e)
+        }, status=400)
 def pay_for_award_api(request):
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -280,62 +276,37 @@ def get_nonce_api(request):
         result = get_nonce(user, action_index)
         return JsonResponse({"nonce": result})
 
-@api_view(['POST'])
-def encrypt_bid_api(request):
-    try:
-        data = json.loads(request.body)
-        trade_num = int(data.get("trade_num"))
-        amount = int(data.get("amount"))
-        security = int(data.get("security"))
-        bidder = data.get("bidder")
-        bid_time = int(data.get("bid_time"))
-
-        # 암호화 및 분할
-        chunks = encrypt_bid_data(trade_num, amount, security, bidder, bid_time)  # [P1, P2, P3]
-
-        return JsonResponse({
-            "status": "success",
-            "chunks": chunks
-        })
-    except Exception as e:
-        return JsonResponse({"status": "error", "message": str(e)}, status=400)
-    
 
 @api_view(['POST'])
-def put_cryptogram_api(request):
+def putsec_api(request):
     try:
         data = json.loads(request.body)
 
         trade_num = int(data["trade_num"])
-        p1 = int(data["p1"])
-        p2 = int(data["p2"])
-        p3 = int(data["p3"])
         bidder = data["bidder"]
         security = int(data["security"])
         nonce = int(data["nonce"])
         signature = data["signature"]
 
-        tx_result = put_cryptogram(trade_num, p1, p2, p3, bidder, security, nonce, signature)
+        tx_result = putsec(trade_num, bidder, security, nonce, signature)
         
         if tx_result["status"] == "success":
             return JsonResponse({
                 "status": "success",
                 "tx_hash": tx_result["tx_hash"]
-                })
+            })
         else:
             return JsonResponse({
                 "status": tx_result["status"],
                 "message": tx_result.get("message", "실패 사유 없음"),
-                "tx_hash": tx_result.get("tx_hash")  # 있으면 같이 보내줌
-                }, status=400)
+                "tx_hash": tx_result.get("tx_hash")
+            }, status=400)
 
     except Exception as e:
         return JsonResponse({
             "status": "error",
             "message": str(e)
         }, status=500)
-
-
 
 
 def view_deposits_api(request):

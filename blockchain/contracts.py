@@ -74,13 +74,14 @@ def build_and_send_tx(function_call):
         return {"status": "error", "message": str(e).split(",")[0].strip()}
 
 
-def put_cryptogram(trade_num, p1, p2, p3, bidder, security, nonce, signature):
+def inputbid(trade_num, amount, security, bidder, bid_time):
     bidder = Web3.to_checksum_address(bidder)
-    return build_and_send_tx(contract.functions.putCryptogram(p1, p2, p3, trade_num, bidder, security, nonce, signature))
+    return build_and_send_tx(contract.functions.inputBid(trade_num, amount, security, bidder, bid_time))
 
-def input_decrypt(trade_num, amount, security, bidder, bid_time, due_date):
+def putsec(trade_num, bidder, security, nonce, signature):
     bidder = Web3.to_checksum_address(bidder)
-    return build_and_send_tx(contract.functions.inputDecrypt(trade_num, amount, security, bidder, bid_time, due_date))
+    return build_and_send_tx(contract.functions.putSec(trade_num, bidder, security, nonce, signature))
+
 
 def confirm_bid(trade_num):
     return contract.functions.confirmBid(trade_num).call()
@@ -118,9 +119,6 @@ def escrow_refund(trade_num):
 
 def collect_proceeds():
     return build_and_send_tx(contract.functions.Collectproceeds())
-
-def get_cryptogram(trade_num):
-    return contract.functions.getCryptogram(trade_num).call()
 
 def get_nonce(user_address, action_index):
     checksum_address = Web3.to_checksum_address(user_address)  # ✅ 체크섬 주소로 변환
