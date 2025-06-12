@@ -31,6 +31,9 @@
         <h4>Metamask 지갑 주소</h4>
         <form method="post" action="{% url 'update_wallet' %}">
           {% csrf_token %}
+          <!-- 이 아래 있는 태그가 출금 금액 입력 태그야 -->
+          <input type="text" id="moneyInput" name="withdraw" class="input-field" placeholder="출금할 금액을 입력하세요" />
+          <button class="btn-primary" type="submit" style="margin-top: 10px;">출금</button>
           <input type="text" id="walletInput" name="wallet_address" class="input-field" placeholder="0x1234abcd5678fgh..." />
           <button class="btn-primary" type="submit" style="margin-top: 10px;">저장</button>
         </form>
