@@ -13,12 +13,11 @@ urlpatterns = [
     path('escrow_deposit/', views.escrow_deposit_api),
     path('confirm_bid/', views.confirm_bid_api),
     path('get_nonce/', views.get_nonce_api),
-    path('decode_and_input_decrypt/', views.decode_and_input_decrypt_api),
+    path('inputbid/', views.inputbid_api),
     path('view_deposits/', views.view_deposits_api),
     path('get_balance/', views.get_balance_api),
     path('escrow_withdraw/', views.escrow_withdraw_api),
-    path('put_cryptogram/', views.put_cryptogram_api),
-    path('encrypt_bid/', views.encrypt_bid_api),
+    path('putsec/', views.putsec_api),
     path('store_encrypted_bid/', views.store_encrypted_bid, name='store_encrypted_bid'),
     path("load_bid_history/", views.load_bid_history, name="load_bid_history")
 

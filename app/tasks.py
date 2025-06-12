@@ -41,20 +41,19 @@ def process_due_auctions():
             item = AuctionItem.objects.get(id=item_id)
             trade_num = int(item.case_number.replace("타경", ""))
 
-            has_put = has_event(trade_num, "PutCrypt")
+            has_put = has_event(trade_num, "PutSec")
             has_win = has_event(trade_num, "BidWin")
 
             if has_put and not has_win:
-                # decode & input 
-                res = requests.post(
-                    "http://localhost:8000/api/decode_and_input_decrypt/",
-                    json={
-                        "trade_num": trade_num,
-                        "due_date": int(latest_decision_date.timestamp())
+                item_data = {
+                    "trade_num": trade_num,
+                    "amount": int(item.bid_amount),        # AuctionItem에 있는 필드로 교체
+                    "security": int(item.deposit_amount),  # 마찬가지로 보증금 필드
+                    "bidder": item.bidder_address,         # 입찰자 지갑 주소
+                    "bid_time": int(item.bid_time.timestamp())  # UNIX 타임스탬프 (datetime이라면)
                     }
-                )
-                print(f"{trade_num} decode 처리 완료: {res.json()}")
-
+                res = requests.post("http://localhost:8000/api/inputbid/", json=item_data)
+                print(f"{trade_num} inputBid 처리 완료: {res.json()}")
             elif not has_put and not has_win:
                 # 유찰 처리
                 new_failures = item.auction_failures + 1
