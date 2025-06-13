@@ -76,6 +76,7 @@ def build_and_send_tx(function_call):
 def inputbid(trade_num: int, amount: int, security: int, bidder: str, bid_time: int) -> dict:
     bidder = Web3.to_checksum_address(bidder)
     bid_time_utc = bid_time - 9 * 60 * 60
+    amount = amount * 100000000
 
     return build_and_send_tx(
         contract.functions.inputBid(trade_num, amount, security, bidder, bid_time_utc)

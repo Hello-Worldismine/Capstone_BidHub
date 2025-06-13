@@ -22,5 +22,5 @@ urlpatterns = [
     path("result/", views.result_view, name="result"),
     path("api/trade_results/", views.result_api_view),
     path('api/region_trade_results/', views.region_trade_results_api, name='region_trade_results_api'),
-
+    path("get_bid_events/", views.get_bid_events, name="get_bid_events"),
 ]

@@ -204,7 +204,9 @@ def tender(request, case_number=None):
                 for url in item_details.item_image_url.split(','):
                     if url.strip():
                         image_paths.append(url.strip())
-            
+            user_wallet_address = ""
+            if request.user.is_authenticated:
+                user_wallet_address = request.user.profile.wallet_address  # 또는 적절한 위치
             context = {
                 'property_id': case_number,
                 'property_info': property_info,
@@ -216,6 +218,7 @@ def tender(request, case_number=None):
                 'building_details': building_details,  # 수정된 부분: BuildingDetail 모델 데이터 사용
                 'interested_parties': interested_parties,
                 'image_paths': image_paths,
+                'user_wallet_address': user_wallet_address,
                 'naver_maps_client_id': getattr(settings, 'NAVER_MAPS_CLIENT_ID', '')
             }
             
@@ -939,3 +942,38 @@ def result(request):
 
 def region_result(request):
     return render(request, 'main/pages/region_result.html')
+
+def get_bid_events(request):
+    trade_num = request.GET.get("trade_num")
+    if not trade_num:
+        return JsonResponse({"error": "trade_num parameter is required"}, status=400)
+
+    query = {
+        "query": f"""
+        {{
+          bidEnters(where: {{ tradeNum: "{trade_num}" }}) {{
+            bidder
+            amount
+            security
+            bidtime
+          }}
+        }}
+        """
+    }
+
+    try:
+        res = requests.post(GRAPHQL_URL, json=query)
+        res.raise_for_status()
+        data = res.json()
+        events = data.get("data", {}).get("bidEnters", [])
+
+        # 정렬: amount 내림차순, 같은 경우 bidtime 내림차순
+        sorted_events = sorted(
+            events,
+            key=lambda e: (-int(e["amount"]), -int(e["bidtime"]))
+        )
+
+        return JsonResponse({"bids": sorted_events})
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
