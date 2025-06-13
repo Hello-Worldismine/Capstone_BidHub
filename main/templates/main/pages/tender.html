@@ -85,7 +85,7 @@
       <button type="button" class="submit-btn"
         onclick="location.href='{% url 'bidform' %}?case_number={{ property_info.case_number }}'">입찰표 작성하기</button>
       <div class="actions">
-        <button type="button" onclick="location.href='{% url 'bid_history' %}'">입찰 내역 보기</button>
+        <button type="button" onclick="openBidHistoryModalFromCase('{{ property_info.case_number }}', '{{ user_wallet_address }}')">입찰 내역 보기</button>
         <button type="button" onclick="addToFavorites('{{ property_info.case_number }}')">관심 목록 추가</button>
       </div>
     </form>
@@ -242,6 +242,7 @@
 </div>
 
 <script>
+  window.user_wallet_address = "{{ user_wallet_address|default:'' }}".toLowerCase();
   document.addEventListener("DOMContentLoaded", function () {
     // 이미지 경로 설정
     const imagePaths = [
@@ -281,5 +282,6 @@
   <img class="modal-content" id="modalImage">
   <button class="modal-arrow right" id="modalNext">&#10095;</button>
 </div>
-
+{% include 'main/pages/bidmodal.html' %}
+<link rel="stylesheet" href="{% static 'css/pages/modal.css' %}">
 {% endblock %}

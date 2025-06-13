@@ -43,5 +43,7 @@ urlpatterns = [
     #매각결과조회
     path('result/', views.result, name='result'),
     path('region_result/', views.region_result, name='region_result')
+    
+    
 ]
 

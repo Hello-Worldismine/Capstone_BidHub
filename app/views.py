@@ -570,6 +570,40 @@ def region_trade_results_api(request):
 
     return JsonResponse(results, safe=False)
 
+def get_bid_events(request):
+    trade_num = request.GET.get("trade_num")
+    if not trade_num:
+        return JsonResponse({"error": "trade_num parameter is required"}, status=400)
+
+    query = {
+        "query": f"""
+        {{
+          bidEnters(where: {{ tradeNum: "{trade_num}" }}) {{
+            bidder
+            amount
+            security
+            bidtime
+          }}
+        }}
+        """
+    }
+
+    try:
+        res = requests.post(GRAPHQL_URL, json=query)
+        res.raise_for_status()
+        data = res.json()
+        events = data.get("data", {}).get("bidEnters", [])
+
+        # 정렬: amount 내림차순, 같은 경우 bidtime 내림차순
+        sorted_events = sorted(
+            events,
+            key=lambda e: (-int(e["amount"]), -int(e["bidtime"]))
+        )
+
+        return JsonResponse({"bids": sorted_events})
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
 #임시 더미
 def dummy_view(request):
     return JsonResponse({"message": "미구현된 API입니다."})
