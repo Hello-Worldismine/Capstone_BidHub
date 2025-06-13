@@ -17,6 +17,7 @@ import logging
 import requests
 from django.utils.dateparse import parse_date
 from datetime import datetime
+from django.views.decorators.csrf import csrf_exempt
 
 logger = logging.getLogger(__name__)
 from .graph_query import fetch_trade_closes
@@ -239,14 +240,26 @@ def mark_additional_bid_api(request):
 
 
 
+from django.http import JsonResponse
+
+@csrf_exempt
 def withdraw_api(request):
-    if request.method == 'POST':
+    try:
         data = json.loads(request.body)
-        result = withdraw(
-            data['amount'], data['to_address'],
-            data['nonce'], data['signature']
-        )
-        return JsonResponse(result)
+        amount = int(data.get("amount"))
+        to_address = data.get("to_address")
+        nonce = int(data.get("nonce"))
+        signature = data.get("signature")
+
+        result = withdraw(amount, to_address, nonce, signature)
+
+        if result["status"] == "success":
+            return JsonResponse({"success": True, "tx_hash": result["tx_hash"]})
+        else:
+            return JsonResponse({"success": False, "message": result.get("message", "출금 실패")})
+
+    except Exception as e:
+        return JsonResponse({"success": False, "message": str(e)})
 
 
 
