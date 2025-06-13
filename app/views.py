@@ -15,7 +15,11 @@ from django.shortcuts import render
 from django.http import HttpRequest
 import logging
 import requests
+from django.utils.dateparse import parse_date
+from datetime import datetime
+
 logger = logging.getLogger(__name__)
+from .graph_query import fetch_trade_closes
 
 from blockchain.contracts import (
     putsec, inputbid, pay_for_award,
@@ -184,6 +188,7 @@ def bulk_upload_images(request, item_id):
 @api_view(['POST'])
 def inputbid_api(request):
     try:
+        print(100)
         data = json.loads(request.body)
 
         trade_num = int(data.get("trade_num"))
@@ -194,15 +199,6 @@ def inputbid_api(request):
 
         # 스마트 컨트랙트 트랜잭션 실행
         tx_result = inputbid(trade_num, amount, security, bidder, bid_time)
-
-        if tx_result["status"] == "success":
-            # DB 저장
-            BidLog.objects.create(
-                trade_num=trade_num,
-                bidder_address=bidder,
-                bid_amount=amount,
-                bid_time=bid_time
-            )
 
         return JsonResponse({
             "status": tx_result.get("status"),
@@ -219,6 +215,8 @@ def inputbid_api(request):
             "status": "error",
             "message": str(e)
         }, status=400)
+
+        
 def pay_for_award_api(request):
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -277,6 +275,8 @@ def get_nonce_api(request):
         return JsonResponse({"nonce": result})
 
 
+from datetime import datetime
+
 @api_view(['POST'])
 def putsec_api(request):
     try:
@@ -287,10 +287,22 @@ def putsec_api(request):
         security = int(data["security"])
         nonce = int(data["nonce"])
         signature = data["signature"]
+        bid_time = int(data["bid_time"])
+        amount = int(data["amount"])  # 🔸 입찰금액 반드시 받아야 함
 
         tx_result = putsec(trade_num, bidder, security, nonce, signature)
-        
+
         if tx_result["status"] == "success":
+            BidLog.objects.update_or_create(
+                trade_num=trade_num,
+                bidder_address=bidder,
+                defaults={
+                    "bid_amount": amount,
+                    "bid_security": security,
+                    "bid_time": datetime.fromtimestamp(bid_time)
+                }
+            )
+
             return JsonResponse({
                 "status": "success",
                 "tx_hash": tx_result["tx_hash"]
@@ -307,7 +319,6 @@ def putsec_api(request):
             "status": "error",
             "message": str(e)
         }, status=500)
-
 
 def view_deposits_api(request):
     if request.method == 'GET':
@@ -406,6 +417,146 @@ def load_bid_history(request):
 
 
     return render(request, "main/pages/bid_history.html", {"bid_rows": bid_rows})
+
+
+def result_view(request):
+    court = request.GET.get("court")
+    property_type = request.GET.get("property_type")
+    start_date = request.GET.get("start_date")
+    end_date = request.GET.get("end_date")
+
+    filters_applied = any([court, property_type, start_date, end_date])
+    results = []
+
+    for event in fetch_trade_closes():
+        try:
+            item = AuctionItem.objects.get(case_number__case_number__contains=str(event["trade_num"]))
+
+            if court and court not in item.case_number.court_name:
+                continue
+            if property_type and property_type not in (item.item_purpose or ""):
+                continue
+            if start_date and event["auction_date"] < datetime.strptime(start_date, "%Y-%m-%d").timestamp():
+                continue
+            if end_date and event["auction_date"] > datetime.strptime(end_date, "%Y-%m-%d").timestamp():
+                continue
+
+            results.append({
+                "case_number": item.case_number.case_number,
+                "court_name": item.case_number.court_name,
+                "case_name": item.case_number.case_name,
+                "valuation_amount": item.valuation_amount,
+                "auction_failures": item.auction_failures,
+                "item_purpose": item.item_purpose,
+                "item_note": item.item_note,
+                "auction_date": datetime.fromtimestamp(event["auction_date"]),
+            })
+        except AuctionItem.DoesNotExist:
+            continue
+
+    return render(request, "result.html", {
+        "search_results": results,
+        "search_performed": filters_applied,  # 중요!
+        "search_error": None  # 오류 있을 시 추가
+    })
+    
+
+def result_api_view(request):
+    court = request.GET.get("court")
+    property_type = request.GET.get("property_type")
+    start_date = request.GET.get("start_date")
+    end_date = request.GET.get("end_date")
+
+    results = []
+    for event in fetch_trade_closes():
+        try:
+            item = AuctionItem.objects.get(case_number__case_number__contains=str(event["trade_num"]))
+
+            # 필터 조건 적용
+            if court and court not in item.case_number.court_name:
+                continue
+            if property_type and property_type not in (item.item_purpose or ""):
+                continue
+            if start_date:
+                if event["auction_date"] < datetime.strptime(start_date, "%Y-%m-%d").timestamp():
+                    continue
+            if end_date:
+                if event["auction_date"] > datetime.strptime(end_date, "%Y-%m-%d").timestamp():
+                    continue
+
+            results.append({
+                "case_number": item.case_number.case_number,
+                "court_name": item.case_number.court_name,
+                "case_name": item.case_number.case_name,
+                "auction_item": {
+                    "valuation_amount": item.valuation_amount,
+                    "auction_failures": item.auction_failures,
+                    "item_purpose": item.item_purpose,
+                    "item_note": item.item_note,
+                    "auction_date": datetime.fromtimestamp(event["auction_date"]).strftime("%Y-%m-%d %H:%M"),
+                }
+            })
+        except AuctionItem.DoesNotExist:
+            continue
+
+    return JsonResponse(results, safe=False)
+
+def region_trade_results_api(request):
+    sido = request.GET.get("sido")
+    sigugun = request.GET.get("sigugun")
+    load_initial = request.GET.get("load")  # 'ㄱ', 'ㄴ', 또는 전체 도로명
+
+    queryset = AuctionCase.objects.all()
+
+    if sido:
+        queryset = queryset.filter(location__sido__icontains=sido)
+    if sigugun:
+        queryset = queryset.filter(location__sigugun__icontains=sigugun)
+
+    # 도로명 필터링: 자음만 들어온 경우 초성별 범위 처리
+    if load_initial:
+        초성_범위 = {
+            "ㄱ": ("가", "나"),
+            "ㄴ": ("나", "다"),
+            "ㄷ": ("다", "라"),
+            "ㄹ": ("라", "마"),
+            "ㅁ": ("마", "바"),
+            "ㅂ": ("바", "사"),
+            "ㅅ": ("사", "아"),
+            "ㅇ": ("아", "자"),
+            "ㅈ": ("자", "차"),
+            "ㅊ": ("차", "카"),
+            "ㅋ": ("카", "타"),
+            "ㅌ": ("타", "파"),
+            "ㅍ": ("파", "하"),
+            "ㅎ": ("하", "힣"),
+        }
+
+        if load_initial in 초성_범위:
+            start, end = 초성_범위[load_initial]
+            queryset = queryset.filter(location__load__gte=start, location__load__lt=end)
+        else:
+            queryset = queryset.filter(location__load__icontains=load_initial)
+
+    # 결과 가공
+    results = []
+    for case in queryset:
+        item = case.auctionitem_set.order_by("-auction_date").first()
+        results.append({
+            "case_number": case.case_number,
+            "court_name": case.court_name,
+            "case_name": case.case_name,
+            "auction_item": {
+                "valuation_amount": item.valuation_amount if item else None,
+                "auction_failures": item.auction_failures if item else None,
+                "item_purpose": item.item_purpose if item else None,
+                "item_note": item.item_note if item else None,
+                "auction_date": item.auction_date.strftime("%Y-%m-%d %H:%M") if item and item.auction_date else None,
+            } if item else None
+        })
+
+    return JsonResponse(results, safe=False)
+
 #임시 더미
 def dummy_view(request):
     return JsonResponse({"message": "미구현된 API입니다."})

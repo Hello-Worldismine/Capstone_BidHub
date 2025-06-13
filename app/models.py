@@ -330,7 +330,9 @@ class BidLog(models.Model):
     trade_num = models.BigIntegerField()
     bidder_address = models.CharField(max_length=42)
     bid_amount = models.BigIntegerField(null=True, blank=True)
-    bid_time = models.BigIntegerField()  
+    bid_security = models.BigIntegerField(null=True, blank=True)
+    bid_time = models.DateTimeField(null=True)  
+    
 
     class Meta:
         unique_together = ('trade_num', 'bidder_address')

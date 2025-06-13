@@ -1,5 +1,5 @@
 // ✅ 필요한 상수들 먼저 정의
-const contractAddress = "0xF65cE559c93b5A078CbAc7c2FEcc34237a0330d6";
+const contractAddress = "0x52A23F869A055A5d145C78759AA541503ab33340";
 const contractABI = [
   "function EscrowDeposit(uint256 amount) external payable",
   "function viewMyDeposits() external view returns (uint256)",
@@ -106,13 +106,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 document.addEventListener("DOMContentLoaded", async () => {
   await refreshWalletBalance();  // 지갑 연결 여부 확인 후 예치금 표시
-  setInterval(refreshWalletBalance, 5000);  // 🔁 10초마다 갱신
+  setInterval(refreshWalletBalance, 60000);  // 🔁 10초마다 갱신
 });
 
 async function refreshWalletBalance() {
   if (typeof window.ethereum === "undefined") {
     document.getElementById("wallet-display").innerHTML =
-      `<i class="fa-solid fa-triangle-exclamation"></i> 메타마스크 미설치`;
+      `<i class="fa-solid fa-triangle-exclamation"></i> 지갑을 연결하세요`;
     return;
   }
 

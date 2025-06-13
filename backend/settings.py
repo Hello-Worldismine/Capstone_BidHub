@@ -144,7 +144,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Seoul'
 
 USE_I18N = True
 
@@ -227,3 +227,24 @@ ACCOUNT_FORMS = {
     'signup': 'main.forms.CustomSignupForm',
 }
 
+
+import os
+from django.db.backends.signals import connection_created
+from django.dispatch import receiver
+from django.db import OperationalError
+
+@receiver(connection_created)
+def activate_sqlite_wal(sender, connection, **kwargs):
+    # runserver 리로더 부모 프로세스나 migrations 체크 타이밍에 실행되지 않도록
+    if os.environ.get('RUN_MAIN') != 'true':
+        return
+
+    if connection.vendor == 'sqlite':
+        cursor = connection.cursor()
+        try:
+            cursor.execute('PRAGMA journal_mode=WAL;')
+            cursor.execute('PRAGMA synchronous=NORMAL;')
+            cursor.execute('PRAGMA busy_timeout=0;')
+        except OperationalError:
+            # 이미 락이 걸려 있으면 무시
+            pass

@@ -123,8 +123,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 trade_num: parseInt(tradeNum),
                 bidder: bidder,
                 security: weiDeposit.toString(),
+                amount: bidAmount1,
                 nonce: nonce,
-                signature: signature
+                signature: signature,
+                bid_time: bid_time 
             })
         });
 
