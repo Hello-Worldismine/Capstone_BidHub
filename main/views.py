@@ -891,7 +891,7 @@ def bid_history(request):
 
         graphql_query = f"""
         {{
-          putCrypts(where: {{tradeNum: "{trade_num}", bidder: "{user_address}"}}) {{
+          putSecs(where: {{tradeNum: "{trade_num}", bidder: "{user_address}"}}) {{
             security
           }}
           refundSecurities(where: {{tradeNum: "{trade_num}", bidder: "{user_address}"}}) {{
@@ -903,24 +903,14 @@ def bid_history(request):
         res = requests.post(GRAPHQL_URL, json={'query': graphql_query}, headers=headers)
 
         data = res.json().get("data", {})
-        print("GraphQL Query:\n", graphql_query)
-        print("response status:", res.status_code)
-        print("response body:", res.text)
-        
-        security_data = data.get("putCrypts", [])
-        print("GraphQL Query:\n", graphql_query)
+        security_data = data.get("putSecs", [])
         if security_data:
             raw_wei = int(security_data[0]["security"])
             eth = raw_wei / 1e18                      # float 연산
-            krw = eth * 1_000_000_000                 # 1 ETH = 10억 원
-            security = int(krw)  
-            print("원본 WEI:", raw_wei)
-            print("ETH:", eth)
-            print("KRW:", krw)
-            print("최종 security:", security)                       # 최종 정수 변환
+            krw = eth * 10_000_000_000                 # 1 ETH = 10억 원
+            security = round(krw)  
         else:
             security = 0
-            print("ㄴㅇㅁ")
       
 
         refund_data = data.get("refundSecurities", [])

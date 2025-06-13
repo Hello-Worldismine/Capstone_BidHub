@@ -73,18 +73,25 @@ def build_and_send_tx(function_call):
         # ✅ 여기서도 바이트 스트링 날리는 걸 제거
         return {"status": "error", "message": str(e).split(",")[0].strip()}
 
-
-def inputbid(trade_num, amount, security, bidder, bid_time):
+def inputbid(trade_num: int, amount: int, security: int, bidder: str, bid_time: int) -> dict:
     bidder = Web3.to_checksum_address(bidder)
-    return build_and_send_tx(contract.functions.inputBid(trade_num, amount, security, bidder, bid_time))
+    bid_time_utc = bid_time - 9 * 60 * 60
 
+    return build_and_send_tx(
+        contract.functions.inputBid(trade_num, amount, security, bidder, bid_time_utc)
+    )
+    
+    
 def putsec(trade_num, bidder, security, nonce, signature):
     bidder = Web3.to_checksum_address(bidder)
     return build_and_send_tx(contract.functions.putSec(trade_num, bidder, security, nonce, signature))
 
 
-def confirm_bid(trade_num):
-    return contract.functions.confirmBid(trade_num).call()
+def confirm_bid(trade_num: int, due_date: int) -> dict:
+    due_date_utc = due_date - 9 * 60 * 60  # == due_date - 9 hours in seconds
+    return build_and_send_tx(
+        contract.functions.confirmBid(trade_num, due_date_utc)
+    )
 
 def pay_for_award(amount, trade_num, bidder, nonce, signature):
     bidder = Web3.to_checksum_address(bidder)
