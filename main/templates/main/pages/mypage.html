@@ -33,7 +33,7 @@
           {% csrf_token %}
           <!-- 이 아래 있는 태그가 출금 금액 입력 태그야 -->
           <input type="text" id="moneyInput" name="withdraw" class="input-field" placeholder="출금할 금액을 입력하세요" />
-          <button class="btn-primary" type="submit" style="margin-top: 10px;">출금</button>
+          <button id="withdrawBtn" type="button" class="btn-primary" style="margin-top: 10px;">출금</button>
           <input type="text" id="walletInput" name="wallet_address" class="input-field" placeholder="0x1234abcd5678fgh..." />
           <button class="btn-primary" type="submit" style="margin-top: 10px;">저장</button>
         </form>
@@ -65,7 +65,6 @@
     </section>
   </div>
 </main>
-
 <script>
   // Metamask 지갑 주소 자동입력
   window.addEventListener('DOMContentLoaded', async () => {
@@ -73,7 +72,6 @@
       try {
         let accounts = await window.ethereum.request({ method: 'eth_accounts' });
         if (accounts.length === 0) {
-          // 사용자가 연결을 아직 허용하지 않은 경우
           await window.ethereum.request({ method: 'eth_requestAccounts' });
           accounts = await window.ethereum.request({ method: 'eth_accounts' });
         }
@@ -109,5 +107,77 @@
     editBtn.textContent = isEditing ? '정보 수정' : '확인';
     isEditing = !isEditing;
   });
+
+  // 출금 처리
+  document.getElementById('withdrawBtn').addEventListener('click', async () => {
+  const krwAmount = document.getElementById('moneyInput').value;
+  const ethAmount = (krwAmount / 1e10).toString();
+  const toAddress = document.getElementById('walletInput').value;
+
+  console.log("[출금 시작]");
+  console.log("KRW 입력값:", krwAmount);
+  console.log("ETH 환산값:", ethAmount);
+  console.log("출금 주소:", toAddress);
+
+  if (!ethAmount || !toAddress) {
+    alert("금액 또는 주소가 비어 있습니다.");
+    return;
+  }
+
+  try {
+    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+    const from = accounts[0];
+    console.log("Metamask 계정:", from);
+
+    // 1. 서버에서 nonce 받아오기
+    const nonceRes = await fetch(`/api/get_nonce/?user=${from}&action_index=3&t=${Date.now()}`);
+    const { nonce } = await nonceRes.json();
+    console.log("받은 nonce:", nonce);
+
+    // 2. hash 생성
+    const ethersProvider = new ethers.providers.Web3Provider(window.ethereum);
+    const signer = ethersProvider.getSigner();
+
+    const packed = ethers.utils.solidityPack(
+      ["uint256", "address", "uint256"],
+      [ethers.utils.parseEther(ethAmount), toAddress, nonce]
+    );
+
+    const hash = ethers.utils.keccak256(packed);
+    console.log("서명할 해시:", hash);
+
+    const signature = await signer.signMessage(ethers.utils.arrayify(hash));
+    console.log("서명 결과:", signature);
+    const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+
+    // 3. 백엔드에 전송
+const res = await fetch('/api/withdraw/', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-CSRFToken': csrfToken
+  },
+  body: JSON.stringify({
+    amount: ethers.utils.parseEther(ethAmount).toString(),
+    to_address: toAddress,
+    nonce,
+    signature
+  })
+});
+    const result = await res.json();
+    console.log("서버 응답 결과:", result);
+
+    if (result.success) {
+      alert("출금 성공");
+    } else {
+      alert("출금 실패: " + (result.message || "오류"));
+    }
+
+  } catch (err) {
+    console.error("출금 처리 중 오류:", err);
+    alert("출금 실패: Metamask 또는 네트워크 오류");
+  }
+});
 </script>
+
 {% endblock %}

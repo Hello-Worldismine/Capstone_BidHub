@@ -30,31 +30,37 @@ def execute_with_retry(sql, params=None, max_retries=3, sleep=0.05, item_id=None
     print(f"[락 반복 실패] item={item_id}, sql skipped")
     return False
 
+
 def fetch_chain_events(trade_nums):
     if not trade_nums:
         return set(), set()
-    
-    nums_str = ','.join(str(n) for n in trade_nums)  # <- 리스트를 숫자 나열 문자열로
 
-    query = json.dumps({
-        'query': f"""
-        {{
-          PutSecs(where: {{ tradeNum_in: [{nums_str}] }}) {{ tradeNum }}
-          BidWins(where: {{ tradeNum_in: [{nums_str}] }}) {{ tradeNum }}
-        }}
-        """
-    })
-    print(query)
+    nums_str = ','.join(f'"{n}"' for n in trade_nums)
+
+    query_str = f"""
+    {{
+      putSecs(where: {{ tradeNum_in: [{nums_str}] }}) {{ tradeNum }}
+      bidWins(where: {{ tradeNum_in: [{nums_str}] }}) {{ tradeNum }}
+    }}
+    """
+
+    print(query_str)
+
     try:
-        res = requests.post(GRAPHQL_URL, data=query, headers={'Content-Type': 'application/json'})
-        data = res.json().get('data', {})
-        put_set = {int(item['tradeNum']) for item in data.get('PutSecs', [])}
-        win_set = {int(item['tradeNum']) for item in data.get('BidWins', [])}
+        res = requests.post(
+            GRAPHQL_URL,
+            json={"query": query_str},
+        )
+        print("[응답 상태]", res.status_code)
+        print("[응답 내용]", res.text)
+
+        data = res.json().get("data", {})
+        put_set = {int(item["tradeNum"]) for item in data.get("putSecs", [])}
+        win_set = {int(item["tradeNum"]) for item in data.get("bidWins", [])}
         return put_set, win_set
     except Exception as e:
         print(f"[GraphQL 오류]: {e}")
         return set(), set()
-
 def process_due_auctions():
     try:
         with lock:
@@ -106,7 +112,7 @@ def process_due_auctions():
                         success = True
                         for bid in bids_by_trade[trade_num]:
                             try:
-                                from blockchain import inputbid
+                                from blockchain.contracts import inputbid
                                 inputbid(
                                     trade_num,
                                     bid.bid_amount,
@@ -119,10 +125,21 @@ def process_due_auctions():
                                 success = False
                                 break
                         if success:
-                            from blockchain import confirm_bid
-                            due_ts = int((decision_date + timezone.timedelta(hours=1)).timestamp())
+                            from blockchain.contracts import confirm_bid
+                            max_round = AuctionSchedule.objects.filter(auction_item_id=item_id).aggregate(Max('round_number'))['round_number__max'] or 0
+                            payment_round = max_round + 1
+                            due_ts = int((decision_date - timedelta(hours=9) + timedelta(hours=1)).timestamp())
                             confirm_bid(trade_num, due_ts)
-                            print("confirmbid")
+
+                            # DB에는 KST 기준으로 '대금지급기한' 스케줄 등록
+                            due_kst = decision_date + timedelta(hours=1)
+
+                            insert_sql = (
+                                "INSERT INTO auction_schedule "
+                                "(auction_item_id, round_number, decision_date, schedule_type, minimum_price) "
+                                "VALUES (%s, %s, %s, '대금지급기한', 0)"
+                            )
+                            execute_with_retry(insert_sql, [item_id, payment_round, due_kst], item_id=item_id)
 
 
                     else:
@@ -141,7 +158,7 @@ def process_due_auctions():
                         execute_with_retry(update_sql, [new_fail, item_id], item_id=item_id)
 
                         max_round = AuctionSchedule.objects.filter(auction_item_id=item_id).aggregate(Max('round_number'))['round_number__max'] or 0
-                        next_round = max_round 
+                        next_round = max_round +1
                         decision_round = next_round + 1
                         print(f"[삽입 시도 전] item_id={item_id}, next_round={next_round}, decision_round={decision_round}")
                         print(f"[DB 상태 확인]")
