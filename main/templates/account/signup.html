@@ -1,13 +1,11 @@
-{% extends "account/base.html" %} {# Extend allauth base for consistency #}
-{% load i18n static %} {# Load necessary tags, including custom form_tags #}
-
-{% block head_title %}{% trans "Signup" %}{% endblock %}
+{% extends "account/base.html" %}
+{% load i18n static %}
 
 {% block extra_head %}
-{# Add custom CSS if needed #}
-<link rel="stylesheet" href="{% static 'css/pages/login.css' %}">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-{# Basic styling for potential error messages #}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'css/pages/signup.css' %}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
 <style>
   .alert-danger { color: red; margin-bottom: 1em; }
   .invalid-feedback { color: red; font-size: 0.8em; }
@@ -183,7 +181,7 @@
         {% for provider in socialaccount_providers %}
           {% if provider.id == "kakao" %}
             <a href="{% provider_login_url "kakao" %}" class="btn-kakao">
-              <i class="fas fa-comment"></i> 카카오로 간편 가입
+              <i class="fas fa-comment"></i> 카카오로 간편 로그인
             </a>
           {% endif %}
         {% endfor %}

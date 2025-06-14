@@ -153,3 +153,5 @@ process_due_auctions.lock
 db.sqlite3-shm
 db.sqlite3-wal
 olddb.sqlite3
+db.sqlite3-wal
+*.sqlite3-wal

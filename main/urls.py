@@ -42,8 +42,9 @@ urlpatterns = [
 
     #매각결과조회
     path('result/', views.result, name='result'),
-    path('region_result/', views.region_result, name='region_result')
-    
-    
+    path('region_result/', views.region_result, name='region_result'),
+
+    # 프로필 관련 URL
+    path('update_profile/', views.update_profile, name='update_profile'),
 ]
 

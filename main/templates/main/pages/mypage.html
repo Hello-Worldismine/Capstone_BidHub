@@ -59,34 +59,49 @@
 
       <div class="mypage-section">
         <h4>기본 입찰자 정보</h4>
+        
+        <form method="post" action="{% url 'update_profile' %}" id="profileForm" style="display: none;">
+          {% csrf_token %}
+          <input type="hidden" name="name" id="nameFormInput">
+          <input type="hidden" name="id_number" id="idFormInput">
+          <input type="hidden" name="phone" id="phoneFormInput">
+          <input type="hidden" name="address" id="addrFormInput">
+        </form>
+        
         <table class="profile-table">
           <tbody>
             <tr>
               <th>이름</th>
               <td>
-                <p id="nameView">{{ profile.name }}</p>
-                <input type="text" id="nameInput" class="input-field" value="{{ profile.name }}" style="display: none;" />
+                <p id="nameView">{{ profile.name|default:"정보 없음" }}</p>
+                <input type="text" id="nameInput" class="input-field" value="{{ profile.name|default:'' }}" style="display: none;" />
               </td>
             </tr>
             <tr>
               <th>주민등록번호 / 법인번호</th>
               <td>
-                <p id="idView">{{ profile.identifier }}</p>
-                <input type="text" id="idInput" class="input-field" value="{{ profile.identifier }}" style="display: none;" />
+                <p id="idView">
+                  {% if profile.identifier and profile.identifier != "정보 없음" %}
+                    {{ profile.identifier|slice:":6" }}-*******
+                  {% else %}
+                    정보 없음
+                  {% endif %}
+                </p>
+                <input type="text" id="idInput" class="input-field" value="{{ profile.identifier|default:'' }}" style="display: none;" />
               </td>
             </tr>
             <tr>
               <th>전화번호</th>
               <td>
-                <p id="phoneView">{{ profile.phone }}</p>
-                <input type="text" id="phoneInput" class="input-field" value="{{ profile.phone }}" style="display: none;" />
+                <p id="phoneView">{{ profile.phone|default:"정보 없음" }}</p>
+                <input type="text" id="phoneInput" class="input-field" value="{{ profile.phone|default:'' }}" style="display: none;" />
               </td>
             </tr>
             <tr>
               <th>주소</th>
               <td>
-                <p id="addrView">{{ profile.address }}</p>
-                <input type="text" id="addrInput" class="input-field" value="{{ profile.address }}" style="display: none;" />
+                <p id="addrView">{{ profile.address|default:"정보 없음" }}</p>
+                <input type="text" id="addrInput" class="input-field" value="{{ profile.address|default:'' }}" style="display: none;" />
               </td>
             </tr>
           </tbody>
@@ -155,23 +170,50 @@
 
   // 기본 정보 수정 기능
   const editBtn = document.getElementById('editBtn');
+  const profileForm = document.getElementById('profileForm');
   let isEditing = false;
   const fields = ['name', 'id', 'phone', 'addr'];
 
   editBtn.addEventListener('click', () => {
-    fields.forEach(field => {
-      const input = document.getElementById(field + 'Input');
-      const view = document.getElementById(field + 'View');
-      if (!isEditing) {
+    if (!isEditing) {
+      // 수정 모드 진입
+      fields.forEach(field => {
+        const input = document.getElementById(field + 'Input');
+        const view = document.getElementById(field + 'View');
         input.style.display = 'block';
         view.style.display = 'none';
-      } else {
-        view.textContent = input.value;
+        input.focus();
+      });
+      editBtn.textContent = '저장';
+    } else {
+      // 저장 모드 - 서버로 데이터 전송
+      fields.forEach(field => {
+        const input = document.getElementById(field + 'Input');
+        const view = document.getElementById(field + 'View');
+        const formInput = document.getElementById(field + 'FormInput');
+        
+        // 폼에 데이터 설정
+        if (field === 'id') {
+          formInput.name = 'id_number';
+          formInput.value = input.value;
+        } else if (field === 'addr') {
+          formInput.name = 'address';
+          formInput.value = input.value;
+        } else {
+          formInput.name = field;
+          formInput.value = input.value;
+        }
+        
+        // 화면 업데이트
+        view.textContent = input.value || '정보 없음';
         input.style.display = 'none';
         view.style.display = 'block';
-      }
-    });
-    editBtn.textContent = isEditing ? '정보 수정' : '확인';
+      });
+      
+      // 폼 제출
+      profileForm.submit();
+    }
+    
     isEditing = !isEditing;
   });
 </script>
