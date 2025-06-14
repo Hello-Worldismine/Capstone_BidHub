@@ -1,3 +1,30 @@
+/* ===== 기본 설정 ===== */
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  color: #1f2937;
+}
+
+/* ===== 전체 카드형 컨테이너 ===== */
+.auto-bid-container {
+  max-width: 940px;
+  margin: 0;
+  padding: 5px 20px;
+}
+
+.section {
+  margin-top: 80px;
+}
+
+/* ===== 제목 ===== */
+.title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 24px;
+  border-left: 4px solid #3b82f6;
+  padding-left: 12px;
+}
+
 /* ===== 탭 메뉴 ===== */
 .auto-bid-tabs {
   max-width: 1000px;
@@ -28,102 +55,127 @@
   border-bottom: 2px solid #3b82f6;
 }
 
-.auto-bid-container {
-  max-width: 940px;
-  background: #fff;
-  padding: 20px 30px;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  font-family: 'Noto Sans KR', sans-serif;
-}
-
-.title {
-  font-size: 20px;
-  font-weight: 700;
-  color: #1f2937;
-  margin-bottom: 24px;
-  border-left: 4px solid #3b82f6;
-  padding-left: 12px;
-}
-
+/* ===== 입력 그룹 ===== */
 .input-group {
   display: flex;
-  gap: 10px;
-  margin-bottom: 20pxㅈ
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 28px;
+  align-items: center;
+}
+
+.input-group label {
+  font-size: 15px;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 .input-group input,
 .input-group select {
-  padding: 10px;
   flex: 1;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+  min-width: 120px;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background-color: #f9fafb;
+  transition: border-color 0.2s;
 }
 
-.input-group button {
-  background: #609cfd;
-  color: white;
-  padding: 10px 16px;
-  border: none;
-  border-radius: 6px;
+.input-group input:focus,
+.input-group select:focus {
+  border-color: #3b82f6;
+  outline: none;
+  background-color: #fff;
+}
+
+.input-field {
+  max-width: 160px;
+}
+
+.input-group select.input-court {
+  width: 300px;
+  flex: none;
+}
+
+.input-group input.input-amount {
+  width: 300px;
+  flex: none;
+}
+
+.input-group select.input-time {
+  width: 325px;
+  flex: none;
+}
+
+.checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 0;       /* 필수 */
+}
+
+.input-group {
+  margin-left: 0;       /* 혹시 flex 중앙정렬된 게 있을까봐 초기화 */
+  justify-content: flex-start;
+}
+
+/* 체크박스 크기 키우기 */
+.checkbox-wrapper input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  accent-color: #3b82f6; /* 체크된 색 */
   cursor: pointer;
 }
 
-.input-group button:hover {
-  background: #4288f8;
+/* ===== 버튼 ===== */
+.input-group button,
+.modal button,
+button {
+  background-color: #3b82f6;
+  color: white;
+  font-weight: 600;
+  font-size: 15px;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  white-space: nowrap;
 }
 
+.input-group button:hover,
+.modal button:hover {
+  background-color: #2563eb;
+}
+
+/* ===== 검색 결과, 관심목록 ===== */
+.search-result ul,
 .favorites-list ul {
   list-style: none;
   padding-left: 0;
+  margin-top: 8px;
 }
 
+.search-result li,
 .favorites-list li {
-  background: #f8f9fa;
-  padding: 10px 16px;
-  margin-bottom: 8px;
-  border-radius: 6px;
+  background-color: #f3f4f6;
+  padding: 12px 16px;
+  margin-bottom: 10px;
+  border-radius: 8px;
   cursor: pointer;
   transition: background-color 0.2s;
 }
 
+.search-result li:hover,
 .favorites-list li:hover {
-  background: #e2e6ea;
+  background-color: #e5e7eb;
 }
 
-.confirm-box p {
-  margin: 8px 0;
-  font-size: 15px;
-}
-
-.hidden {
-  display: none;
-}
-
-.search-result ul {
-  list-style: none;
-  padding-left: 0;
-  margin-top: 10px;
-}
-
-.search-result li {
-  padding: 10px;
-  background: #f0f2f5;
-  margin-bottom: 6px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.search-result li:hover {
-  background: #e0e5eb;
-}
-
-
+/* ===== 예약 확인 모달 ===== */
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
+  top: 0; left: 0;
   width: 100%;
   height: 100%;
   background: rgba(0,0,0,0.5);
@@ -132,29 +184,25 @@
 
 .modal {
   position: fixed;
-  top: 50%;
-  left: 50%;
+  top: 50%; left: 50%;
   transform: translate(-50%, -50%);
-  background: #fff;
-  padding: 30px 40px;
-  border-radius: 12px;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+  background: white;
+  padding: 36px 32px;
+  border-radius: 16px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
   z-index: 1000;
-  width: 400px;
-  max-width: 90%;
+  max-width: 400px;
+  width: 90%;
   text-align: center;
 }
 
-.modal button {
-  margin-top: 20px;
-  padding: 10px 20px;
-  background: #007bff;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
+.confirm-box p {
+  margin: 10px 0;
+  font-size: 16px;
+  color: #374151;
 }
 
-.modal button:hover {
-  background: #0056b3;
+/* ===== 숨김 클래스 ===== */
+.hidden {
+  display: none;
 }
