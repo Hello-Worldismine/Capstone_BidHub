@@ -97,6 +97,7 @@ env.bak/
 venv.bak/
 .env.docker
 env.zip
+.env.zip
 
 # Spyder project settings
 .spyderproject
