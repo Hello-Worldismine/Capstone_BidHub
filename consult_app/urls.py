@@ -11,4 +11,5 @@ urlpatterns = [
     path('agent/<str:room_name>/', views.agent_room, name='agent_room'),
 
     path('<str:room_name>/', views.room, name='room'),  # 사용자 채팅방
+    path('consult_app/agent/dashboard/rooms/', views.consult_active_rooms_api),
 ]

@@ -42,8 +42,16 @@ urlpatterns = [
 
     #매각결과조회
     path('result/', views.result, name='result'),
-    path('region_result/', views.region_result, name='region_result')
+    path('region_result/', views.region_result, name='region_result'),
     
-    
-]
+    # --- 실시간 상담 기능 ---
+path('consult/', views.consult_index, name='consult_app'),  # 법원 선택 페이지
+path('consult/enter/', views.consult_enter_court_room, name='enter_court_room'),
+path('consult/agent/dashboard/', views.consult_agent_dashboard, name='agent_dashboard'),
+path('consult_app/agent/dashboard/rooms/', views.consult_active_rooms_api),
+path('consult/agent/complete/<str:room_name>/', views.consult_complete_chat, name='complete_chat'),
+path('consult_app/agent/<str:room_name>/', views.consult_agent_room, name='agent_room'),
+path('consult_app/<str:room_name>/', views.consult_user_room, name='user_room'),  
 
+
+]
