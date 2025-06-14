@@ -1,7 +1,7 @@
 from allauth.account.forms import SignupForm
 from django import forms
 from accounts.models import User
-from accounts.models import Profile  # Profile 모델 import 추가
+from main.models import Profile  # Profile 모델 import 추가
 
 class CustomSignupForm(SignupForm):
     name = forms.CharField(max_length=100, required=True, label='이름')
