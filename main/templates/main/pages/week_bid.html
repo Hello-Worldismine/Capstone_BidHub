@@ -16,71 +16,77 @@
 
 {% block sidebar_content %}
 <h2>주간경매공고</h2>
-<br>
 <hr style="width: 1000px; margin: 0;">
-<form style="display: none;">{% csrf_token %}</form>
+
+<!-- 검색 결과 요약 -->
+<div class="search-summary" style="margin: 20px 0;">
+    <p>이번 주 경매: 총 {{ page_obj.paginator.count }}건 ({{ page_obj.number }}/{{ page_obj.paginator.num_pages }} 페이지)</p>
+</div>
 
 <div class="fav-container">
-  {% for item in favorite_list %}
+  {% for item in page_obj.object_list %}
   <div class="fav-card" data-item-id="{{ item.id }}">
     <div class="fav-image">
-      <img src="{% static 'images/placeholder.png' %}" alt="물건 이미지">
+      <img src="{% static 'img/bidhub-logo.png' %}" 
+           alt="물건 이미지" 
+           onerror="this.src='{% static 'img/choonsik/choonsik-main.jfif' %}';">
     </div>
     <div class="fav-details">
-      <!-- 하트 아이콘 -->
-      <div class="fav-heart" onclick="removeFavorite('{{ item.id }}', this)">
-        <i class="fas fa-heart heart-icon"></i>
+      <!-- 하트 아이콘 (즐겨찾기) -->
+      <div class="fav-heart" onclick="toggleFavorite('{{ item.case_number.case_number }}', this)">
+        <i class="far fa-heart heart-icon"></i>
       </div>
+      
       <div class="fav-top">
-        {# 물건 종류 표시 - badge #}
-        {% if item.building_type in "아파트,연립주택,오피스텔,단독주택,다세대주택,주상복합,다가구주택,주거기타" %}
-          <span class="badge property-type apt">{{ item.building_type }}</span>
-        {% elif item.building_type in "근링생활시설,주/상용건물,판매시설,위락시설,상가기타" %}
-          <span class="badge property-type store">{{ item.building_type }}</span>
-        {% elif item.building_type in "업무시설,종교시설,공장,창고시설,숙박시설,건물기타" %}
-          <span class="badge property-type etc-building">{{ item.building_type }}</span>
-        {% elif item.building_type in "대지,임야,답,잡종지,전" %}
-          <span class="badge property-type land">{{ item.building_type }}</span>
+        <!-- 물건 종류에 따른 배지 색상 -->
+        {% if item.property_type %}
+          {% if "아파트" in item.property_type or "연립주택" in item.property_type or "오피스텔" in item.property_type or "단독주택" in item.property_type or "다세대주택" in item.property_type or "주상복합" in item.property_type or "다가구주택" in item.property_type or "주거기타" in item.property_type %}
+            <span class="badge property-type apt">{{ item.property_type }}</span>
+          {% elif "근린생활시설" in item.property_type or "주/상용건물" in item.property_type or "판매시설" in item.property_type or "위락시설" in item.property_type or "상가기타" in item.property_type %}
+            <span class="badge property-type store">{{ item.property_type }}</span>
+          {% elif "업무시설" in item.property_type or "종교시설" in item.property_type or "공장" in item.property_type or "창고시설" in item.property_type or "숙박시설" in item.property_type or "건물기타" in item.property_type %}
+            <span class="badge property-type etc-building">{{ item.property_type }}</span>
+          {% elif "대지" in item.property_type or "임야" in item.property_type or "답" in item.property_type or "잡종지" in item.property_type or "전" in item.property_type %}
+            <span class="badge property-type land">{{ item.property_type }}</span>
+          {% else %}
+            <span class="badge property-type etc-land">{{ item.property_type }}</span>
+          {% endif %}
         {% else %}
           <span class="badge property-type etc-land">정보없음</span>
         {% endif %}
       
-        {# 사건번호 표시 - 링크 형태로 #}
+        <!-- 사건번호를 링크로 -->
         <span class="address">
           <a href="{% url 'tender_detail' case_number=item.case_number.case_number %}" style="text-decoration: none; color: inherit;">
             {{ item.case_number.case_number }}
           </a>
         </span>
       
-        {# 법원 이름 표시 #}
-        <span style="font-size: 12px; color: #666;">
-          {{ item.case_number.court_name }}
-        </span>
+        <!-- 법원 정보 -->
+        <span style="font-size: 12px; color: #666;">{{ item.case_number.court_name }}</span>
       </div>
       
-      <!--
-      <div class="fav-top">
-        {% if item.building_type in "아파트,연립주택,오피스텔,단독주택,다세대주택,주상부합,다가구주택,주거기타" %}
-          <span class="badge property-type apt">{{ item.building_type }}</span>
-        {% elif item.building_type in "근링생활시설,주/상용건물,판매시설,위락시설,상가기타" %}
-          <span class="badge property-type store">{{ item.building_type }}</span>
-        {% elif item.building_type in "업무시설,종교시설,공장,창고시설,숙박시설,건물기타" %}
-          <span class="badge property-type etc-building">{{ item.building_type }}</span>
-        {% elif item.building_type in "대지,임야,답,잡종지,전" %}
-          <span class="badge property-type land">{{ item.building_type }}</span>
-        {% else %}
-          <span class="badge property-type etc-land">{{ item.building_type }}</span>
-        {% endif %}
-        <span class="address">{{ item.address }}</span>
-        {% if item.is_new %}<span class="new-label">NEW</span>{% endif %}
-      </div>-->
+      <!-- 감정평가액 -->
       <div class="fav-price">
         {% if item.valuation_amount %}
-          {{ item.valuation_amount }}원
+          {% if item.valuation_amount >= 100000000 %}
+            {{ item.valuation_amount|floatformat:0|slice:":-8" }}억
+            {% if item.valuation_amount|floatformat:0|slice:"-8:" != "00000000" %}
+              {{ item.valuation_amount|floatformat:0|slice:"-8:-4"|add:"0000"|slice:":4" }}만원
+            {% else %}
+              원
+            {% endif %}
+          {% elif item.valuation_amount >= 10000 %}
+            {{ item.valuation_amount|floatformat:0|slice:":-4" }}만원
+          {% else %}
+            {{ item.valuation_amount|floatformat:0 }}원
+          {% endif %}
         {% else %}
           정보없음
         {% endif %}
       </div>
+      
+      <!-- 하단 정보 -->
       <div class="fav-bottom">
         <span>
           {% if item.auction_failures == 0 %}
@@ -98,116 +104,50 @@
       </div>
     </div>
   </div>
+  {% empty %}
+  <div class="no-result" style="text-align: center; padding: 50px; color: #666;">
+    <p>이번 주 예정된 경매가 없습니다.</p>
+  </div>
   {% endfor %}
-
-  <!-- 페이지네이션 영역 -->
-<div class="pagination">
-    {% if page_obj.has_previous %}
-      <a href="?page={{ page_obj.previous_page_number }}">&laquo;</a>
-    {% endif %}
-  
-    {% for num in page_obj.paginator.page_range %}
-      {% if page_obj.number == num %}
-        <span class="current">{{ num }}</span>
-      {% else %}
-        <a href="?page={{ num }}">{{ num }}</a>
-      {% endif %}
-    {% endfor %}
-  
-    {% if page_obj.has_next %}
-      <a href="?page={{ page_obj.next_page_number }}">&raquo;</a>
-    {% endif %}
-  </div>
-
-  <!-- 예시 카드들 -->
-   <!--
-  <div class="fav-card" data-item-id="demo1">
-    <div class="fav-heart" onclick="removeFavorite('demo1', this)">
-        <i class="fas fa-heart heart-icon"></i>
-      </div>
-
-    <div class="fav-image">
-      <img src="{% static 'img/choonsik/choonsik-3.jfif' %}" alt="물건 이미지">
-    </div>
-    <div class="fav-details">
-      
-      <div class="fav-top">
-        <span class="badge">아파트</span>
-        <span class="address">용인시 동천동, 현대2차홈타운</span>
-        <span class="new-label">NEW</span>
-      </div>
-      <div class="fav-price">7억 3500만원</div>
-      <div class="fav-bottom">
-        <span>첫 경매 · 2025-06-13(금) · D-14</span><br>
-        <span>경기도 용인시 수지구 동천로63번길 10</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="fav-card" data-item-id="demo2">
-    <div class="fav-heart" onclick="removeFavorite('demo2', this)">
-        <i class="fas fa-heart heart-icon"></i>
-      </div>
-    <div class="fav-image">
-      <img src="{% static 'img/choonsik/choonsik-2.jfif' %}" alt="물건 이미지">
-    </div>
-    <div class="fav-details">
-      
-      <div class="fav-top">
-        <span class="badge">오피스텔</span>
-        <span class="address">강남구 역삼동 삼익오피스텔</span>
-      </div>
-      <div class="fav-price">4억 2000만원</div>
-      <div class="fav-bottom">
-        <span>첫 경매 · 2025-07-01(화) · D-32</span><br>
-        <span>서울특별시 강남구 테헤란로 222</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="fav-card" data-item-id="demo3">
-    <div class="fav-heart" onclick="removeFavorite('demo2', this)">
-        <i class="fas fa-heart heart-icon"></i>
-      </div>
-    <div class="fav-image">
-      <img src="{% static 'img/choonsik/choonsik-main.jfif' %}" alt="물건 이미지">
-    </div>
-    <div class="fav-details">
-      <div class="fav-top">
-        <span class="badge">빌라</span>
-        <span class="address">인천 간석동 해피빌</span>
-      </div>
-      <div class="fav-price">1억 8000만원</div>
-      <div class="fav-bottom">
-        <span>첫 경매 · 2025-06-25(수) · D-26</span><br>
-        <span>인천 남동구 백범로 112</span>
-      </div>
-    </div>
-  </div> -->
 </div>
 
+<!-- 페이징 네비게이션 (csearch 스타일) -->
+{% if page_obj.paginator.num_pages > 1 %}
+<div class="pagination" style="text-align: center; margin: 30px 0;">
+    {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-secondary">이전</a>
+    {% endif %}
+    
+    <span style="margin: 0 15px;">
+        {{ page_obj.number }} / {{ page_obj.paginator.num_pages }} 페이지
+    </span>
+    
+    {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}" class="btn btn-secondary">다음</a>
+    {% endif %}
+</div>
+{% endif %}
+
 <script>
-function getCSRFToken() {
-  return document.querySelector('[name=csrfmiddlewaretoken]').value;
+// 즐겨찾기 토글 함수
+function toggleFavorite(caseNumber, iconElement) {
+    const heartIcon = iconElement.querySelector('.heart-icon');
+    const isFavorited = heartIcon.classList.contains('fas');
+    
+    // 임시로 UI만 변경 (실제 서버 연동은 나중에)
+    if (isFavorited) {
+        heartIcon.classList.remove('fas');
+        heartIcon.classList.add('far');
+        console.log(`Removed ${caseNumber} from favorites`);
+    } else {
+        heartIcon.classList.remove('far');
+        heartIcon.classList.add('fas');
+        console.log(`Added ${caseNumber} to favorites`);
+    }
 }
 
-function removeFavorite(itemId, iconElement) {
-  // 실제 서버 요청 부분
-  fetch(`/favorites/remove/${itemId}/`, {
-    method: 'POST',
-    headers: {
-      'X-CSRFToken': getCSRFToken(),
-    },
-  })
-  .then(res => {
-    if (res.ok) {
-      // 카드 삭제
-      const card = iconElement.closest('.fav-card');
-      card.remove();
-    } else {
-      alert("삭제 실패");
-    }
-  });
+function getCSRFToken() {
+  return document.querySelector('[name=csrfmiddlewaretoken]').value;
 }
 </script>
 {% endblock %}

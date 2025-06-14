@@ -557,31 +557,37 @@ def find_id(request):
 
 #오늘의경매 관련 Views
 def today_bid(request):
+    """오늘의 경매"""
     today = date.today()
-    items = AuctionItem.objects.filter(auction_date__date=today).order_by('auction_date')
+    items = AuctionItem.objects.filter(
+        auction_date__date=today
+    ).select_related('case_number').order_by('auction_date')
 
-    paginator = Paginator(items, 10)
-    page_number = request.GET.get('page')
+    # 페이지네이션 (20개씩)
+    paginator = Paginator(items, 20)
+    page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
 
     context = {
-        'favorite_list': page_obj,
         'page_obj': page_obj,
     }
     return render(request, 'main/pages/today_bid.html', context)
 
 #주간경매공고 관련 views
 def week_bid(request):
+    """주간 경매 공고"""
     today = date.today()
     end_date = today + timedelta(days=7)
-    items = AuctionItem.objects.filter(auction_date__date__range=(today, end_date)).order_by('auction_date')
+    items = AuctionItem.objects.filter(
+        auction_date__date__range=(today, end_date)
+    ).select_related('case_number').order_by('auction_date')
 
-    paginator = Paginator(items, 10)
-    page_number = request.GET.get('page')
+    # 페이지네이션 (20개씩)
+    paginator = Paginator(items, 20)
+    page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
 
     context = {
-        'favorite_list': page_obj,
         'page_obj': page_obj,
     }
     return render(request, 'main/pages/week_bid.html', context)
