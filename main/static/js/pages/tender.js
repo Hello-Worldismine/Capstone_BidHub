@@ -242,6 +242,85 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     };
 
+    function openBidHistoryModal(tradeNum, userAddress) {
+        const modal = document.getElementById("bidHistoryModal");
+        const listContainer = document.getElementById("bidHistoryList");
+        modal.style.display = "block";
+        listContainer.innerHTML = "로딩 중...";
+
+        fetch(`/api/get_bid_events/?trade_num=${tradeNum}`)
+            .then(res => res.json())
+            .then(data => {
+            const bids = data.bids;
+
+      // 정렬: 금액 내림차순, 같으면 시간 내림차순
+            bids.sort((a, b) => {
+        if (b.amount !== a.amount) return b.amount - a.amount;
+        return b.bidtime - a.bidtime;
+        });
+
+        const userWalletAddress = window.user_wallet_address || "";
+        const list = bids.map((bid, i) => {
+            const rank = i + 1;
+            const bidderAddress = bid.bidder.toLowerCase();
+            console.log(`비교 중: ${bid.bidder.toLowerCase()} === {{ user_wallet_address|default:'' }}`);
+
+            const isMine = bidderAddress === userWalletAddress;
+            const timestamp = parseInt(bid.bidtime);  
+            const date = isNaN(timestamp)
+            ? "시간 정보 없음"
+            : new Date((timestamp + 9 * 3600) * 1000).toLocaleString();
+
+            
+
+        return `
+          <div style="margin-bottom: 10px;">
+            <strong>${rank}순위</strong><br>
+            ${bid.bidder} ${isMine ? "(나)" : ""}<br>
+            금액: ${bid.amount}<br>
+            시간: ${date}
+          </div>
+        `;
+      }).join("");
+
+      listContainer.innerHTML = list || "입찰 기록이 없습니다.";
+    })
+    .catch(err => {
+      listContainer.innerHTML = "에러 발생: " + err;
+    });
+}
+
+function openBidHistoryModalFromCase(caseNumber, userAddress) {
+    const tradeNum = caseNumber.replace(/[^0-9]/g, '');  // "2023타경7092" → "20237092"
+    openBidHistoryModal(tradeNum, userAddress);
+}
+
+
+// ── 모달 닫기 ─────────────────────────────
+function closeBidHistoryModal() {
+  document.getElementById("bidHistoryModal").style.display = "none";
+}
+
+    window.openBidHistoryModal = openBidHistoryModal;
+    window.closeBidHistoryModal = closeBidHistoryModal;
+    window.openBidHistoryModalFromCase = openBidHistoryModalFromCase;
+    // 외부에서 호출 가능한 함수들
+    window.setMainImage = function (index) {
+        currentIndex = index;
+        updateMainImage();
+    };
+
+    window.prevImage = function () {
+        currentIndex = (currentIndex - 1 + imagePaths.length) % imagePaths.length;
+        updateMainImage();
+    };
+
+    window.nextImage = function () {
+        currentIndex = (currentIndex + 1) % imagePaths.length;
+        updateMainImage();
+    };
+
+
     // 전역 설정 함수 (템플릿에서 호출)
     window.initializePage = function (auctionDate) {
         setupCountdown(auctionDate);
