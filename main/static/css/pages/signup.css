@@ -1,0 +1,155 @@
+/* signup.css - 회원가입 페이지 전용 스타일 */
+
+body {
+  background-color: #f8f9fc;
+  font-family: 'Noto Sans KR', sans-serif;
+  margin: 0;
+  padding: 0;
+  display: block !important;
+  align-items: stretch !important;
+  justify-content: normal !important;
+}
+
+.login-container {
+  background-color: #fff;
+  max-width: 650px;
+  margin: 60px auto;
+  padding: 40px 60px;
+  border-radius: 10px;
+  border: 1px solid #e2e2e2;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+
+/* 내부 박스 */
+.login-box {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* 제목 */
+.login-box h1 {
+  font-size: 24px;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.login-box p {
+  font-size: 14px;
+  color: #777;
+  margin-bottom: 20px;
+}
+
+/* 폼 섹션 제목 */
+.form-section {
+  margin: 25px 0;
+  border-top: 1px solid #eee;
+  padding-top: 20px;
+}
+
+.form-section h4 {
+  margin-bottom: 15px;
+  font-size: 18px;
+  color: #3b82f6;
+}
+
+/* 각 필드 그룹 */
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: #444;
+}
+
+.input-field {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 15px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  outline: none;
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.input-field:focus {
+  border-color: #3b82f6;
+}
+
+.is-invalid {
+  border-color: #e63946;
+}
+
+.invalid-feedback {
+  color: #e63946;
+  font-size: 0.85em;
+  margin-top: 5px;
+}
+
+.form-text {
+  font-size: 0.85em;
+  color: #666;
+}
+
+/* 제출 버튼 */
+.btn-primary {
+  width: 100%;
+  padding: 12px;
+  background-color: #3b82f6;
+  color: white;
+  font-weight: bold;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 15px;
+  margin-top: 20px;
+}
+
+.btn-primary:hover {
+  background-color: #2563eb;
+}
+
+/* 소셜 로그인 */
+.social-login {
+  text-align: center;
+  margin-top: 30px;
+}
+
+.btn-kakao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 18px;
+  background-color: #fee500;
+  color: #3c1e1e;
+  border: none;
+  border-radius: 9999px;
+  font-weight: bold;
+  text-decoration: none;
+  font-size: 14px;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.btn-kakao:hover {
+  background-color: #ffeb3b;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .login-container {
+    padding: 30px 20px;
+  }
+
+  .login-box h1 {
+    font-size: 20px;
+  }
+
+  .btn-primary {
+    font-size: 14px;
+  }
+}

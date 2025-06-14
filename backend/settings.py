@@ -10,26 +10,31 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# decouple import 시도 및 fallback 처리
+try:
+    from decouple import config
+except ImportError:
+    def config(key, default=None, cast=str):
+        return os.environ.get(key, default)
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
+# Docker 환경 감지
+DOCKER_ENV = os.environ.get('DOCKER_ENV', False)
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-co-ul@sm@&5r74m@79q8$^#knb=4*7o-#ic0sm+v^n!khfz0dr'
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-co-ul@sm@&5r74m@79q8$^#knb=4*7o-#ic0sm+v^n!khfz0dr')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = ['*']
-
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*').split(',')
 
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -93,23 +98,8 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'backend.wsgi.application'
-STATICFILES_DIRS = [
-    BASE_DIR / 'main/static',  # main 앱의 정적 파일 경로 추가
-]
 
-# Database
-# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': 'auctiondb2',
-#         'USER': 'root',  # 또는 capuser
-#         'PASSWORD': '1q2w3e4r',
-#         'HOST': 'localhost',
-#         'PORT': '3306',
-#     }
-# }
 
 
 DATABASES = {
@@ -154,7 +144,35 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+
+# Docker 환경 감지
+DOCKER_ENV = os.environ.get('DOCKER_ENV', False)
+
+if DOCKER_ENV:
+    STATIC_ROOT = '/app/staticfiles'
+else:
+    STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# 실제 존재하는 static 디렉토리들 설정
+STATICFILES_DIRS = [
+    BASE_DIR / 'auth_api/static',
+    BASE_DIR / 'main/static',
+    BASE_DIR / 'chatbot/static',
+]
+
+# Media files
+MEDIA_URL = '/media/'
+if DOCKER_ENV:
+    MEDIA_ROOT = '/app/media'
+else:
+    MEDIA_ROOT = BASE_DIR / 'media'
+
+# Static files finder 설정
+STATICFILES_FINDERS = [
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -248,3 +266,24 @@ def activate_sqlite_wal(sender, connection, **kwargs):
         except OperationalError:
             # 이미 락이 걸려 있으면 무시
             pass
+
+# Docker 환경 감지
+DOCKER_ENV = os.environ.get('DOCKER_ENV', False)
+
+if DOCKER_ENV:
+    ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost').split(',')
+    
+    # Redis 설정 (Docker 환경)
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {
+                "hosts": [("redis", 6379)],
+            },
+        },
+    }
+
+# Static files settings for Docker
+if DOCKER_ENV:
+    STATIC_ROOT = '/app/staticfiles'
+    MEDIA_ROOT = '/app/media'

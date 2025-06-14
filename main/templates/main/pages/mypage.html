@@ -1,70 +1,121 @@
-{% extends 'main/layout/layout.html' %}
+{% extends 'main/layout/sidebar_layout.html' %}
 {% load static %}
 
-{% block content %}
-<main class="main-content">
-  <div class="page-container">
-    <!-- 사이드 메뉴 -->
-    <aside class="sidebar">
-      <ul class="side-menu">
-        <li><a href="{% url 'bid_history' %}">나의입찰내역</a></li>
-        <li><a href="{% url 'refund' %}">보증금반환현황조회</a></li>
-        <li><a href="{% url 'favlist' %}">즐겨찾기목록</a></li>
-        <li><a href="{% url 'auto_bid' %}">자동입찰설정</a></li>
-        <li class="active"><a href="{% url 'mypage' %}">마이페이지</a></li>
-      </ul>
-    </aside>
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/pages/mypage.css' %}">
+{% endblock %}
+{% block sidebar_menu %}
+<li><a href="{% url 'bid_history' %}">나의입찰내역</a></li>
+<li><a href="{% url 'favlist' %}">관심목록</a></li>
+<li><a href="{% url 'auto_bid' %}">자동입찰예약</a></li>
+<li class="active"><a href="#">마이페이지</a></li>
+{% endblock %}
 
-    <!-- 마이페이지 본문 -->
-    <section class="page-content">
-      <h2>마이페이지</h2>
+{% block sidebar_content %}
+<h2>마이페이지</h2>
+<hr style="width: 1000px; margin: 0;">
 
+<div class="main-content">
       <!-- 로그인 정보 -->
-      <div class="mypage-section">
-        <h4>로그인 정보</h4>
-        <p><strong>아이디:</strong> {{ user.username }}</p>
-        <p><strong>이메일:</strong> {{ user.email }}</p>
-      </div>
+<div class="mypage-section">
+  <h4>로그인 정보</h4>
+  <table class="profile-table">
+    <tbody>
+      <tr>
+        <th>아이디</th>
+        <td>{{ user.username }}</td>
+      </tr>
+      <tr>
+        <th>이메일</th>
+        <td>{{ user.email }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
 
       <!-- Metamask 지갑 주소 -->
       <div class="mypage-section">
         <h4>Metamask 지갑 주소</h4>
-        <form method="post" action="{% url 'update_wallet' %}">
+        <form method="post" action="{% url 'update_wallet' %}" id="walletForm">
           {% csrf_token %}
-          <!-- 이 아래 있는 태그가 출금 금액 입력 태그야 -->
-          <input type="text" id="moneyInput" name="withdraw" class="input-field" placeholder="출금할 금액을 입력하세요" />
-          <button id="withdrawBtn" type="button" class="btn-primary" style="margin-top: 10px;">출금</button>
-          <input type="text" id="walletInput" name="wallet_address" class="input-field" placeholder="0x1234abcd5678fgh..." />
-          <button class="btn-primary" type="submit" style="margin-top: 10px;">저장</button>
+          <div class="wallet-form">
+            <input type="text" id="walletInput" name="wallet_address"
+                   class="input-field wallet-input"
+                   placeholder="0x1234abcd5678fgh..."
+                   value="{{ user_profile.wallet_address|default:'' }}"
+                   {% if user_profile.wallet_address %}readonly{% endif %} />
+            <button class="btn-primary wallet-btn" type="button" id="walletToggleBtn">
+              {% if user_profile.wallet_address %}수정{% else %}저장{% endif %}
+            </button>
+          </div>
         </form>
       </div>
+      
+      
 
       <!-- 기본 입찰자 정보 -->
-      <div class="mypage-section" id="editableSection">
+
+      <div class="mypage-section">
         <h4>기본 입찰자 정보</h4>
-
-        <label>이름</label>
-        <p id="nameView">{{ profile.name }}</p>
-        <input type="text" id="nameInput" class="input-field" value="{{ profile.name }}" style="display: none;" />
-
-        <label>주민등록번호 / 법인번호</label>
-        <p id="idView">{{ profile.identifier }}</p>
-        <input type="text" id="idInput" class="input-field" value="{{ profile.identifier }}" style="display: none;" />
-
-        <label>전화번호</label>
-        <p id="phoneView">{{ profile.phone }}</p>
-        <input type="text" id="phoneInput" class="input-field" value="{{ profile.phone }}" style="display: none;" />
-
-        <label>주소</label>
-        <p id="addrView">{{ profile.address }}</p>
-        <input type="text" id="addrInput" class="input-field" value="{{ profile.address }}" style="display: none;" />
-
-        <button class="btn-primary" id="editBtn" style="margin-top: 16px;">정보 수정</button>
+        
+        <form method="post" action="{% url 'update_profile' %}" id="profileForm" style="display: none;">
+          {% csrf_token %}
+          <input type="hidden" name="name" id="nameFormInput">
+          <input type="hidden" name="id_number" id="idFormInput">
+          <input type="hidden" name="phone" id="phoneFormInput">
+          <input type="hidden" name="address" id="addrFormInput">
+        </form>
+        
+        <table class="profile-table">
+          <tbody>
+            <tr>
+              <th>이름</th>
+              <td>
+                <p id="nameView">{{ profile.name|default:"정보 없음" }}</p>
+                <input type="text" id="nameInput" class="input-field" value="{{ profile.name|default:'' }}" style="display: none;" />
+              </td>
+            </tr>
+            <tr>
+              <th>주민등록번호 / 법인번호</th>
+              <td>
+                <p id="idView">
+                  {% if profile.identifier and profile.identifier != "정보 없음" %}
+                    {{ profile.identifier|slice:":6" }}-*******
+                  {% else %}
+                    정보 없음
+                  {% endif %}
+                </p>
+                <input type="text" id="idInput" class="input-field" value="{{ profile.identifier|default:'' }}" style="display: none;" />
+              </td>
+            </tr>
+            <tr>
+              <th>전화번호</th>
+              <td>
+                <p id="phoneView">{{ profile.phone|default:"정보 없음" }}</p>
+                <input type="text" id="phoneInput" class="input-field" value="{{ profile.phone|default:'' }}" style="display: none;" />
+              </td>
+            </tr>
+            <tr>
+              <th>주소</th>
+              <td>
+                <p id="addrView">{{ profile.address|default:"정보 없음" }}</p>
+                <input type="text" id="addrInput" class="input-field" value="{{ profile.address|default:'' }}" style="display: none;" />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      
+        <button class="btn-primary" id="editBtn" style="margin-top: 20px;">정보 수정</button>
       </div>
+      
+        
 
     </section>
   </div>
 </main>
+
 <script>
   // Metamask 지갑 주소 자동입력
   window.addEventListener('DOMContentLoaded', async () => {
@@ -72,6 +123,7 @@
       try {
         let accounts = await window.ethereum.request({ method: 'eth_accounts' });
         if (accounts.length === 0) {
+          // 사용자가 연결을 아직 허용하지 않은 경우
           await window.ethereum.request({ method: 'eth_requestAccounts' });
           accounts = await window.ethereum.request({ method: 'eth_accounts' });
         }
@@ -86,98 +138,83 @@
     }
   });
 
+  const walletInput = document.getElementById('walletInput');
+  const walletToggleBtn = document.getElementById('walletToggleBtn');
+  const walletForm = document.getElementById('walletForm');
+
+  walletToggleBtn.addEventListener('click', () => {
+    if (walletInput.hasAttribute('readonly')) {
+      // 수정 모드 전환
+      walletInput.removeAttribute('readonly');
+      walletInput.focus();
+      walletToggleBtn.textContent = '저장';
+    } else {
+      // 저장 모드 - 서버로 제출
+      walletForm.submit();
+    }
+  });
+
+  // Metamask 자동입력 기능 (기존 유지)
+  window.addEventListener('DOMContentLoaded', async () => {
+    if (typeof window.ethereum !== 'undefined') {
+      try {
+        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+        if (accounts.length > 0 && walletInput.value === '') {
+          walletInput.value = accounts[0];
+        }
+      } catch (err) {
+        console.error("Metamask 주소 자동 입력 실패:", err);
+      }
+    }
+  });
+
   // 기본 정보 수정 기능
   const editBtn = document.getElementById('editBtn');
+  const profileForm = document.getElementById('profileForm');
   let isEditing = false;
   const fields = ['name', 'id', 'phone', 'addr'];
 
   editBtn.addEventListener('click', () => {
-    fields.forEach(field => {
-      const input = document.getElementById(field + 'Input');
-      const view = document.getElementById(field + 'View');
-      if (!isEditing) {
+    if (!isEditing) {
+      // 수정 모드 진입
+      fields.forEach(field => {
+        const input = document.getElementById(field + 'Input');
+        const view = document.getElementById(field + 'View');
         input.style.display = 'block';
         view.style.display = 'none';
-      } else {
-        view.textContent = input.value;
+        input.focus();
+      });
+      editBtn.textContent = '저장';
+    } else {
+      // 저장 모드 - 서버로 데이터 전송
+      fields.forEach(field => {
+        const input = document.getElementById(field + 'Input');
+        const view = document.getElementById(field + 'View');
+        const formInput = document.getElementById(field + 'FormInput');
+        
+        // 폼에 데이터 설정
+        if (field === 'id') {
+          formInput.name = 'id_number';
+          formInput.value = input.value;
+        } else if (field === 'addr') {
+          formInput.name = 'address';
+          formInput.value = input.value;
+        } else {
+          formInput.name = field;
+          formInput.value = input.value;
+        }
+        
+        // 화면 업데이트
+        view.textContent = input.value || '정보 없음';
         input.style.display = 'none';
         view.style.display = 'block';
-      }
-    });
-    editBtn.textContent = isEditing ? '정보 수정' : '확인';
+      });
+      
+      // 폼 제출
+      profileForm.submit();
+    }
+    
     isEditing = !isEditing;
   });
-
-  // 출금 처리
-  document.getElementById('withdrawBtn').addEventListener('click', async () => {
-  const krwAmount = document.getElementById('moneyInput').value;
-  const ethAmount = (krwAmount / 1e10).toString();
-  const toAddress = document.getElementById('walletInput').value;
-
-  console.log("[출금 시작]");
-  console.log("KRW 입력값:", krwAmount);
-  console.log("ETH 환산값:", ethAmount);
-  console.log("출금 주소:", toAddress);
-
-  if (!ethAmount || !toAddress) {
-    alert("금액 또는 주소가 비어 있습니다.");
-    return;
-  }
-
-  try {
-    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-    const from = accounts[0];
-    console.log("Metamask 계정:", from);
-
-    // 1. 서버에서 nonce 받아오기
-    const nonceRes = await fetch(`/api/get_nonce/?user=${from}&action_index=3&t=${Date.now()}`);
-    const { nonce } = await nonceRes.json();
-    console.log("받은 nonce:", nonce);
-
-    // 2. hash 생성
-    const ethersProvider = new ethers.providers.Web3Provider(window.ethereum);
-    const signer = ethersProvider.getSigner();
-
-    const packed = ethers.utils.solidityPack(
-      ["uint256", "address", "uint256"],
-      [ethers.utils.parseEther(ethAmount), toAddress, nonce]
-    );
-
-    const hash = ethers.utils.keccak256(packed);
-    console.log("서명할 해시:", hash);
-
-    const signature = await signer.signMessage(ethers.utils.arrayify(hash));
-    console.log("서명 결과:", signature);
-    const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
-
-    // 3. 백엔드에 전송
-const res = await fetch('/api/withdraw/', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'X-CSRFToken': csrfToken
-  },
-  body: JSON.stringify({
-    amount: ethers.utils.parseEther(ethAmount).toString(),
-    to_address: toAddress,
-    nonce,
-    signature
-  })
-});
-    const result = await res.json();
-    console.log("서버 응답 결과:", result);
-
-    if (result.success) {
-      alert("출금 성공");
-    } else {
-      alert("출금 실패: " + (result.message || "오류"));
-    }
-
-  } catch (err) {
-    console.error("출금 처리 중 오류:", err);
-    alert("출금 실패: Metamask 또는 네트워크 오류");
-  }
-});
 </script>
-
 {% endblock %}

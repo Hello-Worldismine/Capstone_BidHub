@@ -12,7 +12,7 @@
   {% endblock %}
 </head>
 
-<body>
+<body data-wallet="{{ user.profile.wallet_address|default:'' }}">
   <!-- Header -->
   <header class="header">
     <nav class="navbar">
@@ -70,7 +70,7 @@
           <span class="wallet" id="wallet-display">
             <i class="fa-solid fa-won-sign"></i> 예치금 조회 중...
           </span>
-          <a href="{% url 'mypage' %}">마이페이지</a>
+          <a href="{% url 'mypage' %}" class="mypage-btn" style="color: #3b82f6;"><i class="fas fa-user"></i> 마이페이지</a>
           <form method="POST" action="{% url 'account_logout' %}" style="display:inline;">
             {% csrf_token %}
             <button type="submit" class="logout-btn">로그아웃</button>
@@ -95,8 +95,8 @@
       <div class="footer-group">
         <h4>경매검색</h4>
         <ul>
-          <li><a href="#">오늘의경매</a></li>
-          <li><a href="#">주간경매공고</a></li>
+          <li><a href="{% url 'today_bid' %}">오늘의경매</a></li>
+          <li><a href="{% url 'week_bid' %}">주간경매공고</a></li>
           <li><a href="{% url 'fsearch' %}">빠른검색</a></li>
           <li><a href="{% url 'csearch' %}">조건검색</a></li>
         </ul>
@@ -104,8 +104,8 @@
       <div class="footer-group">
         <h4>매각결과</h4>
         <ul>
-          <li><a href="#">매각결과조회</a></li>
-          <li><a href="#">지역별매각결과</a></li>
+          <li><a href="{% url 'result' %}">매각결과조회</a></li>
+          <li><a href="{% url 'region_result' %}">지역별매각결과</a></li>
         </ul>
       </div>
       <div class="footer-group">
@@ -118,7 +118,7 @@
       <div class="footer-group">
         <h4>고객지원</h4>
         <ul>
-          <li><a href="#">챗봇상담</a></li>
+          <li><a href="{% url 'chatbot' %}">챗봇상담</a></li>
           <li><a href="#">실시간고객지원</a></li>
         </ul>
       </div>

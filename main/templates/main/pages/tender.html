@@ -17,10 +17,12 @@
 <div class="container">
   <div class="left-section">
     <!-- 메인 이미지 + 좌우 화살표 -->
-    <div class="main-image-container">
+    <div class="main-image-container" style="height: 400px; overflow: hidden;">
       <button class="arrow left" onclick="prevImage()">&#10094;</button>
-      <img id="mainImage" src="{% if image_paths %}{{ image_paths.0 }}{% else %}{% static 'img/ex/01.png' %}{% endif %}"
-        alt="메인 이미지" />
+      <img id="mainImage" 
+           src="{% if image_paths %}{{ image_paths.0 }}{% else %}{% static 'img/ex/01.png' %}{% endif %}"
+           alt="메인 이미지" 
+           style="width: 100%; height: 100%; object-fit: cover; object-position: center;" />
       <button class="arrow right" onclick="nextImage()">&#10095;</button>
       <div id="image-counter">1 / {{ image_paths|length|default:5 }}</div>
     </div>
@@ -85,7 +87,7 @@
       <button type="button" class="submit-btn"
         onclick="location.href='{% url 'bidform' %}?case_number={{ property_info.case_number }}'">입찰표 작성하기</button>
       <div class="actions">
-        <button type="button" onclick="openBidHistoryModalFromCase('{{ property_info.case_number }}', '{{ user_wallet_address }}')">입찰 내역 보기</button>
+        <button type="button" onclick="location.href='{% url 'bid_history' %}'">입찰 내역 보기</button>
         <button type="button" onclick="addToFavorites('{{ property_info.case_number }}')">관심 목록 추가</button>
       </div>
     </form>
@@ -241,45 +243,47 @@
 
 </div>
 
+<!-- 이미지 확대용 모달 -->
+<div id="imageModal" class="modal">
+  <span class="close">&times;</span>
+  <button class="modal-arrow left" id="modalPrev">&#10094;</button>
+  <img class="modal-content" id="modalImage">
+  <button class="modal-arrow right" id="modalNext">&#10095;</button>
+</div>
+
 <script>
-  window.user_wallet_address = "{{ user_wallet_address|default:'' }}".toLowerCase();
-  document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", function () {
+    console.log("DOM loaded, initializing page..."); // 디버깅용
+    
     // 이미지 경로 설정
     const imagePaths = [
-      {% for image_path in image_paths %}
-            "{{ image_path }}"{% if not forloop.last %}, {% endif %}
-  {% empty %}
-  "{% static 'img/ex/01.png' %}",
-    "{% static 'img/ex/02.png' %}",
-    "{% static 'img/ex/03.png' %}",
-    "{% static 'img/ex/04.png' %}",
-    "{% static 'img/ex/05.jpg' %}"
-  {% endfor %}
+        {% for image_path in image_paths %}
+        "{{ image_path }}"{% if not forloop.last %},{% endif %}
+        {% empty %}
+        "{% static 'img/ex/01.png' %}",
+        "{% static 'img/ex/02.png' %}",
+        "{% static 'img/ex/03.png' %}",
+        "{% static 'img/ex/04.png' %}",
+        "{% static 'img/ex/05.jpg' %}"
+        {% endfor %}
     ];
 
-  // tender.js에서 정의한 함수들 호출
-  window.setImagePaths(imagePaths);
-  window.initializePage("{{ item_details.auction_date|date:'Y-m-d' }}");
+    console.log("Image paths:", imagePaths); // 디버깅용
 
-  // 즐겨찾기 버튼 이벤트 설정
-  const favoriteBtn = document.querySelector('button[onclick*="addToFavorites"]');
-  if (favoriteBtn) {
-    favoriteBtn.onclick = function () {
-      window.addToFavorites(
-        "{{ property_info.case_number }}",
-        "{{ property_info.min_bid_price }}",
-        "{{ item_details.auction_date|date:'Y-m-d' }}"
-      );
-    };
-  }
-});
-</script>
+    // tender.js에서 정의한 함수들 호출 (약간의 지연을 줘서 확실히 로드되도록)
+    setTimeout(function() {
+        if (window.setImagePaths) {
+            window.setImagePaths(imagePaths);
+        }
+        if (window.initializePage) {
+            window.initializePage("{{ item_details.auction_date|date:'Y-m-d' }}");
+        }
+    }, 100);
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const auctionDate = "{{ item_details.auction_date|date:'c' }}";
-    
+    // 입찰 시간 체크 함수
     function checkBiddingTime() {
+        const auctionDate = "{{ item_details.auction_date|date:'c' }}";
+        
         if (!auctionDate || auctionDate === "None") return true;
         
         const auctionDateTime = new Date(auctionDate);
@@ -288,34 +292,44 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const bidButton = document.querySelector('button[onclick*="bidform"]');
         
+        if (!bidButton) return;
+        
         if (now < auctionDateTime) {
             bidButton.disabled = true;
             bidButton.textContent = "입찰 시간 전";
+            bidButton.style.backgroundColor = "#ccc";
             return false;
         } else if (now > biddingEndTime) {
             bidButton.disabled = true;
             bidButton.textContent = "입찰 시간 종료";
+            bidButton.style.backgroundColor = "#ccc";
             return false;
         } else {
             bidButton.disabled = false;
             bidButton.textContent = "입찰표 작성하기";
+            bidButton.style.backgroundColor = "#3B82F6";
             return true;
         }
     }
     
-    // 초기 체크 및 1분마다 업데이트
+    // 입찰 시간 체크 초기 실행 및 주기적 업데이트
     checkBiddingTime();
     setInterval(checkBiddingTime, 60000);
+
+    // 즐겨찾기 버튼 이벤트 설정
+    const favoriteBtn = document.querySelector('button[onclick*="addToFavorites"]');
+    if (favoriteBtn) {
+        favoriteBtn.onclick = function(e) {
+            e.preventDefault();
+            if (window.addToFavorites) {
+                window.addToFavorites(
+                    "{{ property_info.case_number }}",
+                    "{{ property_info.min_bid_price }}",
+                    "{{ item_details.auction_date|date:'Y-m-d' }}"
+                );
+            }
+        };
+    }
 });
 </script>
-
-<!-- 이미지 확대용 모달 -->
-<div id="imageModal" class="modal">
-  <span class="close">&times;</span>
-  <button class="modal-arrow left" id="modalPrev">&#10094;</button>
-  <img class="modal-content" id="modalImage">
-  <button class="modal-arrow right" id="modalNext">&#10095;</button>
-</div>
-{% include 'main/pages/bidmodal.html' %}
-<link rel="stylesheet" href="{% static 'css/pages/modal.css' %}">
 {% endblock %}

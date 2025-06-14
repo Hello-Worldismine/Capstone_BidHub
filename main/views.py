@@ -518,11 +518,6 @@ def get_favorite_properties(request):
         return JsonResponse({'success': True, 'favorites': []})
 
 # Add missing view functions referenced in templates
-def bid_history(request):
-    return render(request, 'main/pages/bid_history.html')
-
-def favlist(request):
-    return render(request, 'main/pages/favlist.html') #수정 (favorites -> favlist)
 
 #로그인관련view
 def join(request):
@@ -1173,4 +1168,86 @@ COURT_CODE_MAP = {
     "수원가정법원": "suwon_family",
     "수원회생법원": "suwon_rehab"
 }
+
+
+@login_required(login_url='account_login') 
+def bid_history(request):
+    return render(request, 'main/pages/bid_history.html')
+
+@login_required(login_url='account_login') 
+def favlist(request):
+    return render(request, 'main/pages/favlist.html')
+
+@login_required(login_url='account_login') 
+def bidform(request):
+    return render(request, 'main/pages/bidform.html')
+
+@login_required
+def mypage(request):
+    user = request.user
+    
+    # Profile 모델이 있는지 확인하고 없으면 생성
+    try:
+        user_profile = user.profile
+    except:
+        # Profile이 없으면 User 모델의 데이터로 생성
+        from accounts.models import Profile
+        user_profile = Profile.objects.create(
+            user=user,
+            name=getattr(user, 'name', ''),
+            id_number=getattr(user, 'id_number', ''),
+            phone=getattr(user, 'phone', ''),
+            address=getattr(user, 'address', ''),
+        )
+    
+    # 컨텍스트 데이터 준비
+    context = {
+        'user': user,
+        'user_profile': user_profile,
+        'profile': {
+            'name': user_profile.name or getattr(user, 'name', '정보 없음'),
+            'identifier': user_profile.id_number or getattr(user, 'id_number', '정보 없음'),
+            'phone': user_profile.phone or getattr(user, 'phone', '정보 없음'),
+            'address': user_profile.address or getattr(user, 'address', '정보 없음'),
+        }
+    }
+    
+    return render(request, 'main/pages/mypage.html', context)
+
+@login_required
+def update_profile(request):
+    if request.method == 'POST':
+        user = request.user
+        
+        # User 모델 업데이트
+        if hasattr(user, 'name'):
+            user.name = request.POST.get('name', '')
+        if hasattr(user, 'id_number'):
+            user.id_number = request.POST.get('id_number', '')
+        if hasattr(user, 'phone'):
+            user.phone = request.POST.get('phone', '')
+        if hasattr(user, 'address'):
+            user.address = request.POST.get('address', '')
+        user.save()
+        
+        # Profile 모델 업데이트
+        try:
+            profile = user.profile
+            profile.name = request.POST.get('name', '')
+            profile.id_number = request.POST.get('id_number', '')
+            profile.phone = request.POST.get('phone', '')
+            profile.address = request.POST.get('address', '')
+            profile.save()
+        except:
+            # Profile이 없으면 생성
+            from accounts.models import Profile
+            Profile.objects.create(
+                user=user,
+                name=request.POST.get('name', ''),
+                id_number=request.POST.get('id_number', ''),
+                phone=request.POST.get('phone', ''),
+                address=request.POST.get('address', ''),
+            )
+    
+    return redirect('mypage')
 

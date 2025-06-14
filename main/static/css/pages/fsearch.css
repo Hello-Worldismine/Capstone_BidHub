@@ -1,0 +1,175 @@
+/* ===== 공통 ===== */
+body {
+    font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
+    background-color: #f9fafb;
+    color: #1f2937;
+  }
+  
+  /* ===== 타이틀 ===== */
+  h2 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 24px;
+    color: #111827;
+  }
+  
+  /* ===== 검색 폼 ===== */
+  .search-box {
+    max-width: 600px;
+    margin : 20px 0;
+  }
+  
+  .form-group {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  label {
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  
+  select,
+  input[type="text"] {
+    padding: 12px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.2s;
+  }
+  
+  select:focus,
+  input[type="text"]:focus {
+    border-color: #3b82f6;
+    outline: none;
+  }
+  
+  /* 사건번호 라인 */
+  .horizontal-group {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .case-number-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+  }
+  
+  .fixed-text {
+    font-weight: 500;
+    font-size: 14px;
+  }
+  
+  /* 검색 버튼 */
+  .search-btn {
+    padding: 12px 20px;
+    background-color: #3b82f6;
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .search-btn:hover {
+    background-color: #2563eb;
+  }
+  
+  /* ===== 결과 리스트 ===== */
+  .result-list {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    max-width: 1000px;
+  }
+  
+  /* 개별 카드 */
+  .result-card {
+    display: flex;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    padding: 24px;
+    gap: 24px;
+    align-items: flex-start;
+  }
+  
+  .thumbnail img {
+    width: 140px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 8px;
+    background-color: #f3f4f6;
+  }
+  
+  .no-image {
+    width: 140px;
+    height: 100px;
+    background-color: #f3f4f6;
+    color: #9ca3af;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  
+  .card-info {
+    flex: 1;
+  }
+  
+  .case-number {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #1d4ed8;
+  }
+  
+  .card-info p {
+    margin: 4px 0;
+    font-size: 14px;
+  }
+  
+  /* 즐겨찾기 버튼 */
+  .favorite-btn {
+    margin-top: 12px;
+    background-color: #f9fafb;
+    border: 1px solid #d1d5db;
+    color: #374151;
+    padding: 8px 12px;
+    font-size: 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .favorite-btn:hover {
+    background-color: #e5e7eb;
+  }
+  
+  /* ===== 안내 / 에러 메시지 ===== */
+  .search-instruction,
+  .no-result,
+  .error-message {
+    padding: 20px;
+    background-color: #fef3c7;
+    border: 1px solid #fde68a;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #92400e;
+    max-width: 900px;
+  }
+  
+  .error-message {
+    background-color: #fee2e2;
+    border: 1px solid #fca5a5;
+    color: #b91c1c;
+  }
+  

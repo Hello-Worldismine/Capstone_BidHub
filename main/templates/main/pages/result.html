@@ -20,16 +20,16 @@
 <hr style="width: 1000px; margin: 0;">
 
 <!-- 검색 필터 -->
-<form method="get" action="" class="filter-form" style="margin-top: 20px;">
+<form method="get" action="{% url 'result' %}" class="filter-form" style="margin-top: 20px;">
   <label>법원:</label>
-  <select name="court" id="court">
+  <select name="court">
     <option value="">전체</option>
     <option value="서울">서울</option>
     <option value="경기">경기</option>
   </select>
 
   <label>물건종류:</label>
-  <select name="property_type" id="property_type">
+  <select name="property_type">
     <option value="">전체</option>
     <option value="아파트">아파트</option>
     <option value="상가">상가</option>
@@ -37,108 +37,71 @@
   </select>
 
   <label>매각일자:</label>
-  <input type="date" name="start_date" id="start_date"> ~
-  <input type="date" name="end_date" id="end_date">
+  <input type="date" name="start_date"> ~
+  <input type="date" name="end_date">
 
   <button type="submit">검색</button>
 </form>
 
 <!-- 검색 결과 리스트 -->
-<div class="result-list" id="result-list">
-  <p class="search-instruction">조건을 선택하여 검색하세요.</p>
+<div class="result-list">
+  {% if search_performed %}
+    {% if search_error %}
+      <div class="error-message">
+        <p>{{ search_error }}</p>
+      </div>
+    {% elif search_results %}
+      {% for case in search_results %}
+      <div class="result-card" data-case-id="{{ case.case_number }}">
+        <div class="thumbnail">
+          <img src="{% static 'img/bidhub-logo.png' %}" 
+               alt="물건 이미지" 
+               onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+          <div class="no-image" style="display: none;">이미지 없음</div>
+        </div>
+        <div class="card-info">
+          <h3 class="case-number" data-case-id="{{ case.case_number }}">
+            <a href="{% url 'tender' case_number=case.case_number %}" style="text-decoration: underline;">
+              {{ case.case_number }}
+            </a>
+          </h3>
+          <p><strong>법원:</strong> {{ case.court_name }}</p>
+          <p><strong>사건명:</strong> {{ case.case_name|default:"정보없음" }}</p>
+
+          {% with auction_item=case.auctionitem_set.first %}
+          {% if auction_item %}
+            <p><strong>감정평가액:</strong> 
+              {% if auction_item.valuation_amount %}
+                {{ auction_item.valuation_amount|floatformat:0 }}원
+              {% else %}
+                정보없음
+              {% endif %}
+            </p>
+            <p><strong>유찰횟수:</strong> {{ auction_item.auction_failures|default:0 }}회</p>
+            <p><strong>물건용도:</strong> {{ auction_item.item_purpose|default:"정보없음" }}</p>
+            <p><strong>주소:</strong> {{ auction_item.item_note|default:"주소 정보 없음" }}</p>
+            {% if auction_item.auction_date %}
+              <p><strong>매각기일:</strong> {{ auction_item.auction_date|date:"Y-m-d H:i" }}</p>
+            {% endif %}
+          {% else %}
+            <p><strong>물건정보:</strong> 등록된 물건이 없습니다.</p>
+          {% endif %}
+          {% endwith %}
+
+          <button class="favorite-btn" data-case-number="{{ case.case_number }}">
+            <i class="fa-regular fa-star"></i> 즐겨찾기
+          </button>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <p class="no-result">검색 조건에 맞는 결과가 없습니다.</p>
+    {% endif %}
+  {% else %}
+    <div class="search-instruction">
+      <p>조건을 선택하여 검색하세요.</p>
+      <p><small>💡 법원, 물건종류, 매각일자 조건을 조합하여 검색할 수 있습니다.</small></p>
+    </div>
+  {% endif %}
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-  const form = document.querySelector(".filter-form");
-  const resultList = document.getElementById("result-list");
-
-  // URL 쿼리 파라미터 파싱
-  const params = new URLSearchParams(window.location.search);
-  const court = params.get("court");
-  const propertyType = params.get("property_type");
-  const startDate = params.get("start_date");
-  const endDate = params.get("end_date");
-
-  // 필터값 초기 세팅
-  if (court) document.getElementById("court").value = court;
-  if (propertyType) document.getElementById("property_type").value = propertyType;
-  if (startDate) document.getElementById("start_date").value = startDate;
-  if (endDate) document.getElementById("end_date").value = endDate;
-
-  // 조건이 하나라도 있으면 검색 실행
-  if (court || propertyType || startDate || endDate) {
-    fetchResults();
-  }
-
-  form.addEventListener("submit", function (e) {
-    e.preventDefault();
-
-    const query = new URLSearchParams({
-      court: document.getElementById("court").value,
-      property_type: document.getElementById("property_type").value,
-      start_date: document.getElementById("start_date").value,
-      end_date: document.getElementById("end_date").value
-    });
-
-    // URL 업데이트
-    const newUrl = window.location.pathname + "?" + query.toString();
-    history.pushState(null, "", newUrl);
-
-    fetchResults();
-  });
-
-  function fetchResults() {
-    const query = new URLSearchParams(window.location.search);
-
-    resultList.innerHTML = "<p>검색 중...</p>";
-
-    fetch(`/api/trade_results/?${query.toString()}`)
-      .then(res => res.json())
-      .then(data => {
-        resultList.innerHTML = "";
-
-        if (data.length === 0) {
-          resultList.innerHTML = "<p class='no-result'>검색 조건에 맞는 결과가 없습니다.</p>";
-          return;
-        }
-
-        data.forEach(item => {
-          const a = item.auction_item || {};
-          const html = `
-            <div class="result-card">
-              <div class="thumbnail">
-                <img src="/static/img/bidhub-logo.png" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                <div class="no-image" style="display:none;">이미지 없음</div>
-              </div>
-              <div class="card-info">
-                <h3 class="case-number">
-                  <a href="/tender/${item.case_number}" style="text-decoration: underline;">
-                    ${item.case_number}
-                  </a>
-                </h3>
-                <p><strong>법원:</strong> ${item.court_name}</p>
-                <p><strong>사건명:</strong> ${item.case_name || "정보없음"}</p>
-                ${a.valuation_amount ? `<p><strong>감정평가액:</strong> ${Number(a.valuation_amount).toLocaleString()}원</p>` : "<p><strong>감정평가액:</strong> 정보없음</p>"}
-                <p><strong>유찰횟수:</strong> ${a.auction_failures ?? 0}회</p>
-                <p><strong>물건용도:</strong> ${a.item_purpose || "정보없음"}</p>
-                <p><strong>주소:</strong> ${a.item_note || "주소 정보 없음"}</p>
-                ${a.auction_date ? `<p><strong>매각기일:</strong> ${a.auction_date}</p>` : ""}
-                <button class="favorite-btn" data-case-number="${item.case_number}">
-                  <i class="fa-regular fa-star"></i> 즐겨찾기
-                </button>
-              </div>
-            </div>
-          `;
-          resultList.innerHTML += html;
-        });
-      })
-      .catch(() => {
-        resultList.innerHTML = "<p class='error-message'>조회된 매물이 없습니다.</p>";
-      });
-  }
-});
-</script>
 {% endblock %}

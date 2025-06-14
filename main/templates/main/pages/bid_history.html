@@ -4,29 +4,32 @@
 {% block extra_css %}
 {{ block.super }}
 <link rel="stylesheet" href="{% static 'css/pages/bid_history.css' %}">
+<style>
+  .hidden { display: none; }
+</style>
 {% endblock %}
 
 {% block sidebar_menu %}
-<li class="active"><a href="/api/load_bid_history/">나의입찰내역</a>
-<li><a href="#">관심목록</a></li>
-<li><a href="#">자동입찰설정</a></li>
-<li><a href="#">마이페이지</a></li>
+<li class="active"><a href="/api/load_bid_history/">나의입찰내역</a></li>
+<li><a href="{% url 'favlist' %}">관심목록</a></li>
+<li><a href="{% url 'auto_bid' %}">자동입찰예약</a></li>
+<li><a href="{% url 'mypage' %}">마이페이지</a></li>
 {% endblock %}
 
 {% block sidebar_content %}
 <h2>나의입찰내역</h2>
-<br>
 <hr style="width: 1000px; margin: 0;">
 
 <!-- 탭 메뉴 -->
 <div class="auto-bid-tabs">
   <div class="tab-menu">
-    <div class="tab-item active" onclick="showTab('search')">입찰내역</div>
-    <div class="tab-item" onclick="showTab('favorites')">자동입찰예약내역</div>
+    <div class="tab-item active" onclick="showTab('bid-history')">입찰내역</div>
+    <div class="tab-item" onclick="showTab('auto-bid')">자동입찰예약내역</div>
   </div>
 </div>
 
-<div class="refund-container">
+<!-- 입찰 내역 탭 콘텐츠 -->
+<div id="bid-history-tab" class="refund-container tab-content">
   <div class="refund-box">
     <div class="refund-row header">
       <div>사건번호</div>
@@ -37,10 +40,10 @@
     </div>
 
     {% for row in bid_rows %}
-    <div class="refund-row">
-      <div><a href="{% url 'tender_detail' case_number=row.case_number %}">{{ row.case_number }}</a></div>
-      <div>{{ row.bid_amount }}</div>
-      <div>{{ row.security }}</div>
+    <div class="auto-bid-row">
+      <div><a href="#">{{ row.case_number }}</a></div>
+      <div> 원</div>
+      <div> 원</div>
       <div>
         {% if row.refund_status == "완료" %}
           <span class="status done">완료</span>
@@ -51,12 +54,106 @@
       <div>{{ row.refund_date }}</div>
     </div>
     {% empty %}
-    <div class="refund-row">
-      <div colspan="5">입찰 내역이 없습니다.</div>
+    <div class="refund-row no-data">
+      <div class="no-data-text">입찰 내역이 없습니다.</div>
     </div>
+    
     {% endfor %}
   </div>
 </div>
 
+<!-- 자동입찰예약 내역 탭 콘텐츠 -->
+<div id="auto-bid-tab" class="auto-bid-history-container tab-content hidden">
+  <div class="auto-bid-box">
+    <div class="auto-bid-row header">
+      <div>사건번호</div>
+      <div>법원</div>
+      <div>입찰금액</div>
+      <div>예약시간</div>
+      <div>예약활성화</div>
+      <div>삭제</div>
+    </div>
 
+    <!-- 예시 데이터 1 -->
+    <div class="auto-bid-row" id="auto-bid-1">
+      <div>2024타경12345</div>
+      <div>서울중앙지방법원</div>
+      <div>35,000,000 원</div>
+      <div>10:00</div>
+      <div>
+        <input type="checkbox" checked onchange="toggleAutoBid(1, this.checked)">
+      </div>
+      <div>
+        <button onclick="deleteAutoBid(1)">삭제</button>
+      </div>
+    </div>
+
+    <!-- 예시 데이터 2 -->
+    <div class="auto-bid-row" id="auto-bid-2">
+      <div>2024타경67890</div>
+      <div>부산지방법원</div>
+      <div>28,500,000 원</div>
+      <div>13:00</div>
+      <div>
+        <input type="checkbox" onchange="toggleAutoBid(2, this.checked)">
+      </div>
+      <div>
+        <button onclick="deleteAutoBid(2)">삭제</button>
+      </div>
+    </div>
+
+    {% for bid in auto_bid_list %}
+    <div class="auto-bid-row">
+      <div>{{ bid.case_number }}</div>
+      <div>{{ bid.court }}</div>
+      <div> 원</div>
+      <div>{{ bid.time }}</div>
+    </div>
+    {% empty %}
+    <div class="refund-row no-data">
+      <div class="no-data-text">예약 내역이 없습니다.</div>
+    </div>
+    
+    {% endfor %}
+  </div>
+</div>
+
+<script>
+function showTab(tab) {
+  // 탭 버튼 상태 변경
+  document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
+  document.querySelector(`.tab-item[onclick="showTab('${tab}')"]`).classList.add('active');
+
+  // 콘텐츠 영역 전환
+  document.getElementById('bid-history-tab').classList.add('hidden');
+  document.getElementById('auto-bid-tab').classList.add('hidden');
+
+  document.getElementById(`${tab}-tab`).classList.remove('hidden');
+}
+
+// 예약 활성화/비활성화 처리
+function toggleAutoBid(id, isActive) {
+  console.log(`Auto-bid #${id} 상태: ${isActive ? '활성화' : '비활성화'}`);
+  // 실제 서버 반영이 필요하다면 fetch 또는 Ajax 요청 추가
+  /*
+  fetch(`/api/auto_bid/${id}/toggle/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+    body: JSON.stringify({ active: isActive })
+  }).then(response => {
+    if (!response.ok) alert("변경 실패");
+  });
+  */
+}
+
+// 삭제 버튼 처리
+function deleteAutoBid(id) {
+  if (!confirm("정말 삭제하시겠습니까?")) return;
+
+  // 화면에서 제거
+  const row = document.getElementById(`auto-bid-${id}`);
+  if (row) row.remove();
+
+}
+</script>
 {% endblock %}

@@ -43,6 +43,7 @@ urlpatterns = [
     #매각결과조회
     path('result/', views.result, name='result'),
     path('region_result/', views.region_result, name='region_result'),
+
     
 path('consult_app/', views.consult_index, name='consult_app'),  # /consult_app/
 path('consult_app/enter/', views.consult_enter_court_room, name='enter_court_room'),
@@ -53,4 +54,9 @@ path('consult_app/agent/<str:room_name>/', views.consult_agent_room, name='agent
 path('consult_app/<str:room_name>/', views.consult_user_room, name='user_room'),
 
 
+    # 프로필 관련 URL
+    path('update_profile/', views.update_profile, name='update_profile'),
 ]
+
+
+

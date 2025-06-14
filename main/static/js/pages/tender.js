@@ -54,20 +54,61 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
+    // 외부에서 호출 가능한 함수들 (전역 함수로 등록)
+    window.setMainImage = function (index) {
+        if (imagePaths.length > 0) {
+            currentIndex = index;
+            updateMainImage();
+        }
+    };
+
+    window.prevImage = function () {
+        if (imagePaths.length > 0) {
+            currentIndex = (currentIndex - 1 + imagePaths.length) % imagePaths.length;
+            updateMainImage();
+        }
+    };
+
+    window.nextImage = function () {
+        if (imagePaths.length > 0) {
+            currentIndex = (currentIndex + 1) % imagePaths.length;
+            updateMainImage();
+        }
+    };
+
+    // 이미지 경로 설정 함수 (템플릿에서 호출)
+    window.setImagePaths = function (paths) {
+        console.log("Setting image paths:", paths); // 디버깅용
+        imagePaths = paths;
+        currentIndex = 0; // 인덱스 초기화
+        updateMainImage();
+        setupImageEventListeners(); // 이미지 경로 설정 후 이벤트 리스너 재설정
+    };
+
     // 이벤트 리스너 설정
     function setupImageEventListeners() {
         if (mainImage) {
-            mainImage.addEventListener("click", () => openModal(currentIndex));
+            // 기존 이벤트 제거 후 새로 등록
+            mainImage.removeEventListener("click", handleMainImageClick);
+            mainImage.addEventListener("click", handleMainImageClick);
         }
 
+        // 썸네일 이벤트 리스너 설정
         document.querySelectorAll(".thumb").forEach((thumb, index) => {
-            thumb.addEventListener("click", () => {
+            thumb.removeEventListener("click", thumb.clickHandler);
+            thumb.removeEventListener("dblclick", thumb.dblclickHandler);
+            
+            thumb.clickHandler = () => {
                 currentIndex = index;
                 updateMainImage();
-            });
-            thumb.addEventListener("dblclick", () => openModal(index));
+            };
+            thumb.dblclickHandler = () => openModal(index);
+            
+            thumb.addEventListener("click", thumb.clickHandler);
+            thumb.addEventListener("dblclick", thumb.dblclickHandler);
         });
 
+        // 모달 이벤트 리스너
         if (closeBtn) {
             closeBtn.addEventListener("click", closeModal);
         }
@@ -83,6 +124,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (e.target === modal) closeModal();
             });
         }
+    }
+
+    function handleMainImageClick() {
+        openModal(currentIndex);
     }
 
     // 가격 포맷팅 함수들
@@ -177,84 +222,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    function openBidHistoryModal(tradeNum, userAddress) {
-        const modal = document.getElementById("bidHistoryModal");
-        const listContainer = document.getElementById("bidHistoryList");
-        modal.style.display = "block";
-        listContainer.innerHTML = "로딩 중...";
-
-        fetch(`/api/get_bid_events/?trade_num=${tradeNum}`)
-            .then(res => res.json())
-            .then(data => {
-            const bids = data.bids;
-
-      // 정렬: 금액 내림차순, 같으면 시간 내림차순
-            bids.sort((a, b) => {
-        if (b.amount !== a.amount) return b.amount - a.amount;
-        return b.bidtime - a.bidtime;
-        });
-
-        const userWalletAddress = window.user_wallet_address || "";
-        const list = bids.map((bid, i) => {
-            const rank = i + 1;
-            const bidderAddress = bid.bidder.toLowerCase();
-            console.log(`비교 중: ${bid.bidder.toLowerCase()} === {{ user_wallet_address|default:'' }}`);
-
-            const isMine = bidderAddress === userWalletAddress;
-            const timestamp = parseInt(bid.bidtime);  
-            const date = isNaN(timestamp)
-            ? "시간 정보 없음"
-            : new Date((timestamp + 9 * 3600) * 1000).toLocaleString();
-
-            
-
-        return `
-          <div style="margin-bottom: 10px;">
-            <strong>${rank}순위</strong><br>
-            ${bid.bidder} ${isMine ? "(나)" : ""}<br>
-            금액: ${bid.amount}<br>
-            시간: ${date}
-          </div>
-        `;
-      }).join("");
-
-      listContainer.innerHTML = list || "입찰 기록이 없습니다.";
-    })
-    .catch(err => {
-      listContainer.innerHTML = "에러 발생: " + err;
-    });
-}
-
-function openBidHistoryModalFromCase(caseNumber, userAddress) {
-    const tradeNum = caseNumber.replace(/[^0-9]/g, '');  // "2023타경7092" → "20237092"
-    openBidHistoryModal(tradeNum, userAddress);
-}
-
-
-// ── 모달 닫기 ─────────────────────────────
-function closeBidHistoryModal() {
-  document.getElementById("bidHistoryModal").style.display = "none";
-}
-
-    window.openBidHistoryModal = openBidHistoryModal;
-    window.closeBidHistoryModal = closeBidHistoryModal;
-    window.openBidHistoryModalFromCase = openBidHistoryModalFromCase;
-    // 외부에서 호출 가능한 함수들
-    window.setMainImage = function (index) {
-        currentIndex = index;
-        updateMainImage();
-    };
-
-    window.prevImage = function () {
-        currentIndex = (currentIndex - 1 + imagePaths.length) % imagePaths.length;
-        updateMainImage();
-    };
-
-    window.nextImage = function () {
-        currentIndex = (currentIndex + 1) % imagePaths.length;
-        updateMainImage();
-    };
-
     // 즐겨찾기 함수
     window.addToFavorites = function (caseNumber, minBid, auctionDate) {
         let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
@@ -275,18 +242,11 @@ function closeBidHistoryModal() {
         }
     };
 
-    // 이미지 경로 설정 함수 (템플릿에서 호출)
-    window.setImagePaths = function (paths) {
-        imagePaths = paths;
-        updateMainImage();
-    };
-
-    // 초기화
-    setupImageEventListeners();
-    setupPriceValidation();
-    
     // 전역 설정 함수 (템플릿에서 호출)
     window.initializePage = function (auctionDate) {
         setupCountdown(auctionDate);
     };
+
+    // 초기화
+    setupPriceValidation();
 });
