@@ -104,24 +104,37 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
+document.addEventListener("DOMContentLoaded", async () => {
+  await refreshWalletBalance();  // 지갑 연결 여부 확인 후 예치금 표시
+  setInterval(refreshWalletBalance, 60000);  // 🔁 10초마다 갱신
+});
+
 async function refreshWalletBalance() {
-  const userAddress = document.body.dataset.wallet;
-  if (!userAddress) return;
+  if (typeof window.ethereum === "undefined") {
+    document.getElementById("wallet-display").innerHTML =
+      `<i class="fa-solid fa-triangle-exclamation"></i> 지갑을 연결하세요`;
+    return;
+  }
 
   try {
-    const res = await fetch(`/api/view_deposits/?user=${userAddress}`);
+    const accounts = await ethereum.request({ method: 'eth_accounts' });
+    if (!accounts || accounts.length === 0) {
+      document.getElementById("wallet-display").innerHTML =
+        `<i class="fa-solid fa-plug-circle-xmark"></i> 지갑을 연결하세요`;
+      return;
+    }
+
+    const connectedAddress = accounts[0];
+
+    const res = await fetch(`/api/view_deposits/?user=${connectedAddress}`);
     const data = await res.json();
     const krw = Number(data.deposits_krw).toLocaleString();
+
     document.getElementById("wallet-display").innerHTML =
       `<i class="fa-solid fa-won-sign"></i> 예치금 ${krw}원`;
   } catch (err) {
     console.error("예치금 조회 실패", err);
+    document.getElementById("wallet-display").innerHTML =
+      `<i class="fa-solid fa-xmark"></i> 조회 실패`;
   }
 }
-
-document.addEventListener("DOMContentLoaded", async () => {
-  await refreshWalletBalance();
-
-  // 🔁 주기적 자동 갱신 (10초 간격)
-  setInterval(refreshWalletBalance, 10000);
-});

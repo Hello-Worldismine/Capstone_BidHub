@@ -128,11 +128,13 @@ def process_due_auctions():
                             from blockchain.contracts import confirm_bid
                             max_round = AuctionSchedule.objects.filter(auction_item_id=item_id).aggregate(Max('round_number'))['round_number__max'] or 0
                             payment_round = max_round + 1
-                            due_ts = int((decision_date - timedelta(hours=9) + timedelta(hours=1)).timestamp())
+                            due_ts = int((decision_date - timedelta(hours=9) + timedelta(minutes=30)).timestamp())
                             confirm_bid(trade_num, due_ts)
+                            print(f"[confirm_bid 호출] trade_num={trade_num}, due_ts={due_ts} (KST: {timezone.datetime.fromtimestamp(due_ts) + timedelta(hours=9)})")
+
 
                             # DB에는 KST 기준으로 '대금지급기한' 스케줄 등록
-                            due_kst = decision_date + timedelta(hours=1)
+                            due_kst = decision_date + timedelta(minutes=30)
 
                             insert_sql = (
                                 "INSERT INTO auction_schedule "
