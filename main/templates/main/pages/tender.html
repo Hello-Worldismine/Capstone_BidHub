@@ -17,10 +17,12 @@
 <div class="container">
   <div class="left-section">
     <!-- 메인 이미지 + 좌우 화살표 -->
-    <div class="main-image-container">
+    <div class="main-image-container" style="height: 400px; overflow: hidden;">
       <button class="arrow left" onclick="prevImage()">&#10094;</button>
-      <img id="mainImage" src="{% if image_paths %}{{ image_paths.0 }}{% else %}{% static 'img/ex/01.png' %}{% endif %}"
-        alt="메인 이미지" />
+      <img id="mainImage" 
+           src="{% if image_paths %}{{ image_paths.0 }}{% else %}{% static 'img/ex/01.png' %}{% endif %}"
+           alt="메인 이미지" 
+           style="width: 100%; height: 100%; object-fit: cover; object-position: center;" />
       <button class="arrow right" onclick="nextImage()">&#10095;</button>
       <div id="image-counter">1 / {{ image_paths|length|default:5 }}</div>
     </div>
