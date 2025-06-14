@@ -518,11 +518,6 @@ def get_favorite_properties(request):
         return JsonResponse({'success': True, 'favorites': []})
 
 # Add missing view functions referenced in templates
-def bid_history(request):
-    return render(request, 'main/pages/bid_history.html')
-
-def favlist(request):
-    return render(request, 'main/pages/favlist.html') #수정 (favorites -> favlist)
 
 #로그인관련view
 def join(request):
@@ -1086,3 +1081,16 @@ def get_bid_events(request):
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+    
+
+@login_required(login_url='account_login') 
+def bid_history(request):
+    return render(request, 'main/pages/bid_history.html')
+
+@login_required(login_url='account_login') 
+def favlist(request):
+    return render(request, 'main/pages/favlist.html')
+
+@login_required(login_url='account_login') 
+def bidform(request):
+    return render(request, 'main/pages/bidform.html')
