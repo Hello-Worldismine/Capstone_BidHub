@@ -605,5 +605,7 @@ def get_bid_events(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 #임시 더미
+
+
 def dummy_view(request):
     return JsonResponse({"message": "미구현된 API입니다."})
