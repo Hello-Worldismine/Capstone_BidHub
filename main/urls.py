@@ -7,7 +7,6 @@ urlpatterns = [
     path('', views.index, name='index'),
     path('tender/', views.tender, name='tender'),
     path('tender/<str:case_number>/', views.tender, name='tender_detail'),
-    path('auto_bid/', views.auto_bid, name='auto_bid'),
     path('mypage/', views.mypage, name='mypage'),
     path('join/', views.join, name='join'),
     path('login/', views.login, name='login'),

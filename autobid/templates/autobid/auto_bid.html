@@ -1,0 +1,398 @@
+{% extends 'main/layout/sidebar_layout.html' %}
+{% load static %}
+
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/pages/auto_bid.css' %}">
+{% endblock %}
+
+{% block sidebar_menu %}
+<li><a href="{% url 'bid_history' %}">나의입찰내역</a></li>
+<li><a href="{% url 'favlist' %}">관심목록</a></li>
+<li class="active"><a href="#">자동입찰예약</a></li>
+<li><a href="{% url 'mypage' %}">마이페이지</a></li>
+{% endblock %}
+
+{% block sidebar_content %}
+<h2>자동입찰 예약 설정</h2>
+<hr style="width: 1000px; margin: 0;">
+
+<!-- 탭 메뉴 -->
+<div class="auto-bid-tabs">
+  <div class="tab-menu">
+    <div class="tab-item active" onclick="showTab('search')">사건검색</div>
+    <div class="tab-item" onclick="showTab('favorites')">관심목록</div>
+  </div>
+</div>
+
+<!-- 탭 콘텐츠 -->
+<div class="auto-bid-container">
+  <!-- 사건검색 화면 -->
+  <div id="search-tab" class="tab-content">
+    <h3 class="title">사건검색</h3>
+    <div class="input-group">
+      <label for="court">법원 선택</label>
+      <select id="court" name="court" required>
+        <option value="">법원을 선택하세요</option>
+        <option value="서울중앙지방법원">서울중앙지방법원</option>
+        <option value="서울동부지방법원">서울동부지방법원</option>
+        <option value="수원지방법원">수원지방법원</option>
+        <option value="대전지방법원">대전지방법원</option>
+        <option value="부산지방법원">부산지방법원</option>
+        <option value="광주지방법원">광주지방법원</option>
+      </select>
+    </div>
+    <div class="input-group">
+      <label class="fixed-label">사건번호</label>
+      <input type="number" id="year-input" placeholder="년도 입력" class="input-field" min="2000" max="2025" maxlength="4">
+      <label class="fixed-label">타경</label>
+      <input type="text" id="case-number-input" placeholder="번호 입력" class="input-field">
+      <button onclick="searchCase()">검색</button>
+    </div>
+    
+    <!-- 검색 결과 표시 -->
+    <div id="searchResult" class="search-result hidden">
+      <h4>검색 결과</h4>
+      <ul id="searchResultList">
+        <!-- 검색 결과가 동적으로 여기에 추가됩니다 -->
+      </ul>
+    </div>
+    
+    <!-- API 검색 결과 표시 (기존 기능과 연동) -->
+    <div id="searchResultBox" class="confirm-box hidden" style="margin-top: 10px;">
+      <p id="resultText"></p>
+    </div>
+  </div>
+
+  <!-- 관심목록 화면 -->
+  <div id="favorites-tab" class="tab-content hidden">
+    <div class="favorites-list">
+      <h3 class="title">관심목록</h3>
+      <div id="favoritesList">
+        <!-- 즐겨찾기 목록이 동적으로 여기에 로드됩니다 -->
+      </div>
+      
+      <!-- 기존 정적 목록 (예시용) -->
+      <ul class="static-favorites">
+        <li onclick="selectFavorite('2023타경1234', '서울중앙지방법원 매물')">
+          2023타경1234 (서울중앙지방법원)
+        </li>
+        <li onclick="selectFavorite('2023타경5678', '수원지방법원 매물')">
+          2023타경5678 (수원지방법원)
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 예약 설정 영역 -->
+  <div id="reservationForm" class="section">
+    <h3 class="title">예약 설정</h3>
+    <div id="selectedCaseInfo" style="margin-bottom: 10px; color: #333; font-weight: bold;"></div>
+    
+    <div class="input-group">
+      <label for="bidAmount">입찰 금액</label>
+      <input type="number" id="bidAmount" placeholder="입찰 금액 입력" class="input-field" required>
+    </div>
+    
+    <div class="input-group">
+      <label for="bidDate">입찰 날짜</label>
+      <input type="date" id="bidDate" class="input-field" required>
+    </div>
+    
+    <div class="input-group">
+      <label for="bidTime">입찰 시간</label>
+      <select id="bidTime" class="input-field">
+        <option value="09:00">09:00</option>
+        <option value="10:00">10:00</option>
+        <option value="11:00">11:00</option>
+        <option value="12:00">12:00</option>
+        <option value="13:00">13:00</option>
+        <option value="14:00">14:00</option>
+        <option value="15:00">15:00</option>
+        <option value="16:00">16:00</option>
+      </select>
+    </div>
+    
+    <div class="input-group">
+      <label>
+        <input type="checkbox" id="activateAutoBid"> 
+        자동입찰 예약 활성화
+      </label>
+    </div>
+    
+    <button onclick="confirmReservation()" class="btn-primary">예약 저장</button>
+  </div>
+</div>
+
+<!-- 모달 오버레이 -->
+<div id="modalOverlay" class="modal-overlay hidden"></div>
+
+<!-- 모달 창 -->
+<div id="confirmationModal" class="modal hidden">
+  <h3>예약 정보 확인</h3>
+  <div class="confirm-box">
+    <p id="confirmCaseNumber"></p>
+    <p id="confirmBidAmount"></p>
+    <p id="confirmBidDateTime"></p>
+    <p id="confirmAutoBid"></p>
+  </div>
+  <div class="modal-buttons">
+    <button onclick="completeReservation()" class="btn-primary">예약 완료</button>
+    <button onclick="closeModal()" class="btn-secondary">취소</button>
+  </div>
+</div>
+
+<script>
+  // 전역 변수
+  let selectedCaseNumber = '';
+  let selectedCaseUsage = '';
+
+  // 탭 전환 함수
+  function showTab(tab) {
+    document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
+    document.querySelector(`.tab-item[onclick="showTab('${tab}')"]`).classList.add('active');
+
+    document.getElementById('search-tab').classList.add('hidden');
+    document.getElementById('favorites-tab').classList.add('hidden');
+    document.getElementById('searchResult').classList.add('hidden');
+    document.getElementById('searchResultBox').classList.add('hidden');
+    
+    document.getElementById(tab + '-tab').classList.remove('hidden');
+    
+    // 관심목록 탭을 열 때 즐겨찾기 목록 로드
+    if (tab === 'favorites') {
+      loadFavorites();
+    }
+  }
+
+  // 사건 검색 함수 (API 연동)
+  function searchCase() {
+    const year = document.getElementById('year-input').value;
+    const caseNum = document.getElementById('case-number-input').value;
+    const court = document.getElementById('court').value;
+    
+    // 년도와 사건번호로 완전한 사건번호 생성
+    if (year && caseNum) {
+      const fullCaseNumber = `${year}타경${caseNum}`;
+      
+      // API 검색 실행
+      fetch(`/auto_bid/api/search-property/?case_number=${fullCaseNumber}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            // 검색 성공
+            document.getElementById('resultText').innerText = 
+              `${data.case_number} / ${data.usage}`;
+            document.getElementById('searchResultBox').classList.remove('hidden');
+            
+            // 선택된 사건 정보 저장
+            selectedCaseNumber = data.case_number;
+            selectedCaseUsage = data.usage;
+            
+            // 예약 설정 영역 표시
+            updateSelectedCaseInfo(data.case_number, data.usage);
+            
+          } else {
+            // 검색 실패 - 정적 결과 표시
+            showStaticSearchResults(fullCaseNumber, court);
+          }
+        })
+        .catch(error => {
+          console.error('검색 오류:', error);
+          showStaticSearchResults(fullCaseNumber, court);
+        });
+    } else {
+      alert('년도와 사건번호를 모두 입력해주세요.');
+    }
+  }
+
+  // 정적 검색 결과 표시 (API에서 찾지 못한 경우)
+  function showStaticSearchResults(caseNumber, court) {
+    const resultList = document.getElementById('searchResultList');
+    resultList.innerHTML = `
+      <li onclick="selectSearchResult('${caseNumber}', '${court} 매물')">
+        ${caseNumber} (${court || '정보 없음'})
+      </li>
+    `;
+    document.getElementById('searchResult').classList.remove('hidden');
+  }
+
+  // 검색 결과 선택
+  function selectSearchResult(caseId, usage = '매물 정보') {
+    selectedCaseNumber = caseId;
+    selectedCaseUsage = usage;
+    updateSelectedCaseInfo(caseId, usage);
+    document.getElementById('searchResult').classList.add('hidden');
+  }
+
+  // 즐겨찾기 목록 로드
+  function loadFavorites() {
+    fetch('/auto_bid/api/favorites/')
+      .then(response => response.json())
+      .then(data => {
+        const favoritesList = document.getElementById('favoritesList');
+        
+        if (data.success && data.favorites.length > 0) {
+          favoritesList.innerHTML = '<h4>저장된 즐겨찾기</h4>';
+          const ul = document.createElement('ul');
+          
+          data.favorites.forEach(item => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+              <span onclick="selectFavorite('${item.case_number}', '${item.usage}')">
+                ${item.case_number} - ${item.usage}
+                <small>(${item.created_at})</small>
+              </span>
+            `;
+            ul.appendChild(li);
+          });
+          
+          favoritesList.appendChild(ul);
+        } else {
+          favoritesList.innerHTML = '<p>저장된 즐겨찾기가 없습니다.</p>';
+        }
+      })
+      .catch(error => {
+        console.error('즐겨찾기 로드 오류:', error);
+        document.getElementById('favoritesList').innerHTML = '<p>즐겨찾기를 불러올 수 없습니다.</p>';
+      });
+  }
+
+  // 즐겨찾기 선택
+  function selectFavorite(caseId, usage = '매물 정보') {
+    selectedCaseNumber = caseId;
+    selectedCaseUsage = usage;
+    updateSelectedCaseInfo(caseId, usage);
+  }
+
+  // 선택된 사건 정보 업데이트
+  function updateSelectedCaseInfo(caseNumber, usage) {
+    document.getElementById('selectedCaseInfo').innerText = 
+      `선택한 물건: ${caseNumber} - ${usage}`;
+    
+    // 예약 설정 영역으로 스크롤
+    document.getElementById('reservationForm').scrollIntoView({ 
+      behavior: 'smooth' 
+    });
+  }
+
+  // 예약 확인
+  function confirmReservation() {
+    if (!selectedCaseNumber) {
+      alert('먼저 사건을 선택해주세요.');
+      return;
+    }
+
+    const amount = document.getElementById('bidAmount').value;
+    const date = document.getElementById('bidDate').value;
+    const time = document.getElementById('bidTime').value;
+    const active = document.getElementById('activateAutoBid').checked;
+
+    if (!amount || !date) {
+      alert('입찰 금액과 날짜를 입력해주세요.');
+      return;
+    }
+
+    // 모달에 정보 표시
+    document.getElementById('confirmCaseNumber').innerText = 
+      `사건번호: ${selectedCaseNumber}`;
+    document.getElementById('confirmBidAmount').innerText = 
+      `입찰 금액: ${parseInt(amount).toLocaleString()} 원`;
+    document.getElementById('confirmBidDateTime').innerText = 
+      `입찰 일시: ${date} ${time}`;
+    document.getElementById('confirmAutoBid').innerText = 
+      `자동입찰 활성화: ${active ? '예' : '아니오'}`;
+
+    // 모달 표시
+    document.getElementById('modalOverlay').classList.remove('hidden');
+    document.getElementById('confirmationModal').classList.remove('hidden');
+  }
+
+  // 예약 완료 (API 호출)
+  function completeReservation() {
+    const bidAmount = document.getElementById('bidAmount').value;
+    const bidDate = document.getElementById('bidDate').value;
+    const bidTime = document.getElementById('bidTime').value;
+    const isActive = document.getElementById('activateAutoBid').checked;
+    
+    // 날짜와 시간을 결합하여 ISO 형식으로 변환
+    const reserveDateTime = `${bidDate}T${bidTime}:00`;
+
+    fetch('/auto_bid/api/reservation/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify({
+        case_number: selectedCaseNumber,
+        bid_amount: parseInt(bidAmount),
+        reserve_time: reserveDateTime,
+        is_active: isActive
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert(data.message);
+        closeModal();
+        // 폼 초기화
+        resetForm();
+      } else {
+        alert('예약 실패: ' + data.message);
+      }
+    })
+    .catch(error => {
+      console.error('에러 발생:', error);
+      alert('서버 오류가 발생했습니다.');
+    });
+  }
+
+  // 모달 닫기
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.add('hidden');
+    document.getElementById('confirmationModal').classList.add('hidden');
+  }
+
+  // 폼 초기화
+  function resetForm() {
+    document.getElementById('year-input').value = '';
+    document.getElementById('case-number-input').value = '';
+    document.getElementById('court').value = '';
+    document.getElementById('bidAmount').value = '';
+    document.getElementById('bidDate').value = '';
+    document.getElementById('bidTime').value = '09:00';
+    document.getElementById('activateAutoBid').checked = false;
+    document.getElementById('selectedCaseInfo').innerText = '';
+    
+    selectedCaseNumber = '';
+    selectedCaseUsage = '';
+    
+    // 결과 박스들 숨기기
+    document.getElementById('searchResult').classList.add('hidden');
+    document.getElementById('searchResultBox').classList.add('hidden');
+  }
+
+  // CSRF 토큰 가져오기
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  // 페이지 로드 시 오늘 날짜를 기본값으로 설정
+  document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('bidDate').value = today;
+  });
+</script>
+{% endblock %}
