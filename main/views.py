@@ -9,21 +9,21 @@ import json
 from decimal import Decimal # Import Decimal
 from django.templatetags.static import static # Import static function
 from django.conf import settings # Import settings
-from app.models import AuctionItem, AuctionCase, ClaimDistribution, PropertyListing, AuctionParty, BuildingDetail
+from app.models import AuctionItem, AuctionCase, ClaimDistribution, PropertyListing, AuctionParty, BuildingDetail, AuctionSchedule
 from django.utils import timezone # Add timezone import
 from django.db.models import Q, Prefetch
 from allauth.account.forms import LoginForm
 from django.template.response import TemplateResponse
 from app.models import BidLog  # 필요한 모델 import
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 
 #아이디 찾기 관련 추가
 from django.contrib.auth import get_user_model
 User = get_user_model()
 
 #검색 관련 추가
-from datetime import date, timedelta
+from datetime import date
 from .models import AuctionItem  # 실제 모델명에 맞게 수정하세요
 from django.core.paginator import Paginator
 
@@ -319,45 +319,48 @@ def bidform(request):
                     schedule_type='매각기일'
                 ).order_by('-round_number').first()
                 
+                # 현재 시간과 입찰 가능 시간 계산
+                current_time = timezone.now()
+                auction_start_time = None
+                auction_end_time = None
+                
+                # 가장 최근 매각기일 가져오기
+                latest_schedule = AuctionSchedule.objects.filter(
+                    auction_item=item_details,
+                    schedule_type='매각기일'
+                ).order_by('-round_number').first()
+                
+                if latest_schedule and latest_schedule.auction_date:
+                    auction_start_time = latest_schedule.auction_date
+                    auction_end_time = auction_start_time + timedelta(hours=1)
+                elif item_details.auction_date:
+                    auction_start_time = item_details.auction_date
+                    auction_end_time = auction_start_time + timedelta(hours=1)
+                
+                # 입찰 가능 여부 확인
+                bidding_available = False
+                if auction_start_time and auction_end_time:
+                    bidding_available = auction_start_time <= current_time <= auction_end_time
+                
                 case_info = {
                     'case_number': case.case_number,
                     'case_name': case.case_name,
                     'court_name': case.court_name,
                     'property_name': item_details.property_name,
-                    'min_bid_price': f"{current_min_price:,}",  # 실제 최저매각가격
-                    'min_bid_price_raw': current_min_price,     # 계산용 원본값
-                    'valuation_amount': f"{valuation_amount:,}",  # 감정평가액
+                    'min_bid_price': f"{current_min_price:,}",
+                    'min_bid_price_raw': current_min_price,
+                    'valuation_amount': f"{valuation_amount:,}",
                     'current_round': current_round,
-                    'auction_date': latest_schedule.auction_date if latest_schedule else item_details.auction_date
+                    'auction_date': latest_schedule.auction_date if latest_schedule else item_details.auction_date,
+                    'auction_start_time': auction_start_time,
+                    'auction_end_time': auction_end_time,
+                    'bidding_available': bidding_available
                 }
-                
-                # 보증금 계산 (실제 최저매각가격의 10%)
-                deposit_amount = int(current_min_price * 0.1) if current_min_price > 0 else 0
-                
-                # 사건번호에서 연도와 순번 추출
-                import re
-                case_match = re.match(r'(\d{4})타경(\d+)', case_number)
-                if case_match:
-                    case_year = case_match.group(1)
-                    case_sequence = case_match.group(2)
-                else:
-                    if '타경' in case_number:
-                        parts = case_number.split('타경')
-                        case_year = parts[0] if len(parts) > 1 else ""
-                        case_sequence = parts[1] if len(parts) > 1 else ""
-                    else:
-                        case_year = ""
-                        case_sequence = ""
                 
                 context.update({
                     'case_info': case_info,
-                    'deposit_amount': f"{deposit_amount:,}",     # 표시용 (쉼표 포함)
-                    'deposit_amount_raw': deposit_amount,        # 입력 필드용 (숫자만)
-                    'min_bid_price': case_info['min_bid_price'], # 표시용 (쉼표 포함)
-                    'min_bid_price_raw': current_min_price,      # 입력 필드용 (숫자만)
-                    'case_year': case_year,
-                    'case_sequence': case_sequence,
-                    'has_case_info': True
+                    'current_time': current_time,
+                    # ...existing context...
                 })
                 
         except (AuctionCase.DoesNotExist, AuctionItem.DoesNotExist):
@@ -942,6 +945,112 @@ def result(request):
 
 def region_result(request):
     return render(request, 'main/pages/region_result.html')
+
+from django.utils import timezone
+from datetime import timedelta
+from rest_framework.decorators import api_view
+
+@api_view(['POST'])
+def putsec_api(request):
+    try:
+        data = request.data
+        trade_num = data.get('trade_num')
+        bidder = data.get('bidder')
+        bid_amount1 = data.get('bid_amount1')
+        bid_amount2 = data.get('bid_amount2')
+        password1 = data.get('password1')
+        password2 = data.get('password2')
+        deposit = data.get('deposit')
+        bid_time = data.get('bid_time')
+        
+        # 입찰 시간 검증 - auction_date부터 1시간 동안만 입찰 가능
+        if trade_num:
+            case_number = f"2024타경{trade_num}"
+            
+            try:
+                case = AuctionCase.objects.get(case_number=case_number)
+                item_details = AuctionItem.objects.filter(case_number=case).first()
+                
+                if item_details:
+                    # 최신 매각기일 찾기 (여러 회차 경매가 있을 수 있음)
+                    latest_schedule = AuctionSchedule.objects.filter(
+                        auction_item=item_details,
+                        schedule_type='매각기일'
+                    ).order_by('-round_number').first()
+                    
+                    auction_start_time = None
+                    if latest_schedule and latest_schedule.auction_date:
+                        auction_start_time = latest_schedule.auction_date
+                    elif item_details.auction_date:
+                        auction_start_time = item_details.auction_date
+                    
+                    # 입찰 시간 윈도우 검증 (auction_date ~ auction_date + 1시간)
+                    if auction_start_time:
+                        current_time = timezone.now()
+                        auction_end_time = auction_start_time + timedelta(hours=1)
+                        
+                        if current_time < auction_start_time:
+                            return JsonResponse({
+                                'status': 'error',
+                                'message': '입찰 시간이 아직 시작되지 않았습니다.'
+                            })
+                        
+                        if current_time > auction_end_time:
+                            return JsonResponse({
+                                'status': 'error',
+                                'message': '입찰 시간이 종료되었습니다.'
+                            })
+                
+            except AuctionCase.DoesNotExist:
+                pass  # 케이스를 찾을 수 없으면 기본 로직 진행
+        
+        # =====================================================
+        # 실제 입찰 처리 로직 (블록체인 연동) - 추후 구현 예정
+        # =====================================================
+        # TODO: 스마트 컨트랙트의 putsec 함수 호출
+        # - 입찰금액 검증 (최저입찰가 이상인지 확인)
+        # - 보증금 검증 (deposit이 충분한지 확인)
+        # - 블록체인 트랜잭션 생성 및 전송
+        # - 트랜잭션 해시 반환 대기
+        # 
+        # 예상 파라미터:
+        # - trade_num: 거래번호
+        # - bidder: 입찰자 지갑주소
+        # - bid_amount1, bid_amount2: 입찰금액 (암호화된 값들)
+        # - password1, password2: 입찰 비밀번호
+        # - deposit: 보증금
+        # - bid_time: 입찰 시각
+        #
+        # 예상 리턴값:
+        # - transaction_hash: 블록체인 트랜잭션 해시
+        # - success: 성공 여부
+        # - error_message: 실패 시 에러 메시지
+        # =====================================================
+        
+        # 임시 응답 (실제 구현 전까지)
+        print(f"입찰 데이터 수신: trade_num={trade_num}, bidder={bidder}")
+        
+        # 입찰 로그 저장 (실제 블록체인 처리 성공 후에 저장해야 함)
+        # TODO: 블록체인 처리 성공 시에만 아래 로그 저장
+        BidLog.objects.create(
+            trade_num=trade_num,
+            bidder_address=bidder,
+            bid_amount=bid_amount1,  # 실제 입찰금액으로 변경 필요
+            bid_time=timezone.now()
+        )
+        
+        return JsonResponse({
+            'status': 'success',
+            'message': '입찰이 성공적으로 제출되었습니다.',
+            'trade_num': trade_num,
+            # 'transaction_hash': transaction_hash,  # 블록체인 처리 후 추가
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'입찰 처리 중 오류가 발생했습니다: {str(e)}'
+        }, status=500)
 
 def get_bid_events(request):
     trade_num = request.GET.get("trade_num")

@@ -2,8 +2,56 @@ document.addEventListener('DOMContentLoaded', function () {
     const {
         csrfToken,
         bidder,
-        tradeNum
+        tradeNum,
+        auctionDate,
+        currentTime
     } = window.BIDFORM_CONTEXT;
+
+    // 입찰 시간 검증 함수
+    function checkBiddingTimeWindow() {
+        const auctionDateTime = new Date(auctionDate);
+        const now = new Date();
+        const biddingEndTime = new Date(auctionDateTime.getTime() + (60 * 60 * 1000)); // 1시간 후
+        
+        if (now < auctionDateTime) {
+            return { 
+                valid: false, 
+                message: `입찰은 ${auctionDateTime.toLocaleString()}부터 시작됩니다.` 
+            };
+        }
+        
+        if (now > biddingEndTime) {
+            return { 
+                valid: false, 
+                message: `입찰 시간이 ${biddingEndTime.toLocaleString()}에 종료되었습니다.` 
+            };
+        }
+        
+        return { valid: true, message: "" };
+    }
+
+    // 실시간 입찰 가능 시간 표시
+    function updateBiddingStatus() {
+        const timeCheck = checkBiddingTimeWindow();
+        const statusElement = document.getElementById('bidding-status');
+        
+        if (!timeCheck.valid) {
+            statusElement.innerHTML = `<span style="color: red;">${timeCheck.message}</span>`;
+            document.querySelector('.btn-primary').disabled = true;
+        } else {
+            const auctionDateTime = new Date(auctionDate);
+            const biddingEndTime = new Date(auctionDateTime.getTime() + (60 * 60 * 1000));
+            const now = new Date();
+            const remainingMinutes = Math.floor((biddingEndTime - now) / (1000 * 60));
+            
+            statusElement.innerHTML = `<span style="color: green;">입찰 가능 (남은 시간: ${remainingMinutes}분)</span>`;
+            document.querySelector('.btn-primary').disabled = false;
+        }
+    }
+
+    // 페이지 로드 시 및 1분마다 상태 업데이트
+    updateBiddingStatus();
+    setInterval(updateBiddingStatus, 60000);
 
     // ─── 헬퍼 함수 ───────────────────────────────
     function formatNumber(input) {
@@ -74,6 +122,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.getElementById("bidForm").addEventListener("submit", async function (e) {
     e.preventDefault();
+
+    // 입찰 시간 검증
+    const timeCheck = checkBiddingTimeWindow();
+    if (!timeCheck.valid) {
+        alert(timeCheck.message);
+        return;
+    }
 
     const bidAmount1 = document.getElementById("bidAmount1").value;
     const bidAmount2 = document.getElementById("bidAmount2").value;

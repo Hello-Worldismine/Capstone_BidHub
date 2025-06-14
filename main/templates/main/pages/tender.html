@@ -275,6 +275,40 @@
 });
 </script>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const auctionDate = "{{ item_details.auction_date|date:'c' }}";
+    
+    function checkBiddingTime() {
+        if (!auctionDate || auctionDate === "None") return true;
+        
+        const auctionDateTime = new Date(auctionDate);
+        const now = new Date();
+        const biddingEndTime = new Date(auctionDateTime.getTime() + (60 * 60 * 1000));
+        
+        const bidButton = document.querySelector('button[onclick*="bidform"]');
+        
+        if (now < auctionDateTime) {
+            bidButton.disabled = true;
+            bidButton.textContent = "입찰 시간 전";
+            return false;
+        } else if (now > biddingEndTime) {
+            bidButton.disabled = true;
+            bidButton.textContent = "입찰 시간 종료";
+            return false;
+        } else {
+            bidButton.disabled = false;
+            bidButton.textContent = "입찰표 작성하기";
+            return true;
+        }
+    }
+    
+    // 초기 체크 및 1분마다 업데이트
+    checkBiddingTime();
+    setInterval(checkBiddingTime, 60000);
+});
+</script>
+
 <!-- 이미지 확대용 모달 -->
 <div id="imageModal" class="modal">
   <span class="close">&times;</span>
