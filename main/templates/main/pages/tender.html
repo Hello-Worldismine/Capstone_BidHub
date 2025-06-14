@@ -85,7 +85,7 @@
       <button type="button" class="submit-btn"
         onclick="location.href='{% url 'bidform' %}?case_number={{ property_info.case_number }}'">입찰표 작성하기</button>
       <div class="actions">
-        <button type="button" onclick="openBidHistoryModalFromCase('{{ property_info.case_number }}', '{{ user_wallet_address }}')">입찰 내역 보기</button>
+        <button type="button" onclick="location.href='{% url 'bid_history' %}'">입찰 내역 보기</button>
         <button type="button" onclick="addToFavorites('{{ property_info.case_number }}')">관심 목록 추가</button>
       </div>
     </form>
@@ -242,7 +242,6 @@
 </div>
 
 <script>
-  window.user_wallet_address = "{{ user_wallet_address|default:'' }}".toLowerCase();
   document.addEventListener("DOMContentLoaded", function () {
     // 이미지 경로 설정
     const imagePaths = [
@@ -275,40 +274,6 @@
 });
 </script>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const auctionDate = "{{ item_details.auction_date|date:'c' }}";
-    
-    function checkBiddingTime() {
-        if (!auctionDate || auctionDate === "None") return true;
-        
-        const auctionDateTime = new Date(auctionDate);
-        const now = new Date();
-        const biddingEndTime = new Date(auctionDateTime.getTime() + (60 * 60 * 1000));
-        
-        const bidButton = document.querySelector('button[onclick*="bidform"]');
-        
-        if (now < auctionDateTime) {
-            bidButton.disabled = true;
-            bidButton.textContent = "입찰 시간 전";
-            return false;
-        } else if (now > biddingEndTime) {
-            bidButton.disabled = true;
-            bidButton.textContent = "입찰 시간 종료";
-            return false;
-        } else {
-            bidButton.disabled = false;
-            bidButton.textContent = "입찰표 작성하기";
-            return true;
-        }
-    }
-    
-    // 초기 체크 및 1분마다 업데이트
-    checkBiddingTime();
-    setInterval(checkBiddingTime, 60000);
-});
-</script>
-
 <!-- 이미지 확대용 모달 -->
 <div id="imageModal" class="modal">
   <span class="close">&times;</span>
@@ -316,6 +281,5 @@ document.addEventListener('DOMContentLoaded', function() {
   <img class="modal-content" id="modalImage">
   <button class="modal-arrow right" id="modalNext">&#10095;</button>
 </div>
-{% include 'main/pages/bidmodal.html' %}
-<link rel="stylesheet" href="{% static 'css/pages/modal.css' %}">
+
 {% endblock %}

@@ -2,56 +2,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const {
         csrfToken,
         bidder,
-        tradeNum,
-        auctionDate,
-        currentTime
+        tradeNum
     } = window.BIDFORM_CONTEXT;
-
-    // 입찰 시간 검증 함수
-    function checkBiddingTimeWindow() {
-        const auctionDateTime = new Date(auctionDate);
-        const now = new Date();
-        const biddingEndTime = new Date(auctionDateTime.getTime() + (60 * 60 * 1000)); // 1시간 후
-        
-        if (now < auctionDateTime) {
-            return { 
-                valid: false, 
-                message: `입찰은 ${auctionDateTime.toLocaleString()}부터 시작됩니다.` 
-            };
-        }
-        
-        if (now > biddingEndTime) {
-            return { 
-                valid: false, 
-                message: `입찰 시간이 ${biddingEndTime.toLocaleString()}에 종료되었습니다.` 
-            };
-        }
-        
-        return { valid: true, message: "" };
-    }
-
-    // 실시간 입찰 가능 시간 표시
-    function updateBiddingStatus() {
-        const timeCheck = checkBiddingTimeWindow();
-        const statusElement = document.getElementById('bidding-status');
-        
-        if (!timeCheck.valid) {
-            statusElement.innerHTML = `<span style="color: red;">${timeCheck.message}</span>`;
-            document.querySelector('.btn-primary').disabled = true;
-        } else {
-            const auctionDateTime = new Date(auctionDate);
-            const biddingEndTime = new Date(auctionDateTime.getTime() + (60 * 60 * 1000));
-            const now = new Date();
-            const remainingMinutes = Math.floor((biddingEndTime - now) / (1000 * 60));
-            
-            statusElement.innerHTML = `<span style="color: green;">입찰 가능 (남은 시간: ${remainingMinutes}분)</span>`;
-            document.querySelector('.btn-primary').disabled = false;
-        }
-    }
-
-    // 페이지 로드 시 및 1분마다 상태 업데이트
-    updateBiddingStatus();
-    setInterval(updateBiddingStatus, 60000);
 
     // ─── 헬퍼 함수 ───────────────────────────────
     function formatNumber(input) {
@@ -61,10 +13,10 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    const BID_ACTION_PUTSEC = 0;
+    const BID_ACTION_PUTCRYPT = 0;
 
     async function getNonce(address) {
-        const res = await fetch(`/api/get_nonce/?user=${address}&action_index=${BID_ACTION_PUTSEC}`);
+        const res = await fetch(`/api/get_nonce/?user=${address}&action_index=${BID_ACTION_PUTCRYPT}`);
         const data = await res.json();
         return data.nonce;
     }
@@ -118,17 +70,8 @@ document.addEventListener('DOMContentLoaded', function () {
     updateCourtOptions("all");
 
     // ─── 폼 제출 처리 ──────────────────────────────
-
-
-    document.getElementById("bidForm").addEventListener("submit", async function (e) {
+document.getElementById("bidForm").addEventListener("submit", async function (e) {
     e.preventDefault();
-
-    // 입찰 시간 검증
-    const timeCheck = checkBiddingTimeWindow();
-    if (!timeCheck.valid) {
-        alert(timeCheck.message);
-        return;
-    }
 
     const bidAmount1 = document.getElementById("bidAmount1").value;
     const bidAmount2 = document.getElementById("bidAmount2").value;
@@ -138,9 +81,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const bid_time = Math.floor(Date.now() / 1000);
 
     const KRW_PER_ETH = 10000000000;
-    const krwDeposit = BigInt(deposit);
-    const weiDeposit = krwDeposit * 100000000n;
-
+    const krwDeposit = BigInt(deposit); // 원화 입력값 (예: "202000000")
+    const weiDeposit = krwDeposit * 100000000n; // × 1e8
+  
     if (bidAmount1 !== bidAmount2) {
         alert("입찰가가 일치하지 않습니다.");
         return;
@@ -152,23 +95,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     try {
-        // 1. nonce 조회
-        const nonce = await getNonce(bidder);
-
-        // 2. 서명 (msg = keccak256(abi.encodePacked(trade_num, nonce, security)))
-        const bn = (v) => BigInt(v).toString();
-        const hash = ethers.utils.solidityKeccak256(
-            ["uint64", "uint256", "uint80"],
-            [bn(tradeNum), bn(nonce), bn(weiDeposit)]
-        );
-
-        const signature = await ethereum.request({
-            method: "personal_sign",
-            params: [hash, bidder]
-        });
-
-        // 3. putSec 호출
-        const res = await fetch("/api/put_sec/", {
+        // 1. 암호화된 P1, P2, P3 받기
+        const encRes = await fetch("/api/encrypt_bid/", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -176,27 +104,82 @@ document.addEventListener('DOMContentLoaded', function () {
             },
             body: JSON.stringify({
                 trade_num: parseInt(tradeNum),
-                bidder: bidder,
+                amount: parseInt(bidAmount1),
                 security: weiDeposit.toString(),
-                amount: bidAmount1,
-                nonce: nonce,
-                signature: signature,
-                bid_time: bid_time 
+                bidder: bidder,
+                bid_time: bid_time
             })
         });
 
-        const result = await res.json();
-        if (result.status === "success") {
-            alert("입찰 성공! TX Hash: " + result.tx_hash);
-            window.location.href = "/bid_history/";
-        } else {
-            alert("실패: " + result.message);
+        const encData = await encRes.json();
+        if (encData.status !== "success") {
+            alert("암호화 실패: " + encData.message);
+            return;
         }
+
+        const [p1, p2, p3] = encData.chunks;
+
+        // 2. nonce 조회
+        const nonce = await getNonce(bidder);
+
+        // 3. 서명 (msg = keccak256(abi.encodePacked(trade_num, nonce, P1, P2, P3)))
+        const bn = (v) => BigInt(v).toString();
+        
+        const hash = ethers.utils.solidityKeccak256(
+            ["uint64", "uint256", "uint256", "uint256", "uint256"],
+            [bn(tradeNum), bn(nonce), bn(p1), bn(p2), bn(p3)]
+        );
+
+        const signature = await ethereum.request({
+            method: "personal_sign",
+            params: [hash, bidder]
+        });
+
+        // 4. put_cryptogram 호출
+        const res = await fetch("/api/put_cryptogram/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": csrfToken
+            },
+            body: JSON.stringify({
+                trade_num: parseInt(tradeNum),
+                p1: p1,
+                p2: p2,
+                p3: p3,
+                bidder: bidder,
+                security: weiDeposit.toString(),
+                nonce: nonce,
+                signature: signature
+            })
+        });
+        const result = await res.json(); 
+        if (result.status === "success") {
+            await fetch("/api/store_encrypted_bid/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrfToken
+                },
+                body: JSON.stringify({
+                    trade_num: parseInt(tradeNum),
+                    bidder: bidder,
+                    bid_amount: parseInt(bidAmount1)  // or 암호화된 값
+                    })
+    }).then(() => {
+        alert("입찰 성공! TX Hash: " + result.tx_hash);
+        window.location.href = "/bid_history/";
+    });
+        } else if (result.status === "revert") {
+            alert("실패: " + result.message);  // ← 여기에 require 메시지 (예: Invalid Signature)
+            } else {
+                alert("오류: " + result.message);
+            }
+
     } catch (err) {
         alert("요청 실패: " + err);
     }
 });
-
 
     // ─── 기타 입력 처리 (포맷/유효성 등) ─────────────
     const bidAmount1Field = document.getElementById("bidAmount1");

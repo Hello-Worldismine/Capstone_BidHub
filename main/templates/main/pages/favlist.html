@@ -10,7 +10,7 @@
 {% block sidebar_menu %}
 <li><a href="{% url 'bid_history' %}">나의입찰내역</a></li>
 <li class="active"><a href="#">관심목록</a></li>
-<li><a href="{% url 'auto_bid' %}">자동입찰설정</a></li>
+<li><a href="{% url 'auto_bid' %}">자동입찰예약</a></li>
 <li><a href="{% url 'mypage' %}">마이페이지</a></li>
 {% endblock %}
 
@@ -144,5 +144,7 @@ function removeFavorite(itemId, iconElement) {
     }
   });
 }
+
+
 </script>
 {% endblock %}

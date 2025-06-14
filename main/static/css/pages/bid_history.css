@@ -29,7 +29,7 @@
 }
 
 /* ===== 반환 내역 컨테이너 ===== */
-.refund-container {
+.refund-container, .auto-bid-history-container {
   max-width: 940px;
   padding: 32px;
   background: #ffffff;
@@ -42,7 +42,7 @@
 }
 
 /* ===== 표 wrapper ===== */
-.refund-box {
+.refund-box, .auto-bid-box {
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -63,6 +63,20 @@
   box-sizing: border-box;
 }
 
+.auto-bid-row, .auto-bid-row.header {
+  display: grid;
+  grid-template-columns: 2fr 2fr 2fr 2fr 1.5fr 1.5fr; /* ← 6칸으로 변경 */
+  align-items: center;
+  padding: 18px 20px;
+  border-radius: 12px;
+  background-color: #f9fafb;
+  font-size: 15px;
+  color: #374151;
+  transition: background-color 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
 
 
 
@@ -70,8 +84,13 @@
   background-color: #f3f4f6;
 }
 
+.auto-bid-row:not(.header):hover {
+  background-color: #f3f4f6;
+}
+
+
 /* ===== 헤더 줄 ===== */
-.refund-row.header {
+.refund-row.header, .auto-bid-row.header {
   background-color: #eff6ff;
   font-weight: 700;
   color: #1d4ed8;
@@ -82,9 +101,27 @@
   box-sizing: border-box;
 }
 
-.refund-row div {
+.refund-row div, .auto-bid-row div {
   text-align: center;
 }
+
+.auto-bid-row button {
+  background-color: #777e85;       /* 빨간색 계열 */
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  white-space: nowrap;
+}
+
+.auto-bid-row button:hover {
+  background-color: #494949;       /* hover 시 진한 빨강 */
+}
+
 
 /* ===== 상태 뱃지 ===== */
 .status {
@@ -106,6 +143,29 @@
   background-color: #fef3c7;
   color: #d97706;
 }
+
+.hidden {
+  display: none;
+}
+
+/* 내부 텍스트 한 칸만 출력하고 싶을 경우 */
+.refund-row.no-data {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 60px;
+  background-color: #f9fafb;
+  border-radius: 12px;
+  font-size: 15px;
+  color: #6b7280;
+}
+
+/* 혹은 grid 사용 시 전체 span */
+.refund-row.no-data div {
+  grid-column: 1 / -1; /* 전체 칸 차지 */
+  text-align: center;
+}
+
 
 /* ===== 반응형 ===== */
 @media (max-width: 768px) {

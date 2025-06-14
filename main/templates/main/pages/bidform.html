@@ -83,21 +83,15 @@
   </div>
   
   {% if case_info %}
-  <div class="case-info-section">
-    <h4 class="section-title">경매 정보</h4>
-    <div class="case-info-grid">
-        <p><strong>사건번호:</strong> {{ case_info.case_number }}</p>
-        <p><strong>법원:</strong> {{ case_info.court_name }}</p>
-        <p><strong>사건명:</strong> {{ case_info.case_name }}</p>
-        <p><strong>경매일자:</strong> {{ case_info.auction_date|date:"Y-m-d H:i"|default:"미정" }}</p>
-        <p style="grid-column: 1 / -1;"><strong>최저매각가격:</strong> <span style="color: #007bff; font-weight: bold; font-size: 1.1em;">{{ case_info.min_bid_price }}</span></p>
+  <div class="case-info-section" id="case-info-display" style="margin: 20px 0; padding: 15px; background-color: #f8f9fa; border-radius: 5px; border: 1px solid #28a745;">
+    <h5 style="color: #28a745; margin-bottom: 15px;"><i class="fas fa-check-circle"></i> 선택된 경매 정보</h5>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+      <p><strong>사건번호:</strong> {{ case_info.case_number }}</p>
+      <p><strong>법원:</strong> {{ case_info.court_name }}</p>
+      <p><strong>사건명:</strong> {{ case_info.case_name }}</p>
+      <p><strong>경매일자:</strong> {{ case_info.auction_date|date:"Y-m-d"|default:"미정" }}</p>
+      <p style="grid-column: 1 / -1;"><strong>최저매각가격:</strong> <span style="color: #007bff; font-weight: bold; font-size: 1.1em;">{{ case_info.min_bid_price }}</span></p>
     </div>
-    
-    <!-- 입찰 상태 표시 영역 추가 -->
-    <div id="bidding-status" style="margin: 15px 0; padding: 10px; background-color: #f8f9fa; border-radius: 5px; text-align: center; font-weight: bold;">
-        입찰 시간 확인 중...
-    </div>
-    
     <input type="hidden" name="case_number" value="{{ case_info.case_number }}">
   </div>
   {% else %}
@@ -160,27 +154,8 @@
 window.BIDFORM_CONTEXT = {
     csrfToken: "{{ csrf_token }}",
     bidder: "{{ user.profile.wallet_address }}",
-    tradeNum: "{{ case_info.case_number|slice:'4:' }}",
-    auctionDate: "{{ case_info.auction_date|date:'c' }}", // ISO 형식으로 추가
-    currentTime: "{{ current_time|date:'c' }}" // 현재 시간 추가
+    tradeNum: "{{ case_info.case_number|default:'0'|cut:'타경' }}"
 };
-
-// 입찰 시간 검증 함수 추가
-function checkBiddingTimeLimit() {
-    const auctionDate = new Date(window.BIDFORM_CONTEXT.auctionDate);
-    const currentTime = new Date();
-    const oneHourAfterAuction = new Date(auctionDate.getTime() + (60 * 60 * 1000));
-    
-    if (currentTime < auctionDate) {
-        return { valid: false, message: "입찰 시간이 아직 시작되지 않았습니다." };
-    }
-    
-    if (currentTime > oneHourAfterAuction) {
-        return { valid: false, message: "입찰 시간이 종료되었습니다." };
-    }
-    
-    return { valid: true, message: "" };
-}
 </script>
 <script src="{% static 'js/pages/bidform.js' %}"></script>
 {% endblock %}
