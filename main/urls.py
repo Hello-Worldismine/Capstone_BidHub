@@ -44,7 +44,7 @@ urlpatterns = [
     path('region_result/', views.region_result, name='region_result'),
 
     
-path('consult_app/', views.consult_index, name='consult_app'),  # /consult_app/
+path('consult_app/', views.consult_index, name='consult_index'),  # /consult_app/
 path('consult_app/enter/', views.consult_enter_court_room, name='enter_court_room'),
 path('consult_app/agent/dashboard/', views.consult_agent_dashboard, name='agent_dashboard'),
 path('consult_app/agent/dashboard/rooms/', views.consult_active_rooms_api),

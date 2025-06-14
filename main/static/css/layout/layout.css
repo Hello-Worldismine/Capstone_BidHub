@@ -13,6 +13,7 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  overflow-x: auto;
 }
 
 /* 전체 페이지 wrapper */

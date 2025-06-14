@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     'app.apps.AuctionAppConfig',
 
     'autobid',  # autobid app 추가
+
 ]
 
 AUTH_USER_MODEL = 'accounts.User'
