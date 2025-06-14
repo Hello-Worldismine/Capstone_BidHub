@@ -945,36 +945,6 @@ from django.utils import timezone
 from datetime import timedelta
 from rest_framework.decorators import api_view
 
-@api_view(['POST'])
-def putsec_api(request):
-    try:
-        data = json.loads(request.body)
-
-        trade_num = int(data["trade_num"])
-        bidder = data["bidder"]
-        security = int(data["security"])
-        nonce = int(data["nonce"])
-        signature = data["signature"]
-
-        tx_result = putsec(trade_num, bidder, security, nonce, signature)
-        
-        if tx_result["status"] == "success":
-            return JsonResponse({
-                "status": "success",
-                "tx_hash": tx_result["tx_hash"]
-            })
-        else:
-            return JsonResponse({
-                "status": tx_result["status"],
-                "message": tx_result.get("message", "실패 사유 없음"),
-                "tx_hash": tx_result.get("tx_hash")
-            }, status=400)
-
-    except Exception as e:
-        return JsonResponse({
-            "status": "error",
-            "message": str(e)
-        }, status=500)
 
 def get_bid_events(request):
     trade_num = request.GET.get("trade_num")
