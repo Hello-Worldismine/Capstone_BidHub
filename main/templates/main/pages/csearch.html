@@ -152,9 +152,7 @@
     {% elif search_results %}
         <div class="search-summary">
             <p>검색 결과: 총 {{ total_count }}건 ({{ current_page }}/{{ total_pages }} 페이지)</p>
-        </div>
-        
-        <!-- fav-container 클래스 사용 -->
+            <!-- fav-container 클래스 사용 -->
         <div class="fav-container">
             {% for case in search_results %}
             <div class="fav-card" data-case-id="{{ case.case_number }}">
@@ -165,7 +163,7 @@
                 </div>
                 <div class="fav-details">
                     <!-- 하트 아이콘 (즐겨찾기) -->
-                    <div class="fav-heart" onclick="toggleFavorite('{{ case.case_number }}', this)">
+                    <div class="fav-heart" onclick="togglefavorite('{{ case.case_number }}', this)">
                         <i class="far fa-heart heart-icon"></i>
                     </div>
                     
@@ -235,7 +233,7 @@
                                     유찰 {{ auction_item.auction_failures }}회
                                 {% endif %}
                                 {% if auction_item.auction_date %}
-                                    · {{ auction_item.auction_date|date:"Y-m-d(D)" }}
+                                    · {{ auction_item.auction_date|date:"y-m-d(d)" }}
                                 {% endif %}
                             </span><br>
                             <span>{{ auction_item.property_address|default:"주소 정보 없음" }}</span>
@@ -248,6 +246,9 @@
             </div>
             {% endfor %}
         </div>
+        </div>
+        
+        
         
         <!-- 페이징 네비게이션 -->
         {% if total_pages > 1 %}
