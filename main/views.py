@@ -18,6 +18,7 @@ from app.models import BidLog  # 필요한 모델 import
 import requests
 from datetime import datetime, timedelta
 
+
 #아이디 찾기 관련 추가
 from django.contrib.auth import get_user_model
 User = get_user_model()
@@ -1250,4 +1251,3 @@ def update_profile(request):
             )
     
     return redirect('mypage')
-
