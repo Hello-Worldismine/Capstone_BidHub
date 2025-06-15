@@ -100,6 +100,7 @@ def pay_for_award(amount, trade_num, bidder, nonce, signature):
 
 def mark_additional_bid(trade_num, bidder, nonce, signature):
     bidder = Web3.to_checksum_address(bidder)
+    trade_num = int(trade_num) 
     return build_and_send_tx(contract.functions.markAdditionalBid(trade_num, bidder, nonce, signature))
 
 def withdraw(amount, to_address, nonce, signature):
