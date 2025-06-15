@@ -1,12 +1,11 @@
-// ✅ 필요한 상수들 먼저 정의
-const contractAddress = "0xA83a9Bbd6ff325827074A54ea6Fb86FB40Ceb536";
+const contractAddress = "0xd08DAdf34CaAFCa1830232Bfe1623e09239E027C";
 const contractABI = [
   "function EscrowDeposit(uint256 amount) external payable",
   "function viewMyDeposits() external view returns (uint256)",
 ];
 
 async function depositETH(event) {
-  console.log("🚀 charge_2.js 최신 버전 실행됨");
+  console.log("charge_2.js 최신 버전 실행됨");
   event.preventDefault();
 
   const krwInput = document.getElementById("ethAmount").value.trim();
@@ -25,7 +24,7 @@ async function depositETH(event) {
     }
 
     btn.disabled = true;
-    status.innerText = "⏳ 트랜잭션 전송 중...";
+    status.innerText = "트랜잭션 전송 중...";
 
     const provider = new ethers.providers.Web3Provider(window.ethereum);
     const signer = provider.getSigner();
@@ -53,7 +52,7 @@ async function depositETH(event) {
 
     await tx.wait();
     clearTimeout(timeout);
-    status.innerText = `✅ 입금 완료! Tx Hash: ${tx.hash}`;
+    status.innerText = `입금 완료! Tx Hash: ${tx.hash}`;
     setTimeout(async () => {
       try {
         const updated = await fetch(`/api/view_deposits/?user=${await signer.getAddress()}`);
@@ -69,7 +68,7 @@ async function depositETH(event) {
 
   } catch (err) {
     console.error(err);
-    let errorMsg = "❌ 트랜잭션 실패";
+    let errorMsg = "트랜잭션 실패";
 
     if (err?.error?.message) {
       errorMsg = err.error.message;
@@ -83,7 +82,7 @@ async function depositETH(event) {
       errorMsg = errorMsg.split("execution reverted: ")[1];
     }
 
-    status.innerText = "❌ 오류: " + errorMsg;
+    status.innerText = "오류: " + errorMsg;
   } finally {
     btn.disabled = false;
   }
@@ -106,7 +105,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 document.addEventListener("DOMContentLoaded", async () => {
   await refreshWalletBalance();  // 지갑 연결 여부 확인 후 예치금 표시
-  setInterval(refreshWalletBalance, 60000);  // 🔁 10초마다 갱신
+  setInterval(refreshWalletBalance, 60000);  // 10초마다 갱신
 });
 
 async function refreshWalletBalance() {
@@ -138,3 +137,13 @@ async function refreshWalletBalance() {
       `<i class="fa-solid fa-xmark"></i> 조회 실패`;
   }
 }
+
+const ethInput = document.getElementById('ethAmount');
+
+ethInput.addEventListener('input', (e) => {
+  const value = e.target.value.replace(/,/g, ''); // 기존 쉼표 제거
+  if (!isNaN(value)) {
+    const formatted = Number(value).toLocaleString(); // 천 단위 쉼표 자동 추가
+    e.target.value = formatted;
+  }
+});
