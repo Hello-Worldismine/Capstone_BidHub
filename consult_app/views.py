@@ -4,6 +4,10 @@ from .active_rooms import active_rooms, room_assignments
 from django.http import JsonResponse
 
 # 실시간 방 목록 API
+# 실시간 방 목록 API
+def consult_active_rooms_api(request):
+    return JsonResponse({'rooms': list(active_rooms)})
+
 def active_rooms_api(request):
     return JsonResponse({'rooms': list(active_rooms)})
 
