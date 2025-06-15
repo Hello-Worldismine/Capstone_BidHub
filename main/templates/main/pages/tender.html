@@ -56,13 +56,13 @@
       </a>
     </p>
 
-    <p class="case-title">
-    <p>{{ property_info.court|default:"법원 정보 없음" }}</p>
-    <a href="{% if document_urls.specification_url %}{{ document_urls.specification_url }}{% else %}#{% endif %}"
-      target="_blank" rel="noopener noreferrer">
-      {{ property_info.case_number|default:"사건번호" }}
-    </a>
-    </p>
+    <div class="case-title">
+      <p class="court-name">{{ property_info.court|default:"법원 정보 없음" }}</p>
+      <a class="case-number" href="{% if document_urls.specification_url %}{{ document_urls.specification_url }}{% else %}#{% endif %}" target="_blank" rel="noopener noreferrer">
+        {{ property_info.case_number|default:"사건번호" }}
+      </a>
+    </div>
+    
     <div class="price">{{ property_info.min_bid_price|default:"3,210,000,000" }}
       <span style="color:rgb(255, 110, 57); font-size: 12px; font-weight: 500;">
         &nbsp; 감정가의 {{ property_info.price_ratio|default:100 }}% ({{ property_info.current_round|default:1 }}차)
