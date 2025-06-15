@@ -605,7 +605,9 @@ def get_bid_events(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 #임시 더미
-@csrf_exempt
+def dummy_view(request):
+    return JsonResponse({"message": "미구현된 API입니다."})
+
 def pay_for_award_api(request):
     if request.method == "POST":
         data = json.loads(request.body)
@@ -629,7 +631,3 @@ def pay_for_award_api(request):
         except Exception as e:
             return JsonResponse({"success": False, "error": str(e)})
 
-
-
-def dummy_view(request):
-    return JsonResponse({"message": "미구현된 API입니다."})
