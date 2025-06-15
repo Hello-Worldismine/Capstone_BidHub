@@ -558,31 +558,37 @@ def find_id(request):
 
 #오늘의경매 관련 Views
 def today_bid(request):
+    """오늘의 경매"""
     today = date.today()
-    items = AuctionItem.objects.filter(auction_date__date=today).order_by('auction_date')
+    items = AuctionItem.objects.filter(
+        auction_date__date=today
+    ).select_related('case_number').order_by('auction_date')
 
-    paginator = Paginator(items, 10)
-    page_number = request.GET.get('page')
+    # 페이지네이션 (20개씩)
+    paginator = Paginator(items, 20)
+    page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
 
     context = {
-        'favorite_list': page_obj,
         'page_obj': page_obj,
     }
     return render(request, 'main/pages/today_bid.html', context)
 
 #주간경매공고 관련 views
 def week_bid(request):
+    """주간 경매 공고"""
     today = date.today()
     end_date = today + timedelta(days=7)
-    items = AuctionItem.objects.filter(auction_date__date__range=(today, end_date)).order_by('auction_date')
+    items = AuctionItem.objects.filter(
+        auction_date__date__range=(today, end_date)
+    ).select_related('case_number').order_by('auction_date')
 
-    paginator = Paginator(items, 10)
-    page_number = request.GET.get('page')
+    # 페이지네이션 (20개씩)
+    paginator = Paginator(items, 20)
+    page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
 
     context = {
-        'favorite_list': page_obj,
         'page_obj': page_obj,
     }
     return render(request, 'main/pages/week_bid.html', context)
@@ -946,107 +952,6 @@ from django.utils import timezone
 from datetime import timedelta
 from rest_framework.decorators import api_view
 
-@api_view(['POST'])
-def putsec_api(request):
-    try:
-        data = request.data
-        trade_num = data.get('trade_num')
-        bidder = data.get('bidder')
-        bid_amount1 = data.get('bid_amount1')
-        bid_amount2 = data.get('bid_amount2')
-        password1 = data.get('password1')
-        password2 = data.get('password2')
-        deposit = data.get('deposit')
-        bid_time = data.get('bid_time')
-        
-        # 입찰 시간 검증 - auction_date부터 1시간 동안만 입찰 가능
-        if trade_num:
-            case_number = f"2024타경{trade_num}"
-            
-            try:
-                case = AuctionCase.objects.get(case_number=case_number)
-                item_details = AuctionItem.objects.filter(case_number=case).first()
-                
-                if item_details:
-                    # 최신 매각기일 찾기 (여러 회차 경매가 있을 수 있음)
-                    latest_schedule = AuctionSchedule.objects.filter(
-                        auction_item=item_details,
-                        schedule_type='매각기일'
-                    ).order_by('-round_number').first()
-                    
-                    auction_start_time = None
-                    if latest_schedule and latest_schedule.auction_date:
-                        auction_start_time = latest_schedule.auction_date
-                    elif item_details.auction_date:
-                        auction_start_time = item_details.auction_date
-                    
-                    # 입찰 시간 윈도우 검증 (auction_date ~ auction_date + 1시간)
-                    if auction_start_time:
-                        current_time = timezone.now()
-                        auction_end_time = auction_start_time + timedelta(hours=1)
-                        
-                        if current_time < auction_start_time:
-                            return JsonResponse({
-                                'status': 'error',
-                                'message': '입찰 시간이 아직 시작되지 않았습니다.'
-                            })
-                        
-                        if current_time > auction_end_time:
-                            return JsonResponse({
-                                'status': 'error',
-                                'message': '입찰 시간이 종료되었습니다.'
-                            })
-                
-            except AuctionCase.DoesNotExist:
-                pass  # 케이스를 찾을 수 없으면 기본 로직 진행
-        
-        # =====================================================
-        # 실제 입찰 처리 로직 (블록체인 연동) - 추후 구현 예정
-        # =====================================================
-        # TODO: 스마트 컨트랙트의 putsec 함수 호출
-        # - 입찰금액 검증 (최저입찰가 이상인지 확인)
-        # - 보증금 검증 (deposit이 충분한지 확인)
-        # - 블록체인 트랜잭션 생성 및 전송
-        # - 트랜잭션 해시 반환 대기
-        # 
-        # 예상 파라미터:
-        # - trade_num: 거래번호
-        # - bidder: 입찰자 지갑주소
-        # - bid_amount1, bid_amount2: 입찰금액 (암호화된 값들)
-        # - password1, password2: 입찰 비밀번호
-        # - deposit: 보증금
-        # - bid_time: 입찰 시각
-        #
-        # 예상 리턴값:
-        # - transaction_hash: 블록체인 트랜잭션 해시
-        # - success: 성공 여부
-        # - error_message: 실패 시 에러 메시지
-        # =====================================================
-        
-        # 임시 응답 (실제 구현 전까지)
-        print(f"입찰 데이터 수신: trade_num={trade_num}, bidder={bidder}")
-        
-        # 입찰 로그 저장 (실제 블록체인 처리 성공 후에 저장해야 함)
-        # TODO: 블록체인 처리 성공 시에만 아래 로그 저장
-        BidLog.objects.create(
-            trade_num=trade_num,
-            bidder_address=bidder,
-            bid_amount=bid_amount1,  # 실제 입찰금액으로 변경 필요
-            bid_time=timezone.now()
-        )
-        
-        return JsonResponse({
-            'status': 'success',
-            'message': '입찰이 성공적으로 제출되었습니다.',
-            'trade_num': trade_num,
-            # 'transaction_hash': transaction_hash,  # 블록체인 처리 후 추가
-        })
-        
-    except Exception as e:
-        return JsonResponse({
-            'status': 'error',
-            'message': f'입찰 처리 중 오류가 발생했습니다: {str(e)}'
-        }, status=500)
 
 def get_bid_events(request):
     trade_num = request.GET.get("trade_num")

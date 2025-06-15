@@ -4,6 +4,7 @@
 {% block extra_css %}
 {{ block.super }}
 <link rel="stylesheet" href="{% static 'css/pages/tender.css' %}">
+<link rel="stylesheet" href="{% static 'css/pages/modal.css' %}">
 {% endblock %}
 
 {% block extra_js %}
@@ -87,7 +88,7 @@
       <button type="button" class="submit-btn"
         onclick="location.href='{% url 'bidform' %}?case_number={{ property_info.case_number }}'">입찰표 작성하기</button>
       <div class="actions">
-        <button type="button" onclick="location.href='{% url 'bid_history' %}'">입찰 내역 보기</button>
+        <button type="button" onclick="openBidHistoryModalFromCase('{{ property_info.case_number }}', '{{ user_wallet_address }}')">입찰 내역 보기</button>
         <button type="button" onclick="addToFavorites('{{ property_info.case_number }}')">관심 목록 추가</button>
       </div>
     </form>
@@ -332,4 +333,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 });
 </script>
+{% include "main/pages/bidmodal.html" %}
+
 {% endblock %}

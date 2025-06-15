@@ -2,7 +2,7 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('', views.index, name='consult_app'),  # 상담 시작 → 법원 선택 화면
+    path('', views.index, name='consult_index'),  # 상담 시작 → 법원 선택 화면
     path('enter/', views.enter_court_room, name='enter_court_room'),  # 법원 선택 후 이동
 
     path('agent/dashboard/', views.agent_dashboard, name='agent_dashboard'),
