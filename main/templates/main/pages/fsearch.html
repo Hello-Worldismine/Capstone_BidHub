@@ -98,7 +98,7 @@
                         
                         <p><strong>유찰횟수:</strong> {{ auction_item.auction_failures|default:0 }}회</p>
                         <p><strong>물건용도:</strong> {{ auction_item.item_purpose|default:"정보없음" }}</p>
-                        <p><strong>주소:</strong> {{ auction_item.item_note|default:"주소 정보 없음" }}</p>
+                        <p><strong>주소:</strong> {{ auction_item.property_address|default:"주소 정보 없음" }}</p>
                         
                         {% if auction_item.auction_date %}
                             <p><strong>매각기일:</strong> {{ auction_item.auction_date|date:"Y-m-d H:i" }}</p>

@@ -36,4 +36,5 @@ urlpatterns = [
     path('', include('main.urls')),  # main app URLs at root
     path('consult_app/', include('consult_app.urls')),
     path('chatbot/', include('chatbot.urls')), 
+    path('auto_bid/', include('autobid.urls')),  # autobid app URLs
 ]

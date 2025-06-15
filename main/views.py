@@ -88,11 +88,17 @@ def tender(request, case_number=None):
             if item_details and item_details.valuation_amount:
                 valuation_amount = int(item_details.valuation_amount.replace(',', '')) if isinstance(item_details.valuation_amount, str) else item_details.valuation_amount
             
-            # AuctionSchedule에서 현재 진행중인 매각기일 찾기
+            # AuctionSchedule에서 현재 매물(item_details)의 id와 정확히 매칭되는 스케줄만 조회
             from app.models import AuctionSchedule
             from django.utils import timezone
             
-            schedules = AuctionSchedule.objects.filter(auction_item=item_details).order_by('round_number')
+            # 중요: auction_item 필드를 통해 정확한 매물의 스케줄만 조회
+            schedules = AuctionSchedule.objects.filter(
+                auction_item_id=item_details.id  # auction_item_id와 item_details.id를 정확히 매칭
+            ).order_by('round_number')
+            
+            print(f"🔍 매물 ID: {item_details.id}, 사건번호: {case_number}")
+            print(f"📋 해당 매물의 스케줄 개수: {schedules.count()}")
             
             # 현재 진행중인 매각기일의 최저매각가격 찾기
             current_min_price = valuation_amount  # 기본값
@@ -101,6 +107,8 @@ def tender(request, case_number=None):
             now = timezone.now().date()
             
             for schedule in schedules:
+                print(f"📅 스케줄 정보 - 회차: {schedule.round_number}, 타입: {schedule.schedule_type}, 가격: {schedule.minimum_price}")
+                
                 # 매각기일이고 아직 지나지 않은 경우
                 if (schedule.schedule_type == '매각기일' and 
                     schedule.auction_date and 
@@ -110,6 +118,7 @@ def tender(request, case_number=None):
                     
                     current_min_price = schedule.minimum_price  # tsLwsDspslPrc 값 사용
                     current_round = schedule.round_number
+                    print(f"✅ 현재 진행중인 매각기일 발견 - {current_round}차, 가격: {current_min_price}")
                     break
                 
                 # 과거 매각기일 중 가장 최근 회차 확인 (다음 회차 예측용)
@@ -120,7 +129,7 @@ def tender(request, case_number=None):
             
             # 만약 진행중인 매각기일을 찾지 못했다면 감정평가액 사용
             if current_min_price == valuation_amount and schedules.exists():
-                # 가장 최근 스케줄의 minimum_price 사용
+                # 가장 최근 스케줄의 minimum_price 사용 (해당 매물의 것만)
                 latest_schedule = schedules.filter(
                     schedule_type='매각기일',
                     minimum_price__gt=0
@@ -129,17 +138,23 @@ def tender(request, case_number=None):
                 if latest_schedule:
                     current_min_price = latest_schedule.minimum_price
                     current_round = latest_schedule.round_number
+                    print(f"📌 최신 스케줄 사용 - {current_round}차, 가격: {current_min_price}")
             
             # 감정평가액 대비 비율 계산
             price_ratio = 100
             if valuation_amount > 0:
                 price_ratio = round((current_min_price / valuation_amount) * 100)
             
+            # 🔧 법원 정보 정확히 설정
+            court_name = case.court_name if case and case.court_name else "법원 정보 없음"
+            print(f"🏛️ 법원 정보: {court_name}")
+            
             property_info = {
                 'case_number': case.case_number if case else None,
                 'case_name': case.case_name if case else None,
                 'property_name': item_details.property_name if item_details else None,
-                'court': case.court_name if case else None,
+                'court': court_name,  # 정확한 법원 정보 사용
+                'court_name': court_name,  # 추가로 court_name도 제공
                 'receipt_date': case.filing_date if case else None,
                 'responsible_dept': case.responsible_dept if case else None,
                 'claim_amount': case.claim_amount if case else None,
@@ -151,8 +166,18 @@ def tender(request, case_number=None):
                 'specification_url': item_details.item_spec_url if item_details else None
             }
             
+            # 📍 주소 정보를 item_details의 property_address를 우선 사용하도록 수정
+            location_address = None
+            if item_details:
+                # AuctionItem의 get_formatted_address 메서드 사용
+                location_address = item_details.get_formatted_address()
+            
+            # 만약 AuctionItem에 주소가 없으면 ClaimDistribution의 location 사용
+            if location_address == "주소 정보 없음" and claim_distribution and claim_distribution.location:
+                location_address = claim_distribution.location
+            
             location_info = {
-                'location': claim_distribution.location if claim_distribution else None,
+                'location': location_address,
                 'claim_deadline': claim_distribution.claim_deadline if claim_distribution else None,
                 'case_number': case.case_number if case else None
             }
@@ -161,7 +186,7 @@ def tender(request, case_number=None):
                 'specification_url': item_details.item_spec_url if item_details else None
             }
             
-            # 입찰 내역 현황 - AuctionSchedule 모델 사용
+            # 입찰 내역 현황 - 해당 매물의 AuctionSchedule만 사용
             bidding_history = []
             
             if item_details and item_details.valuation_amount:
@@ -172,10 +197,13 @@ def tender(request, case_number=None):
                 except (ValueError, TypeError):
                     valuation_amount = 0
                 
-            # AuctionSchedule에서 회차별 정보 가져오기
+            # 해당 매물의 스케줄만 가져오기 (auction_item_id로 정확히 매칭)
             if item_details:
-                from app.models import AuctionSchedule
-                schedules = AuctionSchedule.objects.filter(auction_item=item_details).order_by('round_number')
+                schedules = AuctionSchedule.objects.filter(
+                    auction_item_id=item_details.id  # 정확한 매물 ID로 필터링
+                ).order_by('round_number')
+                
+                print(f"🔍 입찰 내역용 스케줄 조회 - 매물 ID: {item_details.id}, 스케줄 수: {schedules.count()}")
                 
                 for schedule in schedules:
                     # 실제 저장된 minimum_price 사용 (tsLwsDspslPrc 값)
@@ -199,6 +227,8 @@ def tender(request, case_number=None):
                         'auction_date': schedule.auction_date,
                         'due_date': schedule.decision_date
                     })
+                    
+                    print(f"📊 입찰 내역 추가 - 회차: {schedule.round_number}, 가격: {min_price}, 상태: {status}")
             
             # 이미지 경로 준비
             image_paths = []
@@ -206,9 +236,11 @@ def tender(request, case_number=None):
                 for url in item_details.item_image_url.split(','):
                     if url.strip():
                         image_paths.append(url.strip())
+            
             user_wallet_address = ""
             if request.user.is_authenticated:
                 user_wallet_address = request.user.profile.wallet_address  # 또는 적절한 위치
+            
             context = {
                 'property_id': case_number,
                 'property_info': property_info,
@@ -993,7 +1025,7 @@ def get_bid_events(request):
     # -------------------- 실시간 상담 기능 --------------------
 
 import uuid
-from .active_rooms import active_rooms, room_assignments  # consult_app에서 복사 필요
+from consult_app.active_rooms import active_rooms, room_assignments  # consult_app에서 복사 필요
 from django.http import JsonResponse
 
 # 실시간 방 목록 API

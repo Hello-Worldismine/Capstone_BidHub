@@ -200,8 +200,9 @@ class AuctionItem(models.Model):
         """포맷된 주소 반환"""
         if self.property_address:
             address = self.property_address
-            if self.building_name and self.building_name not in address:
-                address += f" ({self.building_name})"
+            # property_name이 건물명 역할을 하므로 이를 사용
+            if self.property_name and self.property_name not in address:
+                address += f" ({self.property_name})"
             if self.property_detail_address:
                 address += f" {self.property_detail_address}"
             if self.floor_info:
