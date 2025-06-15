@@ -1,5 +1,5 @@
 // ✅ 필요한 상수들 먼저 정의
-const contractAddress = "0xd08DAdf34CaAFCa1830232Bfe1623e09239E027C";
+const contractAddress = "0xA83a9Bbd6ff325827074A54ea6Fb86FB40Ceb536";
 const contractABI = [
   "function EscrowDeposit(uint256 amount) external payable",
   "function viewMyDeposits() external view returns (uint256)",

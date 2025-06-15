@@ -914,7 +914,6 @@ def csearch(request):
     
     return render(request, 'main/pages/csearch.html', context)
 
-
 def bid_history(request):
     user_address = request.user.profile.wallet_address.lower()
     
@@ -938,6 +937,9 @@ def bid_history(request):
           refundSecurities(where: {{tradeNum: "{trade_num}", bidder: "{user_address}"}}) {{
             blockTimestamp
           }}
+          bidWins(where: {{tradeNum: "{trade_num}"}}) {{
+            winner
+          }}
         }}
         """
         headers = {"Content-Type": "application/json"}
@@ -947,12 +949,11 @@ def bid_history(request):
         security_data = data.get("putSecs", [])
         if security_data:
             raw_wei = int(security_data[0]["security"])
-            eth = raw_wei / 1e18                      # float 연산
-            krw = eth * 10_000_000_000                 # 1 ETH = 10억 원
+            eth = raw_wei / 1e18
+            krw = eth * 10_000_000_000
             security = round(krw)  
         else:
             security = 0
-      
 
         refund_data = data.get("refundSecurities", [])
         if refund_data:
@@ -962,15 +963,20 @@ def bid_history(request):
             refund_status = "처리중"
             refund_date = "-"
 
+        win_data = data.get("bidWins", [])
+        is_winner = win_data and win_data[0]["winner"].lower() == user_address
+
         bid_rows.append({
             "case_number": case_number,
             "bid_amount": f"{bid_amount:,}" if isinstance(bid_amount, int) else bid_amount,
             "security": f"{security:,}원",
             "refund_status": refund_status,
-            "refund_date": refund_date
+            "refund_date": refund_date,
+            "is_winner": is_winner
         })
 
     return render(request, "main/pages/bid_history.html", {"bid_rows": bid_rows})
+
 
 def chat_view(request):
     return render(request, 'chatbot/chat.html') # 챗봇상담 페이지
