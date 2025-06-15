@@ -15,7 +15,14 @@ urlpatterns = [
     path('charge/', views.charge, name='charge'),
     path('property/<str:case_number>/', views.property_detail, name='property_detail'),
     path('bid_history/', views.bid_history, name='bid_history'),
+
+    # 즐겨찾기 관련 URL
+    path('favorites/add/', views.add_favorite, name='add_favorite'),
+    path('favorites/remove/<str:item_id>/', views.remove_favorite, name='remove_favorite'),
+    path('favorites/toggle/', views.toggle_favorite, name='toggle_favorite'),
+    path('favorites/check/<str:case_number>/', views.check_favorite_status, name='check_favorite_status'),
     path('favlist/', views.favlist, name='favlist'),
+
     path('update_wallet/', views.update_wallet, name='update_wallet'),
     path('chat/', views.chat_view, name='chatbot'),
     

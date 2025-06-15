@@ -5,6 +5,9 @@ from .models import Profile
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
+from main.models import FavoriteProperty
+from app.models import AuctionItem, AuctionCase
 import json
 from decimal import Decimal # Import Decimal
 from django.templatetags.static import static # Import static function
@@ -17,7 +20,6 @@ from django.template.response import TemplateResponse
 from app.models import BidLog  # 필요한 모델 import
 import requests
 from datetime import datetime, timedelta
-from main.models import FavoriteProperty
 
 
 #아이디 찾기 관련 추가
@@ -1196,3 +1198,163 @@ def update_profile(request):
             )
     
     return redirect('mypage')
+
+@login_required
+@csrf_exempt
+def add_favorite(request):
+    """즐겨찾기 추가"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            case_number = data.get('case_number')
+            
+            if not case_number:
+                return JsonResponse({'success': False, 'message': '사건번호가 필요합니다.'})
+            
+            # AuctionItem 찾기
+            try:
+                auction_case = AuctionCase.objects.get(case_number=case_number)
+                auction_item = AuctionItem.objects.filter(case_number=auction_case).first()
+                
+                if not auction_item:
+                    return JsonResponse({'success': False, 'message': '해당 매물을 찾을 수 없습니다.'})
+                
+                # 이미 즐겨찾기에 있는지 확인
+                favorite, created = FavoriteProperty.objects.get_or_create(
+                    user=request.user,
+                    auction_item=auction_item,
+                    defaults={
+                        'case_number': case_number,
+                        'usage': auction_item.property_type or '정보없음'
+                    }
+                )
+                
+                if created:
+                    return JsonResponse({'success': True, 'message': '즐겨찾기에 추가되었습니다.'})
+                else:
+                    return JsonResponse({'success': False, 'message': '이미 즐겨찾기에 있습니다.'})
+                    
+            except AuctionCase.DoesNotExist:
+                return JsonResponse({'success': False, 'message': '사건을 찾을 수 없습니다.'})
+                
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'message': '잘못된 요청입니다.'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': f'오류가 발생했습니다: {str(e)}'})
+    
+    return JsonResponse({'success': False, 'message': '잘못된 요청 방법입니다.'})
+
+@login_required
+@csrf_exempt
+def remove_favorite(request, item_id):
+    """즐겨찾기 제거"""
+    if request.method == 'POST':
+        try:
+            # item_id가 FavoriteProperty의 ID인 경우
+            if item_id.isdigit():
+                favorite = FavoriteProperty.objects.filter(
+                    id=item_id, 
+                    user=request.user
+                ).first()
+            else:
+                # item_id가 case_number인 경우
+                favorite = FavoriteProperty.objects.filter(
+                    case_number=item_id, 
+                    user=request.user
+                ).first()
+            
+            if favorite:
+                favorite.delete()
+                return JsonResponse({'success': True, 'message': '즐겨찾기에서 제거되었습니다.'})
+            else:
+                return JsonResponse({'success': False, 'message': '즐겨찾기 항목을 찾을 수 없습니다.'})
+                
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': f'오류가 발생했습니다: {str(e)}'})
+    
+    return JsonResponse({'success': False, 'message': '잘못된 요청 방법입니다.'})
+
+@login_required
+@csrf_exempt
+def toggle_favorite(request):
+    """즐겨찾기 토글 (추가/제거)"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            case_number = data.get('case_number')
+            
+            if not case_number:
+                return JsonResponse({'success': False, 'message': '사건번호가 필요합니다.'})
+            
+            # 기존 즐겨찾기 확인
+            existing_favorite = FavoriteProperty.objects.filter(
+                user=request.user,
+                case_number=case_number
+            ).first()
+            
+            if existing_favorite:
+                # 제거
+                existing_favorite.delete()
+                return JsonResponse({
+                    'success': True, 
+                    'action': 'removed',
+                    'message': '즐겨찾기에서 제거되었습니다.'
+                })
+            else:
+                # 추가
+                try:
+                    auction_case = AuctionCase.objects.get(case_number=case_number)
+                    auction_item = AuctionItem.objects.filter(case_number=auction_case).first()
+                    
+                    if not auction_item:
+                        return JsonResponse({'success': False, 'message': '해당 매물을 찾을 수 없습니다.'})
+                    
+                    FavoriteProperty.objects.create(
+                        user=request.user,
+                        auction_item=auction_item,
+                        case_number=case_number,
+                        usage=auction_item.property_type or '정보없음'
+                    )
+                    
+                    return JsonResponse({
+                        'success': True, 
+                        'action': 'added',
+                        'message': '즐겨찾기에 추가되었습니다.'
+                    })
+                    
+                except AuctionCase.DoesNotExist:
+                    return JsonResponse({'success': False, 'message': '사건을 찾을 수 없습니다.'})
+                    
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'message': '잘못된 요청입니다.'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': f'오류가 발생했습니다: {str(e)}'})
+    
+    return JsonResponse({'success': False, 'message': '잘못된 요청 방법입니다.'})
+
+@login_required
+def check_favorite_status(request, case_number):
+    """즐겨찾기 상태 확인"""
+    try:
+        is_favorite = FavoriteProperty.objects.filter(
+            user=request.user,
+            case_number=case_number
+        ).exists()
+        
+        return JsonResponse({
+            'success': True, 
+            'is_favorite': is_favorite
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'오류가 발생했습니다: {str(e)}'})
+
+@login_required
+def favlist(request):
+    """즐겨찾기 목록 페이지"""
+    favorite_list = FavoriteProperty.objects.filter(
+        user=request.user
+    ).select_related('auction_item', 'auction_item__case_number').order_by('-created_at')
+    
+    return render(request, 'main/pages/favlist.html', {
+        'favorite_list': favorite_list
+    })

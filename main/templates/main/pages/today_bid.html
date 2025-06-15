@@ -7,6 +7,10 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 {% endblock %}
 
+{% block extra_head %}
+<meta name="csrf-token" content="{{ csrf_token }}">
+{% endblock %}
+
 {% block sidebar_menu %}
 <li class="active"><a href="{% url 'today_bid' %}">오늘의경매</a></li>
 <li><a href="{% url 'week_bid' %}">주간경매공고</a></li>
@@ -111,7 +115,7 @@
   {% endfor %}
 </div>
 
-<!-- 페이징 네비게이션 (csearch 스타일) -->
+<!-- 페이징 네비게이션 -->
 {% if page_obj.paginator.num_pages > 1 %}
 <div class="pagination" style="text-align: center; margin: 30px 0;">
     {% if page_obj.has_previous %}
@@ -128,26 +132,99 @@
 </div>
 {% endif %}
 
+{% endblock %}
+
+{% block extra_js %}
 <script>
 // 즐겨찾기 토글 함수
 function toggleFavorite(caseNumber, iconElement) {
-    const heartIcon = iconElement.querySelector('.heart-icon');
-    const isFavorited = heartIcon.classList.contains('fas');
+    // 로그인 확인
+    {% if not user.is_authenticated %}
+        alert('로그인이 필요합니다.');
+        window.location.href = '{% url "account_login" %}';
+        return;
+    {% endif %}
     
-    // 임시로 UI만 변경 (실제 서버 연동은 나중에)
-    if (isFavorited) {
-        heartIcon.classList.remove('fas');
-        heartIcon.classList.add('far');
-        console.log(`Removed ${caseNumber} from favorites`);
-    } else {
-        heartIcon.classList.remove('far');
-        heartIcon.classList.add('fas');
-        console.log(`Added ${caseNumber} to favorites`);
-    }
+    const heartIcon = iconElement.querySelector('.heart-icon');
+    
+    fetch('{% url "toggle_favorite" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken(),
+        },
+        body: JSON.stringify({
+            'case_number': caseNumber
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (data.action === 'added') {
+                heartIcon.classList.remove('far');
+                heartIcon.classList.add('fas');
+                showMessage(data.message, 'success');
+            } else if (data.action === 'removed') {
+                heartIcon.classList.remove('fas');
+                heartIcon.classList.add('far');
+                showMessage(data.message, 'info');
+            }
+        } else {
+            alert('오류: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('즐겨찾기 처리 중 오류가 발생했습니다.');
+    });
 }
 
+// CSRF 토큰 가져오기
 function getCSRFToken() {
-  return document.querySelector('[name=csrfmiddlewaretoken]').value;
+    return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 }
+
+// 메시지 표시 함수
+function showMessage(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.textContent = message;
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#4CAF50' : '#2196F3'};
+        color: white;
+        padding: 12px 20px;
+        border-radius: 4px;
+        z-index: 10000;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    `;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+
+// 페이지 로드 시 즐겨찾기 상태 확인
+document.addEventListener('DOMContentLoaded', function() {
+    {% if user.is_authenticated %}
+        const favoriteIcons = document.querySelectorAll('.fav-heart');
+        favoriteIcons.forEach(icon => {
+            const caseNumber = icon.getAttribute('onclick').match(/'([^']+)'/)[1];
+            
+            fetch(`{% url "check_favorite_status" case_number="PLACEHOLDER" %}`.replace('PLACEHOLDER', caseNumber))
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.is_favorite) {
+                    const heartIcon = icon.querySelector('.heart-icon');
+                    heartIcon.classList.remove('far');
+                    heartIcon.classList.add('fas');
+                }
+            })
+            .catch(error => console.error('Error checking favorite status:', error));
+        });
+    {% endif %}
+});
 </script>
 {% endblock %}
