@@ -4,6 +4,7 @@
 {% block extra_css %}
 {{ block.super }}
 <link rel="stylesheet" href="{% static 'css/pages/fsearch.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 {% endblock %}
 
 {% block extra_head %}
@@ -57,7 +58,6 @@
                 <button type="submit" class="search-btn">검색</button>
             </div>
         </div>
-       
     </form>
 </div>
 
@@ -69,51 +69,100 @@
                 <p>{{ search_error }}</p>
             </div>
         {% elif search_results %}
-            {% for case in search_results %}
-            <div class="result-card" data-case-id="{{ case.case_number }}">
-                <div class="thumbnail">
-                    <img src="{% static 'img/bidhub-logo.png' %}" 
-                         alt="물건 이미지" 
-                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                    <div class="no-image" style="display: none;">이미지 없음</div>
-                </div>
-                <div class="card-info">
-                                        <h3 class="case-number" data-case-id="{{ case.case_number }}">
-                        <a href="{% url 'tender' case_number=case.case_number %}" style="text-decoration: underline !important; text-decoration-line: underline;">
-                            {{ case.case_number }}
-                        </a>
-                    </h3>
-                    <p><strong>법원:</strong> {{ case.court_name }}</p>
-                    <p><strong>사건명:</strong> {{ case.case_name|default:"정보없음" }}</p>
-                    
-                    {% with auction_item=case.auctionitem_set.first %}
-                    {% if auction_item %}
-                        <p><strong>감정평가액:</strong> 
-                            {% if auction_item.valuation_amount %}
-                                {{ auction_item.valuation_amount|floatformat:0 }}원
+            <!-- fav-container 스타일로 변경 -->
+            <div class="fav-container">
+                {% for case in search_results %}
+                <div class="fav-card" data-case-id="{{ case.case_number }}">
+                    <div class="fav-image">
+                        <img src="{% static 'img/bidhub-logo.png' %}" 
+                             alt="물건 이미지" 
+                             onerror="this.src='{% static 'img/choonsik/choonsik-main.jfif' %}';">
+                    </div>
+                    <div class="fav-details">
+                        <!-- 하트 아이콘 (즐겨찾기) -->
+                        <div class="fav-heart" onclick="toggleFavorite('{{ case.case_number }}', this)">
+                            <i class="far fa-heart heart-icon"></i>
+                        </div>
+                        
+                        <div class="fav-top">
+                            {% with auction_item=case.auctionitem_set.first %}
+                            {% if auction_item %}
+                                <!-- 물건 종류에 따른 배지 색상 -->
+                                {% if auction_item.item_purpose %}
+                                    {% if "아파트" in auction_item.item_purpose or "연립주택" in auction_item.item_purpose or "오피스텔" in auction_item.item_purpose or "단독주택" in auction_item.item_purpose or "다세대주택" in auction_item.item_purpose or "주상복합" in auction_item.item_purpose or "다가구주택" in auction_item.item_purpose or "주거기타" in auction_item.item_purpose %}
+                                        <span class="badge property-type apt">{{ auction_item.item_purpose }}</span>
+                                    {% elif "근린생활시설" in auction_item.item_purpose or "주/상용건물" in auction_item.item_purpose or "판매시설" in auction_item.item_purpose or "위락시설" in auction_item.item_purpose or "상가기타" in auction_item.item_purpose %}
+                                        <span class="badge property-type store">{{ auction_item.item_purpose }}</span>
+                                    {% elif "업무시설" in auction_item.item_purpose or "종교시설" in auction_item.item_purpose or "공장" in auction_item.item_purpose or "창고시설" in auction_item.item_purpose or "숙박시설" in auction_item.item_purpose or "건물기타" in auction_item.item_purpose %}
+                                        <span class="badge property-type etc-building">{{ auction_item.item_purpose }}</span>
+                                    {% elif "대지" in auction_item.item_purpose or "임야" in auction_item.item_purpose or "답" in auction_item.item_purpose or "잡종지" in auction_item.item_purpose or "전" in auction_item.item_purpose %}
+                                        <span class="badge property-type land">{{ auction_item.item_purpose }}</span>
+                                    {% else %}
+                                        <span class="badge property-type etc-land">{{ auction_item.item_purpose }}</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="badge property-type etc-land">정보없음</span>
+                                {% endif %}
+                            {% endif %}
+                            {% endwith %}
+                            
+                            <!-- 사건번호를 링크로 -->
+                            <span class="address">
+                                <a href="{% url 'tender' case_number=case.case_number %}" style="text-decoration: none; color: inherit;">
+                                    {{ case.case_number }}
+                                </a>
+                            </span>
+                            
+                            <!-- 법원 정보 -->
+                            <span style="font-size: 12px; color: #666;">{{ case.court_name }}</span>
+                        </div>
+                        
+                        <!-- 감정평가액 -->
+                        <div class="fav-price">
+                            {% with auction_item=case.auctionitem_set.first %}
+                            {% if auction_item and auction_item.valuation_amount %}
+                                {% if auction_item.valuation_amount|floatformat:0|length > 8 %}
+                                    {{ auction_item.valuation_amount|floatformat:0|slice:":-8" }}억
+                                    {% if auction_item.valuation_amount|floatformat:0|slice:"-8:" != "00000000" %}
+                                        {{ auction_item.valuation_amount|floatformat:0|slice:"-8:-4" }}만원
+                                    {% else %}
+                                        원
+                                    {% endif %}
+                                {% elif auction_item.valuation_amount|floatformat:0|length > 4 %}
+                                    {{ auction_item.valuation_amount|floatformat:0|slice:":-4" }}만원
+                                {% else %}
+                                    {{ auction_item.valuation_amount|floatformat:0 }}원
+                                {% endif %}
                             {% else %}
                                 정보없음
                             {% endif %}
-                        </p>
+                            {% endwith %}
+                        </div>
                         
-                        <p><strong>유찰횟수:</strong> {{ auction_item.auction_failures|default:0 }}회</p>
-                        <p><strong>물건용도:</strong> {{ auction_item.item_purpose|default:"정보없음" }}</p>
-                        <p><strong>주소:</strong> {{ auction_item.property_address|default:"주소 정보 없음" }}</p>
-                        
-                        {% if auction_item.auction_date %}
-                            <p><strong>매각기일:</strong> {{ auction_item.auction_date|date:"Y-m-d H:i" }}</p>
-                        {% endif %}
-                    {% else %}
-                        <p><strong>물건정보:</strong> 등록된 물건이 없습니다.</p>
-                    {% endif %}
-                    {% endwith %}
-                    
-                    <button class="favorite-btn" data-case-number="{{ case.case_number }}">
-                        <i class="fa-regular fa-star"></i> 즐겨찾기
-                    </button>
+                        <!-- 하단 정보 -->
+                        <div class="fav-bottom">
+                            {% with auction_item=case.auctionitem_set.first %}
+                            {% if auction_item %}
+                                <span>
+                                    {% if auction_item.auction_failures == 0 %}
+                                        첫 경매
+                                    {% else %}
+                                        유찰 {{ auction_item.auction_failures }}회
+                                    {% endif %}
+                                    {% if auction_item.auction_date %}
+                                        · {{ auction_item.auction_date|date:"Y-m-d(D)" }}
+                                    {% endif %}
+                                </span><br>
+                                <span>{{ auction_item.property_address|default:"주소 정보 없음" }}</span>
+                            {% else %}
+                                <span>물건 정보가 없습니다.</span>
+                            {% endif %}
+                            {% endwith %}
+                        </div>
+                    </div>
                 </div>
+                {% endfor %}
             </div>
-            {% endfor %}
         {% else %}
             <p class="no-result">검색 결과가 없습니다.</p>
         {% endif %}
@@ -128,6 +177,97 @@
 {% endblock %}
 
 {% block extra_js %}
-<!-- fsearch.js 로드 -->
 <script src="{% static 'js/pages/fsearch.js' %}"></script>
+<script>
+// 즐겨찾기 토글 함수
+function toggleFavorite(caseNumber, iconElement) {
+    // 로그인 확인
+    {% if not user.is_authenticated %}
+        alert('로그인이 필요합니다.');
+        window.location.href = '{% url "account_login" %}';
+        return;
+    {% endif %}
+    
+    const heartIcon = iconElement.querySelector('.heart-icon');
+    
+    fetch('{% url "toggle_favorite" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken(),
+        },
+        body: JSON.stringify({
+            'case_number': caseNumber
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (data.action === 'added') {
+                heartIcon.classList.remove('far');
+                heartIcon.classList.add('fas');
+                showMessage(data.message, 'success');
+            } else if (data.action === 'removed') {
+                heartIcon.classList.remove('fas');
+                heartIcon.classList.add('far');
+                showMessage(data.message, 'info');
+            }
+        } else {
+            alert('오류: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('즐겨찾기 처리 중 오류가 발생했습니다.');
+    });
+}
+
+// CSRF 토큰 가져오기
+function getCSRFToken() {
+    return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+}
+
+// 메시지 표시 함수
+function showMessage(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.textContent = message;
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#4CAF50' : '#2196F3'};
+        color: white;
+        padding: 12px 20px;
+        border-radius: 4px;
+        z-index: 10000;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    `;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+
+// 페이지 로드 시 즐겨찾기 상태 확인
+document.addEventListener('DOMContentLoaded', function() {
+    {% if user.is_authenticated %}
+        const favoriteIcons = document.querySelectorAll('.fav-heart');
+        favoriteIcons.forEach(icon => {
+            const caseNumber = icon.getAttribute('onclick').match(/'([^']+)'/)[1];
+            
+            fetch(`{% url "check_favorite_status" case_number="PLACEHOLDER" %}`.replace('PLACEHOLDER', caseNumber))
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.is_favorite) {
+                    const heartIcon = icon.querySelector('.heart-icon');
+                    heartIcon.classList.remove('far');
+                    heartIcon.classList.add('fas');
+                }
+            })
+            .catch(error => console.error('Error checking favorite status:', error));
+        });
+    {% endif %}
+});
+</script>
 {% endblock %}
