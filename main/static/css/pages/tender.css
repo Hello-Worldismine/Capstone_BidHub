@@ -358,28 +358,37 @@ h2 {
 
 /* 모달 */
 .modal {
-  display: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   position: fixed;
   z-index: 2000;
-  left: 0;
   top: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0,0,0,0.8);
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.8);
+  overflow: hidden;
 }
 
 .modal-content {
+  max-width: 90vw;
+  max-height: 90vh;
+  width: auto;
+  height: auto;
+
+  background: none;
+  border: none;
+  box-shadow: none;
+  outline: none;
+  margin: 0;
+  padding: 0;
+
   display: block;
-  max-width: 90%;
-  max-height: 80vh;
-  margin: auto;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  border-radius: 8px;
-  box-shadow: 0 0 20px rgba(0,0,0,0.3);
+  object-fit: contain;
 }
+
+
 
 .close {
   position: absolute;
@@ -415,4 +424,11 @@ h2 {
 .modal-arrow:hover,
 .close:hover {
   color: #ccc;
+}
+
+img.modal-content {
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+  box-shadow: none !important;
 }
