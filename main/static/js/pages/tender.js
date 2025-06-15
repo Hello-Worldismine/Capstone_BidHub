@@ -10,6 +10,71 @@ document.addEventListener("DOMContentLoaded", function () {
     const closeBtn = document.querySelector(".close");
     const modalPrev = document.getElementById("modalPrev");
     const modalNext = document.getElementById("modalNext");
+    const contractBtn = document.getElementById("contractActionBtn");
+
+  if (contractBtn) {
+    contractBtn.addEventListener("click", async function () {
+      try {
+        const tradeNum = window.currentTradeNum;
+        const bidder = window.user_wallet_address;
+
+        if (!tradeNum || !bidder) {
+          alert("필요한 정보가 없습니다.");
+          return;
+        }
+
+        const nonce = await getNonce(bidder, 2);  // action_index = 2
+        const messageHash = ethers.utils.solidityKeccak256(
+            ["uint64", "address", "uint256"],
+            [parseInt(tradeNum), bidder, nonce]
+        );
+
+        const signature = await ethereum.request({
+            method: "personal_sign",
+            params: [messageHash, bidder],
+        });
+
+        const res = await fetch("/api/mark_additional_bid/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCSRFToken(),
+          },
+          body: JSON.stringify({
+            trade_num: tradeNum,
+            bidder: bidder,
+            nonce: nonce,
+            signature: signature,
+          }),
+        });
+
+        const data = await res.json();
+        if (data.status === "success") {
+          alert("성공적으로 처리되었습니다.");
+          closeBidHistoryModal();
+        } else {
+          alert("실패: " + (data.message || "서버 오류"));
+        }
+      } catch (err) {
+        console.error("추가 참여 에러:", err);
+        alert("에러 발생: " + err.message);
+      }
+    });
+  }
+
+  // nonce 요청 함수
+  async function getNonce(address, actionIndex = 0) {
+    const res = await fetch(`/api/get_nonce/?user=${address}&action_index=${actionIndex}`);
+    const data = await res.json();
+    return data.nonce;
+  }
+
+  function getCSRFToken() {
+    return document.cookie
+      .split("; ")
+      .find(row => row.startsWith("csrftoken="))
+      ?.split("=")[1];
+  }
 
     // 이미지 관련 함수들
     function updateMainImage() {
@@ -292,6 +357,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
 function openBidHistoryModalFromCase(caseNumber, userAddress) {
     const tradeNum = caseNumber.replace(/[^0-9]/g, '');  // "2023타경7092" → "20237092"
+    window.currentTradeNum = tradeNum;          // 여기 추가
+    window.user_wallet_address = userAddress;
     openBidHistoryModal(tradeNum, userAddress);
 }
 
