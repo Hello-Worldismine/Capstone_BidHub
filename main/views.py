@@ -17,6 +17,7 @@ from django.template.response import TemplateResponse
 from app.models import BidLog  # 필요한 모델 import
 import requests
 from datetime import datetime, timedelta
+from main.models import FavoriteProperty
 
 
 #아이디 찾기 관련 추가
@@ -1082,7 +1083,8 @@ def bid_history(request):
 
 @login_required(login_url='account_login') 
 def favlist(request):
-    return render(request, 'main/pages/favlist.html')
+    favorite_list = FavoriteProperty.objects.filter(user=request.user).select_related('auction_item')
+    return render(request, 'main/pages/favlist.html', {'favorite_list': favorite_list})
 
 @login_required(login_url='account_login') 
 def bidform(request):

@@ -5,7 +5,9 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model  # User 모델을 동적으로 가져오기
-from .models import Property, AutoBidReservation, AutoBidFavorite  # 모델명 변경
+from .models import Property, AutoBidReservation  # 모델명 변경
+from main.models import FavoriteProperty
+from app.models import AuctionItem
 
 User = get_user_model()  # 현재 설정된 User 모델 가져오기
 
@@ -89,9 +91,9 @@ def get_favorite_properties(request):
     """즐겨찾기 매물 조회 API"""
     try:
         if request.user.is_authenticated:
-            favorites = AutoBidFavorite.objects.filter(user=request.user)  # 변경
+            favorites = FavoriteProperty.objects.filter(user=request.user)  # 변경
         else:
-            favorites = AutoBidFavorite.objects.all()  # 변경
+            favorites = FavoriteProperty.objects.all()  # 변경
             
         data = [
             {
@@ -118,19 +120,19 @@ def add_favorite_property(request):
                 return JsonResponse({'success': False, 'message': '사건번호를 입력해주세요.'})
             
             if request.user.is_authenticated:
-                existing = AutoBidFavorite.objects.filter(  # 변경
+                existing = FavoriteProperty.objects.filter(  # 변경
                     user=request.user, 
                     case_number=case_number
                 ).first()
             else:
-                existing = AutoBidFavorite.objects.filter(  # 변경
+                existing = FavoriteProperty.objects.filter(  # 변경
                     case_number=case_number
                 ).first()
             
             if existing:
                 return JsonResponse({'success': False, 'message': '이미 즐겨찾기에 있는 매물입니다.'})
             
-            AutoBidFavorite.objects.create(  # 변경
+            FavoriteProperty.objects.create(  # 변경
                 user=request.user if request.user.is_authenticated else None,
                 case_number=case_number,
                 usage=usage

@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sites',  # allauth를 위해 필요
     'django_extensions',
+    'django.contrib.humanize',
     
     # Third-party apps (allauth를 accounts보다 먼저)
     'allauth',
