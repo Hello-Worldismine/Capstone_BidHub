@@ -1,4 +1,4 @@
-const contractAddress = "0xd08DAdf34CaAFCa1830232Bfe1623e09239E027C";
+const contractAddress = "0xa83a9bbd6ff325827074a54ea6fb86fb40ceb536";
 const contractABI = [
   "function EscrowDeposit(uint256 amount) external payable",
   "function viewMyDeposits() external view returns (uint256)",

@@ -1,0 +1,188 @@
+{% load static %}
+{% load image_tags %}
+
+<div class="fav-container">
+  {% for item in items %}
+  <div class="fav-card" data-item-id="{{ item.id|default:item.case_number }}">
+    <div class="fav-image">
+      {% if item_type == 'auction_item' %}
+        {% get_item_main_image item as main_image %}
+      {% else %}
+        {% get_case_image item as main_image %}
+      {% endif %}
+      
+      {% if main_image %}
+        <img src="{{ main_image }}" 
+             alt="물건 이미지" 
+             onerror="this.src='{% static 'img/bidhub-logo.png' %}';">
+      {% else %}
+        <img src="{% static 'img/bidhub-logo.png' %}" 
+             alt="기본 이미지" 
+             onerror="this.src='{% static 'img/choonsik/choonsik-main.jfif' %}';">
+      {% endif %}
+    </div>
+    
+    <div class="fav-details">
+      <!-- 하트 아이콘 (즐겨찾기) - 상태에 따라 초기 표시 -->
+      <div class="fav-heart" onclick="toggleFavorite('{% if item_type == 'auction_item' %}{{ item.case_number.case_number }}{% else %}{{ item.case_number }}{% endif %}', this)">
+        {% if item.is_favorite %}
+          <i class="fas fa-heart heart-icon" style="color: #e74c3c;"></i> <!-- 빨간 하트 -->
+        {% else %}
+          <i class="far fa-heart heart-icon" style="color: #e74c3c;"></i> <!-- 속이 빈 하트 -->
+        {% endif %}
+      </div>
+      
+      <div class="fav-top">
+        <!-- 물건 종류에 따른 배지 색상 -->
+        {% if item_type == 'auction_item' %}
+          {% with property_type=item.property_type %}
+            {% if property_type %}
+              {% if "아파트" in property_type or "연립주택" in property_type or "오피스텔" in property_type or "단독주택" in property_type or "다세대주택" in property_type or "주상복합" in property_type or "다가구주택" in property_type or "주거기타" in property_type %}
+                <span class="badge property-type apt">{{ property_type }}</span>
+              {% elif "근린생활시설" in property_type or "주/상용건물" in property_type or "판매시설" in property_type or "위락시설" in property_type or "상가기타" in property_type %}
+                <span class="badge property-type store">{{ property_type }}</span>
+              {% elif "업무시설" in property_type or "종교시설" in property_type or "공장" in property_type or "창고시설" in property_type or "숙박시설" in property_type or "건물기타" in property_type %}
+                <span class="badge property-type etc-building">{{ property_type }}</span>
+              {% elif "대지" in property_type or "임야" in property_type or "답" in property_type or "잡종지" in property_type or "전" in property_type %}
+                <span class="badge property-type land">{{ property_type }}</span>
+              {% else %}
+                <span class="badge property-type etc-land">{{ property_type }}</span>
+              {% endif %}
+            {% else %}
+              <span class="badge property-type etc-land">정보없음</span>
+            {% endif %}
+          {% endwith %}
+        {% else %}
+          {% with auction_item=item.auctionitem_set.first %}
+            {% if auction_item and auction_item.property_type %}
+              {% with property_type=auction_item.property_type %}
+                {% if "아파트" in property_type or "연립주택" in property_type or "오피스텔" in property_type or "단독주택" in property_type or "다세대주택" in property_type or "주상복합" in property_type or "다가구주택" in property_type or "주거기타" in property_type %}
+                  <span class="badge property-type apt">{{ property_type }}</span>
+                {% elif "근린생활시설" in property_type or "주/상용건물" in property_type or "판매시설" in property_type or "위락시설" in property_type or "상가기타" in property_type %}
+                  <span class="badge property-type store">{{ property_type }}</span>
+                {% elif "업무시설" in property_type or "종교시설" in property_type or "공장" in property_type or "창고시설" in property_type or "숙박시설" in property_type or "건물기타" in property_type %}
+                  <span class="badge property-type etc-building">{{ property_type }}</span>
+                {% elif "대지" in property_type or "임야" in property_type or "답" in property_type or "잡종지" in property_type or "전" in property_type %}
+                  <span class="badge property-type land">{{ property_type }}</span>
+                {% else %}
+                  <span class="badge property-type etc-land">{{ property_type }}</span>
+                {% endif %}
+              {% endwith %}
+            {% else %}
+              <span class="badge property-type etc-land">정보없음</span>
+            {% endif %}
+          {% endwith %}
+        {% endif %}
+      
+        <!-- 사건번호를 링크로 -->
+        <span class="address">
+          {% if item_type == 'auction_item' %}
+            <a href="{% url 'tender_detail' case_number=item.case_number.case_number %}" style="text-decoration: none; color: inherit;">
+              {{ item.case_number.case_number }}
+            </a>
+          {% else %}
+            <a href="{% url 'tender_detail' case_number=item.case_number %}" style="text-decoration: none; color: inherit;">
+              {{ item.case_number }}
+            </a>
+          {% endif %}
+        </span>
+      
+        <!-- 법원 정보 -->
+        {% if item_type == 'auction_item' %}
+          <span style="font-size: 12px; color: #666;">{{ item.case_number.court_name }}</span>
+        {% else %}
+          <span style="font-size: 12px; color: #666;">{{ item.court_name }}</span>
+        {% endif %}
+      </div>
+      
+      <!-- 감정평가액 -->
+      <div class="fav-price">
+        {% if item_type == 'auction_item' %}
+          {% with valuation_amount=item.valuation_amount %}
+            {% if valuation_amount %}
+              {% if valuation_amount >= 100000000 %}
+                {{ valuation_amount|floatformat:0|slice:":-8" }}억
+                {% if valuation_amount|floatformat:0|slice:"-8:" != "00000000" %}
+                  {{ valuation_amount|floatformat:0|slice:"-8:-4"|add:"0000"|slice:":4" }}만원
+                {% else %}
+                  원
+                {% endif %}
+              {% elif valuation_amount >= 10000 %}
+                {{ valuation_amount|floatformat:0|slice:":-4" }}만원
+              {% else %}
+                {{ valuation_amount|floatformat:0 }}원
+              {% endif %}
+            {% else %}
+              정보없음
+            {% endif %}
+          {% endwith %}
+        {% else %}
+          {% with auction_item=item.auctionitem_set.first %}
+            {% if auction_item and auction_item.valuation_amount %}
+              {% with valuation_amount=auction_item.valuation_amount %}
+                {% if valuation_amount >= 100000000 %}
+                  {{ valuation_amount|floatformat:0|slice:":-8" }}억
+                  {% if valuation_amount|floatformat:0|slice:"-8:" != "00000000" %}
+                    {{ valuation_amount|floatformat:0|slice:"-8:-4"|add:"0000"|slice:":4" }}만원
+                  {% else %}
+                    원
+                  {% endif %}
+                {% elif valuation_amount >= 10000 %}
+                  {{ valuation_amount|floatformat:0|slice:":-4" }}만원
+                {% else %}
+                  {{ valuation_amount|floatformat:0 }}원
+                {% endif %}
+              {% endwith %}
+            {% else %}
+              정보없음
+            {% endif %}
+          {% endwith %}
+        {% endif %}
+      </div>
+      
+      <!-- 하단 정보 -->
+      <div class="fav-bottom">
+        {% if item_type == 'auction_item' %}
+          <span>
+            {% if item.auction_failures == 0 %}
+              첫 경매
+            {% else %}
+              유찰 {{ item.auction_failures }}회
+            {% endif %}
+            {% if item.auction_date %}
+              · {{ item.auction_date|date:"Y-m-d(D)" }}
+            {% endif %}
+          </span><br>
+          <span>
+            {{ item.property_address|default:"주소 정보 없음" }}
+          </span>
+        {% else %}
+          {% with auction_item=item.auctionitem_set.first %}
+            {% if auction_item %}
+              <span>
+                {% if auction_item.auction_failures == 0 %}
+                  첫 경매
+                {% else %}
+                  유찰 {{ auction_item.auction_failures }}회
+                {% endif %}
+                {% if auction_item.auction_date %}
+                  · {{ auction_item.auction_date|date:"Y-m-d(D)" }}
+                {% endif %}
+              </span><br>
+              <span>
+                {{ auction_item.property_address|default:"주소 정보 없음" }}
+              </span>
+            {% else %}
+              <span>물건 정보가 없습니다.</span>
+            {% endif %}
+          {% endwith %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <div class="no-result" style="text-align: center; padding: 50px; color: #666;">
+    <p>{{ empty_message|default:"검색 결과가 없습니다." }}</p>
+  </div>
+  {% endfor %}
+</div>

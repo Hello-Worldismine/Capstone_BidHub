@@ -45,8 +45,6 @@
       <div> 원</div>
       <div> 원</div>
       <div>
-            {% if row.is_winner %}
-      <button onclick="handlePayment('{{ row.case_number }}')">납부</button>
         {% if row.refund_status == "완료" %}
           <span class="status done">완료</span>
         {% else %}
@@ -104,28 +102,19 @@
       </div>
     </div>
 
-    {% for row in bid_rows %}
-<div class="auto-bid-row">
-  <div><a href="#">{{ row.case_number }}</a></div>
-  <div> 원</div>
-  <div> 원</div>
-  <div>
-    {% if row.is_winner %}
-      <button onclick="handlePayment('{{ row.case_number }}')">납부</button>
-    {% elif row.refund_status == "완료" %}
-      <span class="status done">완료</span>
-    {% else %}
-      <span class="status pending">처리중</span>
-    {% endif %}
-  </div>
-  <div>{{ row.refund_date }}</div>
-</div>
-{% empty %}
-<div class="refund-row no-data">
-  <div class="no-data-text">입찰 내역이 없습니다.</div>
-</div>
-{% endfor %}
-
+    {% for bid in auto_bid_list %}
+    <div class="auto-bid-row">
+      <div>{{ bid.case_number }}</div>
+      <div>{{ bid.court }}</div>
+      <div> 원</div>
+      <div>{{ bid.time }}</div>
+    </div>
+    {% empty %}
+    <div class="refund-row no-data">
+      <div class="no-data-text">예약 내역이 없습니다.</div>
+    </div>
+    
+    {% endfor %}
   </div>
 </div>
 
@@ -166,35 +155,5 @@ function deleteAutoBid(id) {
   if (row) row.remove();
 
 }
-async function handlePayment(caseNumber) {
-  const tradeNum = caseNumber.replace("타경", "");
-  const bidder = ethereum.selectedAddress;
-
-  const res = await fetch(`/api/get_nonce/?user=${bidder}&action_index=3`);
-  const { nonce } = await res.json();
-
-  const response = await fetch("/pay_for_award/", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-CSRFToken": "{{ csrf_token }}"
-    },
-    body: JSON.stringify({
-      trade_num: parseInt(tradeNum),
-      bidder,
-      nonce
-    })
-  });
-
-  const result = await response.json();
-  if (response.ok) {
-    alert("납부가 완료되었습니다.");
-    location.reload();
-  } else {
-    alert("납부 실패: " + (result.detail || "알 수 없는 오류"));
-  }
-}
-
-
 </script>
 {% endblock %}

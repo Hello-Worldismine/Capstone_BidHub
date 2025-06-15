@@ -10,6 +10,9 @@ from web3 import Web3
 from eth_account.messages import encode_defunct
 import os
 import json
+
+# Initialize Web3 instance
+w3 = Web3()
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from django.http import HttpRequest

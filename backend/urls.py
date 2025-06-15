@@ -23,6 +23,11 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 
+from django.contrib import admin
+from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
+
 router = DefaultRouter()
 router.register(r'users', UserViewSet)
 
@@ -38,3 +43,13 @@ urlpatterns = [
     path('chatbot/', include('chatbot.urls')), 
     path('auto_bid/', include('autobid.urls')),  # autobid app URLs
 ]
+
+# 개발 환경에서 미디어/정적 파일 서빙
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    
+    # 디버깅용 출력
+    print(f"🔧 MEDIA_URL: {settings.MEDIA_URL}")
+    print(f"🔧 MEDIA_ROOT: {settings.MEDIA_ROOT}")
+    print(f"🔧 미디어 파일 서빙 활성화됨")

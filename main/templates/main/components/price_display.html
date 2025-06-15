@@ -1,0 +1,28 @@
+{% load static %}
+
+{% if amount %}
+  {% if "," in amount %}
+    <!-- 이미 포맷된 문자열인 경우 -->
+    {{ amount }}원
+  {% else %}
+    <!-- 숫자인 경우 변환 -->
+    {% with amount_int=amount|add:0 %}
+      {% if amount_int >= 100000000 %}
+        {% widthratio amount_int 100000000 1 %}억
+        {% with remainder=amount_int|stringformat:"d" %}
+          {% if remainder|slice:"-8:" != "00000000" %}
+            {% widthratio remainder|slice:"-8:"|add:"0"|add:"0"|add:"0"|add:"0"|slice:":4"|add:0 10000 1 %}만원
+          {% else %}
+            원
+          {% endif %}
+        {% endwith %}
+      {% elif amount_int >= 10000 %}
+        {% widthratio amount_int 10000 1 %}만원
+      {% else %}
+        {{ amount_int|floatformat:0 }}원
+      {% endif %}
+    {% endwith %}
+  {% endif %}
+{% else %}
+  <span class="text-muted">정보없음</span>
+{% endif %}

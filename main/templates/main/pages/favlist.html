@@ -1,10 +1,20 @@
 {% extends 'main/layout/sidebar_layout.html' %}
 {% load static %}
+{% load fav_components %}
 
 {% block extra_css %}
 {{ block.super }}
 <link rel="stylesheet" href="{% static 'css/pages/favlist.css' %}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+{% endblock %}
+
+{% block extra_head %}
+<meta name="csrf-token" content="{{ csrf_token }}">
+<script>
+    window.USER_AUTHENTICATED = {% if user.is_authenticated %}true{% else %}false{% endif %};
+    window.LOGIN_URL = '{% url "account_login" %}';
+    window.TOGGLE_FAVORITE_URL = '{% url "toggle_favorite" %}';
+</script>
 {% endblock %}
 
 {% block sidebar_menu %}
@@ -17,139 +27,64 @@
 {% block sidebar_content %}
 <h2>나의관심목록</h2>
 <hr style="width: 1000px; margin: 0;">
-<form style="display: none;">{% csrf_token %}</form>
 
-<div class="fav-container">
-  {% for item in favorite_list %}
-  <div class="fav-card" data-item-id="{{ item.id }}">
-    <div class="fav-image">
-      {% if item.auction_item.item_image_url %}
-        <img src="{{ item.auction_item.item_image_url }}" alt="물건 이미지" onerror="this.src='{% static 'img/bidhub-logo.png' %}';">
-      {% else %}
-        <img src="{% static 'img/bidhub-logo.png' %}" alt="물건 이미지">
-      {% endif %}
-    </div>
-    <div class="fav-details">
-      <!-- 하트 아이콘 -->
-      <div class="fav-heart" onclick="removeFavorite('{{ item.id }}', this)">
-        <i class="fas fa-heart heart-icon"></i>
-      </div>
-      <div class="fav-top">
-        <!-- 물건 종류 배지 -->
-        {% if item.auction_item.property_type %}
-          {% if "아파트" in item.auction_item.property_type or "연립주택" in item.auction_item.property_type or "오피스텔" in item.auction_item.property_type or "단독주택" in item.auction_item.property_type or "다세대주택" in item.auction_item.property_type or "주상복합" in item.auction_item.property_type or "다가구주택" in item.auction_item.property_type or "주거기타" in item.auction_item.property_type %}
-            <span class="badge property-type apt">{{ item.auction_item.property_type }}</span>
-          {% elif "근린생활시설" in item.auction_item.property_type or "주/상용건물" in item.auction_item.property_type or "판매시설" in item.auction_item.property_type or "위락시설" in item.auction_item.property_type or "상가기타" in item.auction_item.property_type %}
-            <span class="badge property-type store">{{ item.auction_item.property_type }}</span>
-          {% elif "업무시설" in item.auction_item.property_type or "종교시설" in item.auction_item.property_type or "공장" in item.auction_item.property_type or "창고시설" in item.auction_item.property_type or "숙박시설" in item.auction_item.property_type or "건물기타" in item.auction_item.property_type %}
-            <span class="badge property-type etc-building">{{ item.auction_item.property_type }}</span>
-          {% elif "대지" in item.auction_item.property_type or "임야" in item.auction_item.property_type or "답" in item.auction_item.property_type or "잡종지" in item.auction_item.property_type or "전" in item.auction_item.property_type %}
-            <span class="badge property-type land">{{ item.auction_item.property_type }}</span>
-          {% else %}
-            <span class="badge property-type etc-land">{{ item.auction_item.property_type }}</span>
-          {% endif %}
-        {% else %}
-          <span class="badge property-type etc-land">정보없음</span>
-        {% endif %}
-        
-        <span class="address">
-          <a href="{% url 'tender_detail' case_number=item.case_number %}" style="text-decoration: none; color: inherit;">
-            {{ item.auction_item.get_formatted_address }}
-          </a>
-        </span>
-        {% if item.created_at|timesince|slice:":1" == "0" %}<span class="new-label">NEW</span>{% endif %}
-      </div>
-      
-      <!-- 감정평가액 -->
-      <div class="fav-price">
-        {% if item.auction_item.valuation_amount %}
-          {% if item.auction_item.valuation_amount|floatformat:0|length > 8 %}
-            {{ item.auction_item.valuation_amount|floatformat:0|slice:":-8" }}억
-            {% if item.auction_item.valuation_amount|floatformat:0|slice:"-8:" != "00000000" %}
-              {{ item.auction_item.valuation_amount|floatformat:0|slice:"-8:-4" }}만원
-            {% else %}
-              원
-            {% endif %}
-          {% elif item.auction_item.valuation_amount|floatformat:0|length > 4 %}
-            {{ item.auction_item.valuation_amount|floatformat:0|slice:":-4" }}만원
-          {% else %}
-            {{ item.auction_item.valuation_amount|floatformat:0 }}원
-          {% endif %}
-        {% else %}
-          정보없음
-        {% endif %}
-      </div>
-      
-      <div class="fav-bottom">
-        <span>
-          {% if item.auction_item.auction_failures == 0 %}
-            첫 경매
-          {% else %}
-            유찰 {{ item.auction_item.auction_failures }}회
-          {% endif %}
-          {% if item.auction_item.auction_date %}
-            · {{ item.auction_item.auction_date|date:"Y-m-d(D)" }}
-          {% endif %}
-        </span><br>
-        <span>{{ item.auction_item.case_number.court_name }}</span>
-      </div>
-    </div>
-  </div>
-  {% empty %}
-  <div class="no-result" style="text-align: center; padding: 50px; color: #666;">
-    <p>즐겨찾기한 매물이 없습니다.</p>
-    <p><a href="{% url 'csearch' %}">매물 검색하러 가기</a></p>
-  </div>
-  {% endfor %}
+<!-- 컴포넌트 사용 - 즐겨찾기 제거 시 애니메이션 포함 -->
+<div class="fav-container-wrapper">
+    {% render_fav_container_with_remove favorite_list 'favorite_item' '즐겨찾기한 매물이 없습니다.' %}
 </div>
 
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/components/favorite.js' %}"></script>
 <script>
-function getCSRFToken() {
-  return document.querySelector('[name=csrfmiddlewaretoken]').value;
+// 기존 애니메이션 함수 유지
+function removeFavoriteWithAnimation(itemId, iconElement) {
+    if (!confirm('즐겨찾기에서 제거하시겠습니까?')) {
+        return;
+    }
+    
+    fetch(`{% url 'remove_favorite' item_id='PLACEHOLDER' %}`.replace('PLACEHOLDER', itemId), {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCSRFToken(),
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // 카드 삭제 애니메이션
+            const card = iconElement.closest('.fav-card');
+            card.style.opacity = '0';
+            card.style.transform = 'translateX(-100%)';
+            card.style.transition = 'all 0.3s ease';
+            
+            setTimeout(() => {
+                card.remove();
+                
+                // 남은 카드가 없으면 빈 메시지 표시
+                const container = document.querySelector('.fav-container');
+                if (container.children.length === 0) {
+                    container.innerHTML = `
+                        <div class="no-result" style="text-align: center; padding: 50px; color: #666;">
+                            <p>즐겨찾기한 매물이 없습니다.</p>
+                            <p><a href="{% url 'csearch' %}">매물 검색하러 가기</a></p>
+                        </div>
+                    `;
+                }
+            }, 300);
+        } else {
+            alert("삭제 실패: " + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert("삭제 중 오류가 발생했습니다.");
+    });
 }
 
-function removeFavorite(itemId, iconElement) {
-  if (!confirm('즐겨찾기에서 제거하시겠습니까?')) {
-    return;
-  }
-  
-  fetch(`{% url 'remove_favorite' item_id='PLACEHOLDER' %}`.replace('PLACEHOLDER', itemId), {
-    method: 'POST',
-    headers: {
-      'X-CSRFToken': getCSRFToken(),
-    },
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.success) {
-      // 카드 삭제 애니메이션
-      const card = iconElement.closest('.fav-card');
-      card.style.opacity = '0';
-      card.style.transform = 'translateX(-100%)';
-      card.style.transition = 'all 0.3s ease';
-      
-      setTimeout(() => {
-        card.remove();
-        
-        // 남은 카드가 없으면 빈 메시지 표시
-        const container = document.querySelector('.fav-container');
-        if (container.children.length === 0) {
-          container.innerHTML = `
-            <div class="no-result" style="text-align: center; padding: 50px; color: #666;">
-              <p>즐겨찾기한 매물이 없습니다.</p>
-              <p><a href="{% url 'csearch' %}">매물 검색하러 가기</a></p>
-            </div>
-          `;
-        }
-      }, 300);
-    } else {
-      alert("삭제 실패: " + data.message);
-    }
-  })
-  .catch(error => {
-    console.error('Error:', error);
-    alert("삭제 중 오류가 발생했습니다.");
-  });
+function getCSRFToken() {
+    return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 }
 </script>
 {% endblock %}

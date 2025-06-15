@@ -1,0 +1,15 @@
+{% if property_type %}
+  {% if "아파트" in property_type or "연립주택" in property_type or "오피스텔" in property_type or "단독주택" in property_type or "다세대주택" in property_type or "주상복합" in property_type or "다가구주택" in property_type or "주거기타" in property_type %}
+    <span class="badge property-type apt">{{ property_type }}</span>
+  {% elif "근린생활시설" in property_type or "주/상용건물" in property_type or "판매시설" in property_type or "위락시설" in property_type or "상가기타" in property_type %}
+    <span class="badge property-type store">{{ property_type }}</span>
+  {% elif "업무시설" in property_type or "종교시설" in property_type or "공장" in property_type or "창고시설" in property_type or "숙박시설" in property_type or "건물기타" in property_type %}
+    <span class="badge property-type etc-building">{{ property_type }}</span>
+  {% elif "대지" in property_type or "임야" in property_type or "답" in property_type or "잡종지" in property_type or "전" in property_type %}
+    <span class="badge property-type land">{{ property_type }}</span>
+  {% else %}
+    <span class="badge property-type etc-land">{{ property_type }}</span>
+  {% endif %}
+{% else %}
+  <span class="badge property-type etc-land">정보없음</span>
+{% endif %}

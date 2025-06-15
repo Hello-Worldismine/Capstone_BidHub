@@ -1,7 +1,9 @@
 # Create your views here.
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from .models import Profile
+from .models import Profile, FavoriteProperty
+from app.models import AuctionItem, AuctionCase
+from django.core.paginator import Paginator
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -62,209 +64,89 @@ def get_status_text(status_code):
     }
     return status_mapping.get(status_code, '진행중')
 
-def tender(request, case_number=None):
-    if case_number:
-        try:
-            case = get_object_or_404(AuctionCase, case_number=case_number)
-            item_details = AuctionItem.objects.filter(case_number=case).first()
-            
-            if not item_details:
-                return redirect('index')
-            
-            # Get related data for display
-            claim_distribution = ClaimDistribution.objects.filter(case_number=case).first()
-            property_listings = PropertyListing.objects.filter(case_number=case)
-            interested_parties = AuctionParty.objects.filter(case_number=case)
-            
-            # 건물 상세정보 가져오기 (BuildingDetail 모델 사용)
-            building_details = []
-            try:
-                building_details_qs = BuildingDetail.objects.filter(auction_item=item_details).order_by('sequence')
-                building_details = list(building_details_qs)
-            except Exception as e:
-                print(f"❌ BuildingDetail 조회 오류: {e}")
-                building_details = []
-            
-            # 감정평가액 (기준 가격)
-            valuation_amount = 0
-            if item_details and item_details.valuation_amount:
-                valuation_amount = int(item_details.valuation_amount.replace(',', '')) if isinstance(item_details.valuation_amount, str) else item_details.valuation_amount
-            
-            # AuctionSchedule에서 현재 매물(item_details)의 id와 정확히 매칭되는 스케줄만 조회
-            from app.models import AuctionSchedule
-            from django.utils import timezone
-            
-            # 중요: auction_item 필드를 통해 정확한 매물의 스케줄만 조회
-            schedules = AuctionSchedule.objects.filter(
-                auction_item_id=item_details.id  # auction_item_id와 item_details.id를 정확히 매칭
-            ).order_by('round_number')
-            
-            print(f"🔍 매물 ID: {item_details.id}, 사건번호: {case_number}")
-            print(f"📋 해당 매물의 스케줄 개수: {schedules.count()}")
-            
-            # 현재 진행중인 매각기일의 최저매각가격 찾기
-            current_min_price = valuation_amount  # 기본값
-            current_round = 1
-            
-            now = timezone.now().date()
-            
-            for schedule in schedules:
-                print(f"📅 스케줄 정보 - 회차: {schedule.round_number}, 타입: {schedule.schedule_type}, 가격: {schedule.minimum_price}")
-                
-                # 매각기일이고 아직 지나지 않은 경우
-                if (schedule.schedule_type == '매각기일' and 
-                    schedule.auction_date and 
-                    schedule.auction_date.date() >= now and
-                    schedule.minimum_price and 
-                    schedule.minimum_price > 0):
-                    
-                    current_min_price = schedule.minimum_price  # tsLwsDspslPrc 값 사용
-                    current_round = schedule.round_number
-                    print(f"✅ 현재 진행중인 매각기일 발견 - {current_round}차, 가격: {current_min_price}")
-                    break
-                
-                # 과거 매각기일 중 가장 최근 회차 확인 (다음 회차 예측용)
-                elif (schedule.schedule_type == '매각기일' and 
-                      schedule.auction_date and 
-                      schedule.auction_date.date() < now):
-                    current_round = schedule.round_number + 1  # 다음 회차
-            
-            # 만약 진행중인 매각기일을 찾지 못했다면 감정평가액 사용
-            if current_min_price == valuation_amount and schedules.exists():
-                # 가장 최근 스케줄의 minimum_price 사용 (해당 매물의 것만)
-                latest_schedule = schedules.filter(
-                    schedule_type='매각기일',
-                    minimum_price__gt=0
-                ).first()
-                
-                if latest_schedule:
-                    current_min_price = latest_schedule.minimum_price
-                    current_round = latest_schedule.round_number
-                    print(f"📌 최신 스케줄 사용 - {current_round}차, 가격: {current_min_price}")
-            
-            # 감정평가액 대비 비율 계산
-            price_ratio = 100
-            if valuation_amount > 0:
-                price_ratio = round((current_min_price / valuation_amount) * 100)
-            
-            # 🔧 법원 정보 정확히 설정
-            court_name = case.court_name if case and case.court_name else "법원 정보 없음"
-            print(f"🏛️ 법원 정보: {court_name}")
-            
-            property_info = {
-                'case_number': case.case_number if case else None,
-                'case_name': case.case_name if case else None,
-                'property_name': item_details.property_name if item_details else None,
-                'court': court_name,  # 정확한 법원 정보 사용
-                'court_name': court_name,  # 추가로 court_name도 제공
-                'receipt_date': case.filing_date if case else None,
-                'responsible_dept': case.responsible_dept if case else None,
-                'claim_amount': case.claim_amount if case else None,
-                'appeal_status_display': '항고' if case and case.appeal_status else '미항고',
-                'min_bid_price': f"{current_min_price:,}",  # 실제 tsLwsDspslPrc 값
-                'current_round': current_round,
-                'valuation_amount': f"{valuation_amount:,}",
-                'price_ratio': price_ratio,  # 감정가 대비 비율
-                'specification_url': item_details.item_spec_url if item_details else None
-            }
-            
-            # 📍 주소 정보를 item_details의 property_address를 우선 사용하도록 수정
-            location_address = None
-            if item_details:
-                # AuctionItem의 get_formatted_address 메서드 사용
-                location_address = item_details.get_formatted_address()
-            
-            # 만약 AuctionItem에 주소가 없으면 ClaimDistribution의 location 사용
-            if location_address == "주소 정보 없음" and claim_distribution and claim_distribution.location:
-                location_address = claim_distribution.location
-            
-            location_info = {
-                'location': location_address,
-                'claim_deadline': claim_distribution.claim_deadline if claim_distribution else None,
-                'case_number': case.case_number if case else None
-            }
-            
-            document_urls = {
-                'specification_url': item_details.item_spec_url if item_details else None
-            }
-            
-            # 입찰 내역 현황 - 해당 매물의 AuctionSchedule만 사용
-            bidding_history = []
-            
-            if item_details and item_details.valuation_amount:
-                try:
-                    val_amount_str = item_details.valuation_amount or "0"
-                    val_amount_str = ''.join(c for c in val_amount_str if c.isdigit() or c == '.')
-                    valuation_amount = float(val_amount_str)
-                except (ValueError, TypeError):
-                    valuation_amount = 0
-                
-            # 해당 매물의 스케줄만 가져오기 (auction_item_id로 정확히 매칭)
-            if item_details:
-                schedules = AuctionSchedule.objects.filter(
-                    auction_item_id=item_details.id  # 정확한 매물 ID로 필터링
-                ).order_by('round_number')
-                
-                print(f"🔍 입찰 내역용 스케줄 조회 - 매물 ID: {item_details.id}, 스케줄 수: {schedules.count()}")
-                
-                for schedule in schedules:
-                    # 실제 저장된 minimum_price 사용 (tsLwsDspslPrc 값)
-                    min_price = schedule.minimum_price if schedule.minimum_price else 0
-                    
-                    # 보증금 계산 (최저매각가격의 10%)
-                    deposit_amount = int(min_price * 0.1) if min_price > 0 else 0
-                    
-                    # 상태 결정
-                    status = get_status_text(schedule.result_status)
-                    
-                    # 기일 종류에 따른 표시 텍스트
-                    schedule_display = schedule.schedule_type or f"{schedule.round_number}차"
-                    
-                    bidding_history.append({
-                        'id': schedule.round_number,
-                        'link_text': f"{case.case_number} {schedule_display}",
-                        'type': schedule_display,  # "매각기일", "매각결정기일" 등
-                        'min_price': f"{min_price:,}" if min_price > 0 else "정보없음",
-                        'status': status,
-                        'auction_date': schedule.auction_date,
-                        'due_date': schedule.decision_date
-                    })
-                    
-                    print(f"📊 입찰 내역 추가 - 회차: {schedule.round_number}, 가격: {min_price}, 상태: {status}")
-            
-            # 이미지 경로 준비
-            image_paths = []
-            if item_details and item_details.item_image_url:
-                for url in item_details.item_image_url.split(','):
-                    if url.strip():
-                        image_paths.append(url.strip())
-            
-            user_wallet_address = ""
-            if request.user.is_authenticated:
-                user_wallet_address = request.user.profile.wallet_address  # 또는 적절한 위치
-            
-            context = {
-                'property_id': case_number,
-                'property_info': property_info,
-                'item_details': item_details,
-                'case': case,
-                'location_info': location_info,
-                'document_urls': document_urls,
-                'bidding_history': bidding_history,
-                'building_details': building_details,  # 수정된 부분: BuildingDetail 모델 데이터 사용
-                'interested_parties': interested_parties,
-                'image_paths': image_paths,
-                'user_wallet_address': user_wallet_address,
-                'naver_maps_client_id': getattr(settings, 'NAVER_MAPS_CLIENT_ID', '')
-            }
-            
-            return render(request, 'main/pages/tender.html', context)
-            
-        except (AuctionCase.DoesNotExist, AuctionItem.DoesNotExist):
-            return redirect('index')
-    else:
-        return render(request, 'main/pages/tender.html')
+# ...existing code...
+from django.shortcuts import render, get_object_or_404, redirect
+from django.conf import settings
+from app.models import AuctionCase, AuctionItem, ClaimDistribution, PropertyListing, AuctionParty
+from .utils.tender_helper import (
+    get_current_min_price_and_round, 
+    get_property_info, 
+    get_location_info, 
+    get_bidding_history,
+    get_valuation_amount,
+    get_building_details
+)
+from .utils.image_helper import get_property_images
 
+def tender(request, case_number=None):
+    """매물 상세 페이지"""
+    
+    if not case_number:
+        return render(request, 'main/pages/tender.html')
+    
+    try:
+        # 기본 데이터 조회
+        case = get_object_or_404(AuctionCase, case_number=case_number)
+        item_details = AuctionItem.objects.filter(case_number=case).first()
+        
+        if not item_details:
+            return redirect('index')
+        
+        # 관련 데이터 조회
+        claim_distribution = ClaimDistribution.objects.filter(case_number=case).first()
+        property_listings = PropertyListing.objects.filter(case_number=case)
+        interested_parties = AuctionParty.objects.filter(case_number=case)
+        
+        # 감정평가액 계산
+        valuation_amount = get_valuation_amount(item_details)
+        
+        # 현재 최저매각가격과 회차 계산
+        current_min_price, current_round = get_current_min_price_and_round(
+            item_details, valuation_amount
+        )
+        
+        # 각종 정보 딕셔너리 생성
+        property_info = get_property_info(
+            case, item_details, current_min_price, current_round, valuation_amount
+        )
+        
+        location_info = get_location_info(item_details, claim_distribution, case)
+        
+        document_urls = {
+            'specification_url': item_details.item_spec_url if item_details else None
+        }
+        
+        # 입찰 내역과 건물 상세정보
+        bidding_history = get_bidding_history(item_details, case)
+        building_details = get_building_details(item_details)
+        
+        # 이미지 경로
+        image_paths = get_property_images(item_details)
+        
+        # 사용자 지갑 주소
+        user_wallet_address = ""
+        if request.user.is_authenticated:
+            user_wallet_address = getattr(request.user.profile, 'wallet_address', "")
+        
+        context = {
+            'property_id': case_number,
+            'property_info': property_info,
+            'item_details': item_details,
+            'case': case,
+            'location_info': location_info,
+            'document_urls': document_urls,
+            'bidding_history': bidding_history,
+            'building_details': building_details,
+            'interested_parties': interested_parties,
+            'image_paths': image_paths,
+            'user_wallet_address': user_wallet_address,
+            'naver_maps_client_id': getattr(settings, 'NAVER_MAPS_CLIENT_ID', '')
+        }
+        
+        return render(request, 'main/pages/tender.html', context)
+        
+    except (AuctionCase.DoesNotExist, AuctionItem.DoesNotExist):
+        return redirect('index')
 def auto_bid(request):
     return render(request, 'main/pages/auto_bid.html')
 
@@ -599,6 +481,22 @@ def today_bid(request):
         auction_date__date=today
     ).select_related('case_number').order_by('auction_date')
 
+    # 로그인된 사용자의 즐겨찾기 상태 추가
+    if request.user.is_authenticated:
+        user_favorites = set(
+            FavoriteProperty.objects.filter(
+                user=request.user
+            ).values_list('case_number', flat=True)
+        )
+        
+        # 각 아이템에 즐겨찾기 상태 추가
+        for item in items:
+            item.is_favorite = item.case_number.case_number in user_favorites
+    else:
+        # 비로그인 사용자는 모두 False
+        for item in items:
+            item.is_favorite = False
+
     # 페이지네이션 (20개씩)
     paginator = Paginator(items, 20)
     page_number = request.GET.get('page', 1)
@@ -618,6 +516,20 @@ def week_bid(request):
         auction_date__date__range=(today, end_date)
     ).select_related('case_number').order_by('auction_date')
 
+    # 로그인된 사용자의 즐겨찾기 상태 추가
+    if request.user.is_authenticated:
+        user_favorites = set(
+            FavoriteProperty.objects.filter(
+                user=request.user
+            ).values_list('case_number', flat=True)
+        )
+        
+        for item in items:
+            item.is_favorite = item.case_number.case_number in user_favorites
+    else:
+        for item in items:
+            item.is_favorite = False
+    
     # 페이지네이션 (20개씩)
     paginator = Paginator(items, 20)
     page_number = request.GET.get('page', 1)
@@ -999,17 +911,19 @@ def get_bid_events(request):
     if not trade_num:
         return JsonResponse({"error": "trade_num parameter is required"}, status=400)
 
+    query_template = """
+    {
+      bidEnters(where: { tradeNum: "%s" }) {
+        bidder
+        amount
+        security
+        bidtime
+      }
+    }
+    """
+    
     query = {
-        "query": f"""
-        {{
-          bidEnters(where: {{ tradeNum: "{trade_num}" }}) {{
-            bidder
-            amount
-            security
-            bidtime
-          }}
-        }}
-        """
+        "query": query_template % trade_num
     }
 
     try:
@@ -1028,7 +942,6 @@ def get_bid_events(request):
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
-    
 
     # -------------------- 실시간 상담 기능 --------------------
 
