@@ -180,9 +180,9 @@
       {% if socialaccount_providers %}
         {% for provider in socialaccount_providers %}
           {% if provider.id == "kakao" %}
-            <a href="{% provider_login_url "kakao" %}" class="btn-kakao">
-              <i class="fas fa-comment"></i> 카카오로 간편 로그인
-            </a>
+          <a href="https://kauth.kakao.com/oauth/authorize?client_id=717318581cabe2d3d608ec057f0f82d5&redirect_uri=http://localhost:8000/accounts/kakao/login/callback/&response_type=code&prompt=login" class="btn-kakao">
+            <i class="fas fa-comment"></i> 카카오로 간편 로그인
+          </a>
           {% endif %}
         {% endfor %}
       {% endif %}

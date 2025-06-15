@@ -73,14 +73,11 @@
           </div>
 
           {% get_providers as socialaccount_providers %}
-          {% if socialaccount_providers %}
-          {% provider_login_url "kakao" as kakao_login_url %}
           <div class="kakao-login">
-            <a href="{{ kakao_login_url }}" class="btn-kakao">
-              <i class="fas fa-comment"></i> {% blocktrans %}카카오 간편 로그인{% endblocktrans %}
+            <a href="https://kauth.kakao.com/oauth/authorize?client_id=717318581cabe2d3d608ec057f0f82d5&redirect_uri=http://localhost:8000/&response_type=code&prompt=login" class="btn-kakao">
+              <i class="fas fa-comment"></i> 카카오 간편 로그인
             </a>
           </div>
-          {% endif %}
         </form>
       </div>
     </div>

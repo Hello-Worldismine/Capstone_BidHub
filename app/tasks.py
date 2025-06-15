@@ -128,13 +128,11 @@ def process_due_auctions():
                             from blockchain.contracts import confirm_bid
                             max_round = AuctionSchedule.objects.filter(auction_item_id=item_id).aggregate(Max('round_number'))['round_number__max'] or 0
                             payment_round = max_round + 1
-                            due_ts = int((decision_date - timedelta(hours=9) + timedelta(days=7)).timestamp())
+                            due_ts = int((decision_date - timedelta(hours=9) + timedelta(hours=1)).timestamp())
                             confirm_bid(trade_num, due_ts)
-                            print(f"[confirm_bid 호출] trade_num={trade_num}, due_ts={due_ts} (KST: {timezone.datetime.fromtimestamp(due_ts) + timedelta(hours=9)})")
-
 
                             # DB에는 KST 기준으로 '대금지급기한' 스케줄 등록
-                            due_kst = decision_date + timedelta(days=7)
+                            due_kst = decision_date + timedelta(hours=1)
 
                             insert_sql = (
                                 "INSERT INTO auction_schedule "
@@ -167,7 +165,7 @@ def process_due_auctions():
                         for r in AuctionSchedule.objects.filter(auction_item_id=item_id).order_by("round_number"):
                             print(f" - round={r.round_number}, type={r.schedule_type}, date={r.decision_date}")
 
-                        t0 = decision_date + timezone.timedelta(days=7)
+                        t0 = decision_date + timezone.timedelta(minutes=30)
 
                         insert1 = (
                             "INSERT INTO auction_schedule "
@@ -180,7 +178,7 @@ def process_due_auctions():
                             "VALUES(%s,%s,%s,'매각결정기일',0)"
                         )
                         execute_with_retry(insert1, [item_id, next_round, t0, price], item_id=item_id)
-                        execute_with_retry(insert2, [item_id, decision_round, t0 + timezone.timedelta(days=7)], item_id=item_id)
+                        execute_with_retry(insert2, [item_id, decision_round, t0 + timezone.timedelta(minutes=30)], item_id=item_id)
 
             print("[process_due_auctions] 완료")
     except Timeout:
