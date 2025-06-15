@@ -27,7 +27,8 @@ body {
 /* 메인 콘텐츠 고정 너비 */
 .main-content {
   flex: 1;
-  width: 1440px;             /* 고정 너비 */
+  width: 1440px;  
+  margin: 0 auto;          
   padding: 40px 20px;
   display: flex;
   flex-direction: column;
