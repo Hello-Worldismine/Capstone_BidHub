@@ -605,6 +605,30 @@ def get_bid_events(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 #임시 더미
+@csrf_exempt
+def pay_for_award_api(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        trade_num = int(data["trade_num"])
+        bidder = data["bidder"]
+        nonce = int(data["nonce"])
+        signature = data["signature"]
+
+        # 서명 검증
+        message = f"{trade_num}{bidder}{nonce}"
+        encoded = encode_defunct(text=message)
+        recovered_address = w3.eth.account.recover_message(encoded, signature=signature)
+
+        if recovered_address.lower() != bidder.lower():
+            return JsonResponse({"success": False, "error": "Invalid signature"})
+
+        # 트랜잭션 실행
+        try:
+            tx_hash = pay_for_award(trade_num, bidder, nonce)
+            return JsonResponse({"success": True, "tx_hash": tx_hash.hex()})
+        except Exception as e:
+            return JsonResponse({"success": False, "error": str(e)})
+
 
 
 def dummy_view(request):

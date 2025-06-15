@@ -93,10 +93,11 @@ def confirm_bid(trade_num: int, due_date: int) -> dict:
     return build_and_send_tx(
         contract.functions.confirmBid(trade_num, due_date_utc)
     )
-
-def pay_for_award(amount, trade_num, bidder, nonce, signature):
+    
+def pay_for_award(trade_num, bidder, nonce):
     bidder = Web3.to_checksum_address(bidder)
-    return build_and_send_tx(contract.functions.payForAward(amount, trade_num, bidder, nonce, signature))
+    return build_and_send_tx(contract.functions.payForAward(trade_num, bidder, nonce))
+
 
 def mark_additional_bid(trade_num, bidder, nonce, signature):
     bidder = Web3.to_checksum_address(bidder)

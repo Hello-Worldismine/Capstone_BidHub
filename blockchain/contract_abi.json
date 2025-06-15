@@ -183,6 +183,31 @@
       "inputs": [
         {
           "indexed": false,
+          "internalType": "uint64",
+          "name": "tradeNum",
+          "type": "uint64"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "PaymentCompleted",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
           "internalType": "uint256",
           "name": "tradeNum",
           "type": "uint256"
@@ -409,6 +434,53 @@
     {
       "inputs": [
         {
+          "internalType": "address",
+          "name": "_user",
+          "type": "address"
+        },
+        {
+          "internalType": "uint64",
+          "name": "_tradeNum",
+          "type": "uint64"
+        }
+      ],
+      "name": "getPay",
+      "outputs": [
+        {
+          "internalType": "uint80",
+          "name": "",
+          "type": "uint80"
+        },
+        {
+          "internalType": "uint80",
+          "name": "",
+          "type": "uint80"
+        },
+        {
+          "internalType": "uint80",
+          "name": "",
+          "type": "uint80"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getTradeNumList",
+      "outputs": [
+        {
+          "internalType": "uint64[]",
+          "name": "",
+          "type": "uint64[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
           "internalType": "uint64",
           "name": "_tradeNum",
           "type": "uint64"
@@ -520,11 +592,6 @@
     {
       "inputs": [
         {
-          "internalType": "uint80",
-          "name": "_amount",
-          "type": "uint80"
-        },
-        {
           "internalType": "uint64",
           "name": "_tradeNum",
           "type": "uint64"
@@ -538,11 +605,6 @@
           "internalType": "uint256",
           "name": "nonce",
           "type": "uint256"
-        },
-        {
-          "internalType": "bytes",
-          "name": "signature",
-          "type": "bytes"
         }
       ],
       "name": "payForAward",
