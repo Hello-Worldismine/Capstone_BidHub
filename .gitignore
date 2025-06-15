@@ -157,5 +157,3 @@ db.sqlite3-wal
 olddb.sqlite3
 
 production_settings.py
-
-*.jpg
