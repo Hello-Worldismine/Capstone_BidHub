@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -26,6 +27,9 @@ SECRET_KEY = 'django-insecure-co-ul@sm@&5r74m@79q8$^#knb=4*7o-#ic0sm+v^n!khfz0dr
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
+
+# URL 자동 슬래시 추가
+APPEND_SLASH = True
 
 
 # Application definition
@@ -45,17 +49,17 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.kakao',
-    'consult_app',  # consult_app 추가
-    'chatbot',
+    'channels',  # WebSocket 지원
     'rest_framework',
     'corsheaders',
     
     # Your apps (accounts를 다른 앱들보다 먼저)
     'accounts',  # Custom user model app
-    'auth_api',
     'main',
     'app.apps.AuctionAppConfig',
-
+    'auth_api',  # auth_api 앱 추가
+    'consult_app',  # consult_app 추가
+    'chatbot',
     'autobid',  # autobid 앱 추가
 ]
 
@@ -64,6 +68,7 @@ AUTH_USER_MODEL = 'accounts.User'
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # whitenoise 추가
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -95,9 +100,32 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'backend.wsgi.application'
+
+# ASGI 설정 (WebSocket 지원)
+ASGI_APPLICATION = 'backend.asgi.application'
+
+# Channels Layer 설정 (인메모리 채널 레이어 사용)
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    },
+}
+
+# Static files (CSS, JavaScript, Images)
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
 STATICFILES_DIRS = [
-    BASE_DIR / 'main/static',  # main 앱의 정적 파일 경로 추가
+    BASE_DIR / 'static',  # 루트 static 폴더
+    BASE_DIR / 'main/static',  # main 앱의 정적 파일 경로
 ]
+
+# WhiteNoise 설정
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# WhiteNoise 추가 설정
+WHITENOISE_USE_FINDERS = True
+WHITENOISE_AUTOREFRESH = True
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
@@ -114,13 +142,31 @@ STATICFILES_DIRS = [
 # }
 
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-        
+# 개발환경에서는 SQLite 사용, 배포시에는 Cloud SQL 사용
+if os.getenv('USE_CLOUD_SQL', '0') == '1':
+    # Cloud SQL (PostgreSQL) 설정
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('DB_NAME', 'postgres'),
+            'USER': os.getenv('DB_USER', 'postgres'),
+            'PASSWORD': os.getenv('DB_PASSWORD', 'bidhub123'),
+            'HOST': os.getenv('DB_HOST', '34.64.92.99'),
+            'PORT': os.getenv('DB_PORT', '5432'),
+            'OPTIONS': {
+                'sslmode': 'require',
+                'connect_timeout': 60,
+            },
+        }
     }
-}
+else:
+    # 개발환경 SQLite 설정
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -153,10 +199,6 @@ USE_I18N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.1/howto/static-files/
-
-STATIC_URL = 'static/'
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
@@ -227,25 +269,3 @@ SOCIALACCOUNT_PROVIDERS = {
 ACCOUNT_FORMS = {
     'signup': 'main.forms.CustomSignupForm',
 }
-
-
-import os
-from django.db.backends.signals import connection_created
-from django.dispatch import receiver
-from django.db import OperationalError
-
-@receiver(connection_created)
-def activate_sqlite_wal(sender, connection, **kwargs):
-    # runserver 리로더 부모 프로세스나 migrations 체크 타이밍에 실행되지 않도록
-    if os.environ.get('RUN_MAIN') != 'true':
-        return
-
-    if connection.vendor == 'sqlite':
-        cursor = connection.cursor()
-        try:
-            cursor.execute('PRAGMA journal_mode=WAL;')
-            cursor.execute('PRAGMA synchronous=NORMAL;')
-            cursor.execute('PRAGMA busy_timeout=0;')
-        except OperationalError:
-            # 이미 락이 걸려 있으면 무시
-            pass

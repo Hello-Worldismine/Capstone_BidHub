@@ -157,3 +157,9 @@ db.sqlite3-wal
 olddb.sqlite3
 
 production_settings.py
+
+*.yaml
+*.bat
+*.env
+*.ps1
+

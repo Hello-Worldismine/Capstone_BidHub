@@ -318,10 +318,10 @@ class PropertyImage(models.Model):
 class PropertyDocument(models.Model):
     id = models.AutoField(primary_key=True)
     auction_item = models.OneToOneField(AuctionItem, on_delete=models.CASCADE, related_name='documents', help_text="물건정보")
-    specification_url = models.URLField(blank=True, null=True, help_text="매각물건명세서 URL")
-    appraisal_url = models.URLField(blank=True, null=True, help_text="감정평가서 URL")
-    survey_url = models.URLField(blank=True, null=True, help_text="측량서 URL")
-    register_url = models.URLField(blank=True, null=True, help_text="등기부등본 URL")
+    specification_url = models.URLField(max_length=500, blank=True, null=True, help_text="매각물건명세서 URL")
+    appraisal_url = models.URLField(max_length=500, blank=True, null=True, help_text="감정평가서 URL")
+    survey_url = models.URLField(max_length=500, blank=True, null=True, help_text="측량서 URL")
+    register_url = models.URLField(max_length=500, blank=True, null=True, help_text="등기부등본 URL")
     
     class Meta:
         managed = True

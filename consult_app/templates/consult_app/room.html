@@ -105,38 +105,83 @@ h2 {
 
 <script>
     const roomName = "{{ room_name }}";
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const chatSocket = new WebSocket(
-        'ws://' + window.location.host + '/ws/chat/' + roomName + '/'
+        protocol + '//' + window.location.host + '/ws/chat/' + roomName + '/'
     );
 
     // Django 템플릿에서 is_agent가 True면 agent, 아니면 user
     const role = "{{ is_agent|default:False }}" === "True" ? "agent" : "user";
+    console.log("현재 사용자 역할:", role); // 디버깅용
 
-    chatSocket.onmessage = function(e) {
-        const data = JSON.parse(e.data);
+    // 메시지를 화면에 표시하는 함수
+    function displayMessage(message, sender, isMine = false) {
         const chatLog = document.querySelector('#chat-log');
         const messageDiv = document.createElement('div');
-
-        // 내가 보낸 메시지는 오른쪽 (user), 상대방은 왼쪽 (agent)
-        const isMine = data.sender === role;
         messageDiv.classList.add('message');
-        messageDiv.classList.add(isMine ? 'user' : 'agent');
-        messageDiv.innerText = data.message;
+        
+        if (isMine) {
+            messageDiv.classList.add('user');
+        } else {
+            messageDiv.classList.add('agent');
+        }
+        
+        // 발신자 정보 표시
+        const senderLabel = isMine ? '나' : (sender === 'agent' ? '상담원' : '사용자');
+        messageDiv.innerHTML = `<strong>${senderLabel}:</strong> ${message}`;
 
         chatLog.appendChild(messageDiv);
         chatLog.scrollTop = chatLog.scrollHeight;
+    }
+
+    chatSocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        console.log("받은 메시지:", data); // 디버깅용
+        
+        // 내가 보낸 메시지는 무시 (이미 화면에 표시했음)
+        const isMine = data.sender === role;
+        if (!isMine) {
+            displayMessage(data.message, data.sender, false);
+        }
     };
 
-    document.querySelector('#chat-message-submit').onclick = function() {
-        const inputDom = document.querySelector('#chat-message-input');
-        const message = inputDom.value;
+    chatSocket.onerror = function(e) {
+        console.error('WebSocket 오류:', e);
+    };
 
-        if (message.trim() !== '') {
+    chatSocket.onclose = function(e) {
+        console.log('WebSocket 연결이 끊어졌습니다.');
+    };
+
+    chatSocket.onopen = function(e) {
+        console.log('WebSocket 연결이 성공했습니다.');
+    };
+
+    function sendMessage() {
+        const inputDom = document.querySelector('#chat-message-input');
+        const message = inputDom.value.trim();
+
+        if (message !== '') {
+            console.log("메시지 전송:", message, "역할:", role); // 디버깅용
+            
+            // 먼저 내 메시지를 화면에 즉시 표시
+            displayMessage(message, role, true);
+            
+            // WebSocket으로 메시지 전송
             chatSocket.send(JSON.stringify({
                 'message': message,
-                'sender': role  // 내가 보낸 사람 역할 추가
+                'sender': role
             }));
             inputDom.value = '';
+        }
+    }
+
+    document.querySelector('#chat-message-submit').onclick = sendMessage;
+
+    // Enter 키로도 메시지 전송 가능
+    document.querySelector('#chat-message-input').onkeypress = function(e) {
+        if (e.key === 'Enter') {
+            sendMessage();
         }
     };
 </script>

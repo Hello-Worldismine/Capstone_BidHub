@@ -137,13 +137,3 @@ async function refreshWalletBalance() {
       `<i class="fa-solid fa-xmark"></i> 조회 실패`;
   }
 }
-
-const ethInput = document.getElementById('ethAmount');
-
-ethInput.addEventListener('input', (e) => {
-  const value = e.target.value.replace(/,/g, ''); // 기존 쉼표 제거
-  if (!isNaN(value)) {
-    const formatted = Number(value).toLocaleString(); // 천 단위 쉼표 자동 추가
-    e.target.value = formatted;
-  }
-});

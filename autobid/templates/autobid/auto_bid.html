@@ -383,45 +383,101 @@ document.addEventListener('DOMContentLoaded', function() {
   // 컴포넌트의 모든 카드에 클릭 이벤트 추가
   const favCards = document.querySelectorAll('#favorites-tab .fav-card');
   favCards.forEach(card => {
-    // 기존 클릭 이벤트 제거하고 새로운 이벤트 추가
+    // 카드 스타일 설정
     card.style.cursor = 'pointer';
-    card.addEventListener('click', function(e) {
-      // 하트 아이콘 클릭이 아닌 경우에만 선택 처리
-      if (!e.target.closest('.fav-heart')) {
+    card.style.transition = 'transform 0.2s ease, box-shadow 0.2s ease';
+    
+    // 호버 효과 추가
+    card.addEventListener('mouseenter', function() {
+      card.style.transform = 'translateY(-2px)';
+      card.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+    });
+    
+    card.addEventListener('mouseleave', function() {
+      card.style.transform = 'translateY(0)';
+      card.style.boxShadow = '';
+    });
+    
+    // 자동입찰 선택 버튼 추가
+    const favDetails = card.querySelector('.fav-details');
+    if (favDetails && !card.querySelector('.auto-bid-select-btn')) {
+      const selectBtn = document.createElement('div');
+      selectBtn.className = 'auto-bid-select-btn';
+      selectBtn.style.cssText = `
+        margin-top: 10px;
+        text-align: center;
+      `;
+      selectBtn.innerHTML = '<button class="btn btn-primary" style="background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">자동입찰 선택</button>';
+      
+      // 버튼 클릭 이벤트 (이벤트 위임 방식)
+      const btnElement = selectBtn.querySelector('button');
+      btnElement.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        
+        // 시각적 피드백
+        btnElement.style.background = '#28a745';
+        btnElement.textContent = '선택됨!';
+        
+        setTimeout(() => {
+          btnElement.style.background = '#007bff';
+          btnElement.textContent = '자동입찰 선택';
+        }, 1000);
+        
+        // 사건번호 추출
         const addressElement = card.querySelector('.address a');
         if (addressElement) {
           const caseNumber = addressElement.textContent.trim();
           const propertyTypeElement = card.querySelector('.property-type');
           const propertyType = propertyTypeElement ? propertyTypeElement.textContent : '매물 정보';
           
-          // 전역 함수 호출
+          console.log('자동입찰 선택:', caseNumber, propertyType);
+          window.selectFavoriteForAutoBid(caseNumber, propertyType);
+        }
+        
+        return false;
+      });
+      
+      favDetails.appendChild(selectBtn);
+    }
+    
+    // 카드 클릭 이벤트 (버튼이 아닌 영역 클릭 시에만)
+    card.addEventListener('click', function(e) {
+      // 버튼이나 하트 아이콘 클릭이 아닌 경우에만 처리
+      if (!e.target.closest('.auto-bid-select-btn') && 
+          !e.target.closest('.fav-heart') && 
+          !e.target.closest('button')) {
+        
+        const addressElement = card.querySelector('.address a');
+        if (addressElement) {
+          const caseNumber = addressElement.textContent.trim();
+          const propertyTypeElement = card.querySelector('.property-type');
+          const propertyType = propertyTypeElement ? propertyTypeElement.textContent : '매물 정보';
+          
+          console.log('카드 클릭으로 선택:', caseNumber, propertyType);
           window.selectFavoriteForAutoBid(caseNumber, propertyType);
         }
       }
     });
-    
-    // 자동입찰 선택 버튼 추가
-    const favAction = card.querySelector('.fav-details');
-    if (favAction && !card.querySelector('.auto-bid-select-btn')) {
-      const selectBtn = document.createElement('div');
-      selectBtn.className = 'fav-action auto-bid-select-btn';
-      selectBtn.innerHTML = '<button class="btn" onclick="event.stopPropagation();">자동입찰 선택</button>';
-      
-      selectBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        const addressElement = card.querySelector('.address a');
-        if (addressElement) {
-          const caseNumber = addressElement.textContent.trim();
-          const propertyTypeElement = card.querySelector('.property-type');
-          const propertyType = propertyTypeElement ? propertyTypeElement.textContent : '매물 정보';
-          
-          window.selectFavoriteForAutoBid(caseNumber, propertyType);
-        }
-      });
-      
-      favAction.appendChild(selectBtn);
-    }
   });
+  
+  // 관심목록 탭이 활성화될 때마다 다시 이벤트 설정
+  const originalShowTab = window.showTab;
+  window.showTab = function(tab) {
+    originalShowTab(tab);
+    
+    if (tab === 'favorites') {
+      // 잠시 후 이벤트 재설정 (DOM이 완전히 로드된 후)
+      setTimeout(() => {
+        const newFavCards = document.querySelectorAll('#favorites-tab .fav-card:not([data-auto-bid-processed])');
+        newFavCards.forEach(card => {
+          card.setAttribute('data-auto-bid-processed', 'true');
+          // 위의 이벤트 설정 로직을 여기서도 실행
+        });
+      }, 100);
+    }
+  };
 });
 </script>
 {% endblock %}

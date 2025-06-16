@@ -28,16 +28,109 @@
 <h2>나의관심목록</h2>
 <hr style="width: 1000px; margin: 0;">
 
+
+
 <!-- 컴포넌트 사용 - 즐겨찾기 제거 시 애니메이션 포함 -->
-<div class="fav-container-wrapper">
-    {% render_fav_container_with_remove favorite_list 'favorite_item' '즐겨찾기한 매물이 없습니다.' %}
-</div>
+<div id="favoritesList">
+        {% render_fav_container favorite_items 'auction_item' '즐겨찾기한 매물이 없습니다.' %}
+      </div>
 
 {% endblock %}
 
 {% block extra_js %}
 <script src="{% static 'js/components/favorite.js' %}"></script>
 <script>
+// favlist 페이지에서 toggleFavorite 함수 오버라이드
+function toggleFavorite(caseNumber, iconElement) {
+    // 로그인 확인
+    if (!window.USER_AUTHENTICATED) {
+        alert('로그인이 필요합니다.');
+        window.location.href = window.LOGIN_URL;
+        return;
+    }
+    
+    // 즐겨찾기 제거 확인
+    if (!confirm('즐겨찾기에서 제거하시겠습니까?')) {
+        return;
+    }
+    
+    fetch(window.TOGGLE_FAVORITE_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken(),
+        },
+        body: JSON.stringify({
+            'case_number': caseNumber
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (data.action === 'removed') {
+                // 카드 삭제 애니메이션
+                const card = iconElement.closest('.fav-card');
+                if (card) {
+                    card.style.transition = 'all 0.3s ease';
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateX(-100%)';
+                    
+                    // 애니메이션 완료 후 카드 제거
+                    setTimeout(() => {
+                        card.remove();
+                        
+                        // 남은 카드가 있는지 확인
+                        const remainingCards = document.querySelectorAll('.fav-card');
+                        if (remainingCards.length === 0) {
+                            // 빈 메시지 표시
+                            const favoritesList = document.getElementById('favoritesList');
+                            favoritesList.innerHTML = '<div class="no-result" style="text-align: center; padding: 50px; color: #666;"><p>즐겨찾기한 매물이 없습니다.</p><p><a href="{% url "csearch" %}">매물 검색하러 가기</a></p></div>';
+                        }
+                    }, 300);
+                }
+                
+                // 성공 메시지 표시
+                showMessage(data.message || '즐겨찾기에서 제거되었습니다.', 'info');
+            }
+        } else {
+            alert('오류: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('즐겨찾기 처리 중 오류가 발생했습니다.');
+    });
+}
+
+// 메시지 표시 함수
+function showMessage(message, type = 'info') {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${type}`;
+    messageDiv.textContent = message;
+    messageDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 10px 20px;
+        background: ${type === 'success' ? '#28a745' : '#17a2b8'};
+        color: white;
+        border-radius: 4px;
+        z-index: 1000;
+        transition: opacity 0.3s ease;
+    `;
+    
+    document.body.appendChild(messageDiv);
+    
+    setTimeout(() => {
+        messageDiv.style.opacity = '0';
+        setTimeout(() => {
+            if (document.body.contains(messageDiv)) {
+                document.body.removeChild(messageDiv);
+            }
+        }, 300);
+    }, 3000);
+}
+
 // 기존 애니메이션 함수 유지
 function removeFavoriteWithAnimation(itemId, iconElement) {
     if (!confirm('즐겨찾기에서 제거하시겠습니까?')) {

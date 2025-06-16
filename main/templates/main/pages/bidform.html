@@ -4,6 +4,7 @@
 {% block extra_css %}
 {{ block.super }}
 <link rel="stylesheet" href="{% static 'css/pages/bidform.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
 {% endblock %}
 
@@ -81,8 +82,7 @@
       </div>
     </div>
   </div>
-  
-  {% if case_info %}
+    {% if case_info %}
   <div class="case-info-section">
     <h4 class="section-title">경매 정보</h4>
     <div class="case-info-grid">
@@ -90,7 +90,7 @@
         <p><strong>법원:</strong> {{ case_info.court_name }}</p>
         <p><strong>사건명:</strong> {{ case_info.case_name }}</p>
         <p><strong>경매일자:</strong> {{ case_info.auction_date|date:"Y-m-d H:i"|default:"미정" }}</p>
-        <p style="grid-column: 1 / -1;"><strong>최저매각가격:</strong> <span style="color: #007bff; font-weight: bold; font-size: 1.1em;">{{ case_info.min_bid_price }}</span></p>
+        <p style="grid-column: 1 / -1;"><strong>최저매각가격:</strong> <span style="color: #007bff; font-weight: bold; font-size: 1.1em;">{{ case_info.min_bid_price }}원</span></p>
     </div>
     
     <!-- 입찰 상태 표시 영역 추가 -->
@@ -100,37 +100,41 @@
     
     <input type="hidden" name="case_number" value="{{ case_info.case_number }}">
   </div>
+  {% elif error_message %}
+  <div class="case-info-section" id="case-info-error" style="margin: 20px 0; padding: 15px; background-color: #f8d7da; border-radius: 5px; border: 1px solid #f5c6cb;">
+    <h5 style="color: #721c24;"><i class="fas fa-exclamation-circle"></i> {{ error_message }}</h5>
+    <p style="color: #721c24; margin: 5px 0 0 0;">사건번호를 다시 확인해주세요.</p>
+  </div>
   {% else %}
   <div class="case-info-section" id="case-info-placeholder" style="margin: 20px 0; padding: 15px; background-color: #fff3cd; border-radius: 5px; border: 1px solid #ffc107;">
     <h5 style="color: #856404;"><i class="fas fa-exclamation-triangle"></i> 경매 정보를 검색하세요</h5>
-    <p>사건번호를 입력하고 검색 버튼을 클릭하여 경매 정보를 확인하세요.</p>
+    <p style="color: #856404; margin: 5px 0 0 0;">사건번호를 입력하고 검색 버튼을 클릭하여 경매 정보를 확인하세요.</p>
   </div>
   {% endif %}
-
   <br>
   <h4 class="section-title">입찰 금액 입력</h4>
   <div class="search-group">
-    
     <label for="deposit">보증금</label>
     <div class="input-wrapper">
         <input type="number" id="deposit" name="deposit" class="input-field deposit" 
                value="{{ deposit_amount_raw|default:'' }}" 
                {% if case_info %}readonly style="background-color: #f8f9fa;"{% endif %} 
-               required /><span class="case-type">원</span>
+               required />
+        <span class="case-type">원</span>
     </div>
     {% if case_info %}
     <small style="color: #6c757d;">* 최저매각가격의 10%로 자동 계산됩니다. ({{ deposit_amount }}원)</small>
     {% endif %}
   </div>
   <br>
-  
-  <div class="search-group">
+    <div class="search-group">
     <label for="bidAmount1">입찰가 입력</label>
     <div class="input-wrapper">
         <input type="number" id="bidAmount1" name="bidAmount1" class="input-field price" 
                min="{{ min_bid_price_raw|default:1 }}" 
                value="{{ min_bid_price_raw|default:'' }}" 
-               required /><span class="case-type">원</span>
+               required />
+        <span class="case-type">원</span>
     </div>
     {% if case_info %}
     <small style="color: #6c757d;">* 최저매각가격: {{ min_bid_price }}원</small>
@@ -140,7 +144,8 @@
     <div class="input-wrapper">
         <input type="number" id="bidAmount2" name="bidAmount2" class="input-field price" 
                min="{{ min_bid_price_raw|default:1 }}" 
-               required /><span class="case-type">원</span>
+               required />
+        <span class="case-type">원</span>
     </div>
   </div>
   <br>
@@ -181,6 +186,115 @@ function checkBiddingTimeLimit() {
     
     return { valid: true, message: "" };
 }
+
+// 사건 검색 함수
+function searchCase() {
+    const year = document.getElementById('year-input').value;
+    const sequence = document.getElementById('case-sequence').value;
+    const court = document.getElementById('court').value;
+    
+    if (!year || !sequence) {
+        alert('년도와 사건번호를 모두 입력해주세요.');
+        return;
+    }
+    
+    if (year < 2000 || year > new Date().getFullYear()) {
+        alert('올바른 년도를 입력해주세요.');
+        return;
+    }
+    
+    // 사건번호 조합
+    const caseNumber = year + '타경' + sequence;
+    
+    // 페이지 리로드로 검색 결과 가져오기
+    const currentUrl = new URL(window.location.href);
+    currentUrl.searchParams.set('case_year', year);
+    currentUrl.searchParams.set('case_sequence', sequence);
+    currentUrl.searchParams.set('court', court);
+    
+    window.location.href = currentUrl.toString();
+}
+
+// 엔터키로 검색 실행
+document.addEventListener('DOMContentLoaded', function() {
+    const yearInput = document.getElementById('year-input');
+    const sequenceInput = document.getElementById('case-sequence');
+    
+    if (yearInput && sequenceInput) {
+        [yearInput, sequenceInput].forEach(input => {
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    searchCase();
+                }
+            });
+        });
+    }
+    
+    // 입찰가 동기화
+    const bidAmount1 = document.getElementById('bidAmount1');
+    const bidAmount2 = document.getElementById('bidAmount2');
+    
+    if (bidAmount1 && bidAmount2) {
+        bidAmount1.addEventListener('input', function() {
+            // 입찰가 1이 변경되면 입찰가 2 초기화
+            bidAmount2.value = '';
+            bidAmount2.style.borderColor = '';
+        });
+        
+        bidAmount2.addEventListener('input', function() {
+            // 입찰가 일치 확인
+            if (this.value && bidAmount1.value) {
+                if (this.value === bidAmount1.value) {
+                    this.style.borderColor = '#28a745';
+                } else {
+                    this.style.borderColor = '#dc3545';
+                }
+            } else {
+                this.style.borderColor = '';
+            }
+        });
+    }
+    
+    // 비밀번호 확인
+    const password1 = document.getElementById('password1');
+    const password2 = document.getElementById('password2');
+    
+    if (password1 && password2) {
+        password2.addEventListener('input', function() {
+            if (this.value && password1.value) {
+                if (this.value === password1.value) {
+                    this.style.borderColor = '#28a745';
+                } else {
+                    this.style.borderColor = '#dc3545';
+                }
+            } else {
+                this.style.borderColor = '';
+            }
+        });
+    }
+    
+    // 숫자 필드 포맷팅
+    const numberFields = document.querySelectorAll('input[type="number"]');
+    numberFields.forEach(field => {
+        if (field.id === 'year-input') return; // 년도는 제외
+        
+        field.addEventListener('input', function() {
+            // 숫자만 허용
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+        
+        field.addEventListener('blur', function() {
+            // 포커스를 잃을 때 숫자 포맷팅
+            if (this.value) {
+                const num = parseInt(this.value);
+                if (!isNaN(num)) {
+                    this.value = num;
+                }
+            }
+        });
+    });
+});
 </script>
 <script src="{% static 'js/pages/bidform.js' %}"></script>
 {% endblock %}

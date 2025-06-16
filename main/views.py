@@ -20,8 +20,12 @@ from django.db.models import Q, Prefetch
 from allauth.account.forms import LoginForm
 from django.template.response import TemplateResponse
 from app.models import BidLog  # 필요한 모델 import
+from autobid.models import AutoBidReservation  # 자동입찰 모델 import
 import requests
 from datetime import datetime, timedelta
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 #아이디 찾기 관련 추가
@@ -170,11 +174,34 @@ def mypage(request):
 def bidform(request):
     context = {}
     
+    # GET 파라미터에서 검색 조건 가져오기
     case_number = request.GET.get('case_number')
+    case_year = request.GET.get('case_year')
+    case_sequence = request.GET.get('case_sequence')
+    court = request.GET.get('court')
     
-    if case_number:
+    # 사건번호가 직접 제공되었거나, 년도+순번+법원으로 검색하는 경우
+    if case_number or (case_year and case_sequence and court):
         try:
-            case = get_object_or_404(AuctionCase, case_number=case_number)
+            if case_number:
+                # 직접 사건번호로 검색
+                case = get_object_or_404(AuctionCase, case_number=case_number)
+            else:
+                # 년도, 순번, 법원으로 검색
+                case_type = "타경"  # 기본값, 실제로는 동적으로 처리 가능
+                full_case_number = f"{case_year}{case_type}{case_sequence}"
+                
+                # court 이름이 포함된 케이스 검색
+                cases = AuctionCase.objects.filter(
+                    case_number__contains=full_case_number,
+                    court_name__icontains=court
+                )
+                
+                if cases.exists():
+                    case = cases.first()
+                else:
+                    raise AuctionCase.DoesNotExist
+            
             item_details = AuctionItem.objects.filter(case_number=case).first()
             
             if item_details:
@@ -259,6 +286,9 @@ def bidform(request):
                 bidding_available = False
                 if auction_start_time and auction_end_time:
                     bidding_available = auction_start_time <= current_time <= auction_end_time
+                  # 보증금 계산 (최저매각가격의 10%)
+                deposit_amount_raw = int(current_min_price * 0.1)
+                deposit_amount = f"{deposit_amount_raw:,}"
                 
                 case_info = {
                     'case_number': case.case_number,
@@ -278,17 +308,28 @@ def bidform(request):
                 context.update({
                     'case_info': case_info,
                     'current_time': current_time,
-                    # ...existing context...
+                    'deposit_amount': deposit_amount,
+                    'deposit_amount_raw': deposit_amount_raw,
+                    'min_bid_price': f"{current_min_price:,}",
+                    'min_bid_price_raw': current_min_price,
+                    # 검색 파라미터들도 다시 전달
+                    'case_year': case_year,
+                    'case_sequence': case_sequence,
+                    'court': court,
                 })
                 
         except (AuctionCase.DoesNotExist, AuctionItem.DoesNotExist):
             context.update({
                 'error_message': "해당 사건 정보를 찾을 수 없습니다.",
-                'has_case_info': False
+                'has_case_info': False,
+                # 검색 파라미터들 유지
+                'case_year': case_year,
+                'case_sequence': case_sequence,
+                'court': court,
             })
     else:
         context.update({
-            'error_message': "사건번호가 필요합니다.",
+            'error_message': "사건번호를 검색해주세요.",
             'has_case_info': False
         })
     
@@ -828,68 +869,125 @@ def csearch(request):
     
     return render(request, 'main/pages/csearch.html', context)
 
+@login_required(login_url='account_login') 
 def bid_history(request):
-    user_address = request.user.profile.wallet_address.lower()
-    
-    bid_logs = BidLog.objects.filter(bidder_address__iexact=user_address)
-    bid_rows = []
-    
-    for log in bid_logs:
-        trade_num = log.trade_num
-        bid_amount = log.bid_amount or "경매 마감 후 공개"
-
-        trade_str = str(trade_num)
-        year = trade_str[:4]
-        suffix = trade_str[4:]
-        case_number = f"{year}타경{suffix}"
-
-        graphql_query = f"""
-        {{
-          putSecs(where: {{tradeNum: "{trade_num}", bidder: "{user_address}"}}) {{
-            security
-          }}
-          refundSecurities(where: {{tradeNum: "{trade_num}", bidder: "{user_address}"}}) {{
-            blockTimestamp
-          }}
-          bidWins(where: {{tradeNum: "{trade_num}"}}) {{
-            winner
-          }}
-        }}
-        """
-        headers = {"Content-Type": "application/json"}
-        res = requests.post(GRAPHQL_URL, json={'query': graphql_query}, headers=headers)
-
-        data = res.json().get("data", {})
-        security_data = data.get("putSecs", [])
-        if security_data:
-            raw_wei = int(security_data[0]["security"])
-            eth = raw_wei / 1e18
-            krw = eth * 10_000_000_000
-            security = round(krw)  
-        else:
-            security = 0
-
-        refund_data = data.get("refundSecurities", [])
-        if refund_data:
-            refund_status = "완료"
-            refund_date = datetime.fromtimestamp(int(refund_data[0]["blockTimestamp"])).strftime("%Y-%m-%d")
-        else:
-            refund_status = "처리중"
-            refund_date = "-"
-
-        win_data = data.get("bidWins", [])
-        is_winner = win_data and win_data[0]["winner"].lower() == user_address
-
-        bid_rows.append({
-            "case_number": case_number,
-            "bid_amount": f"{bid_amount:,}" if isinstance(bid_amount, int) else bid_amount,
-            "security": f"{security:,}원",
-            "refund_status": refund_status,
-            "refund_date": refund_date,
-            "is_winner": is_winner
+    """사용자의 입찰 내역을 조회하는 뷰"""
+    try:
+        # 사용자 프로필과 지갑 주소 확인
+        if not hasattr(request.user, 'profile') or not request.user.profile.wallet_address:        return render(request, "main/pages/bid_history.html", {
+            "bid_rows": [],
+            "auto_bid_rows": [],
+            "error_message": "지갑 주소가 설정되지 않았습니다. 마이페이지에서 지갑을 연결해주세요."
         })
+        
+        user_address = request.user.profile.wallet_address.lower()
+        
+        # BidLog에서 사용자의 입찰 내역 조회
+        bid_logs = BidLog.objects.filter(bidder_address__iexact=user_address)
+        bid_rows = []
+        
+        for log in bid_logs:
+            trade_num = log.trade_num
+            bid_amount = log.bid_amount or "경매 마감 후 공개"
 
-    return render(request, "main/pages/bid_history.html", {"bid_rows": bid_rows})
+            # 사건번호 포맷팅
+            trade_str = str(trade_num)
+            year = trade_str[:4]
+            suffix = trade_str[4:]
+            case_number = f"{year}타경{suffix}"
+
+            # GraphQL 쿼리로 추가 정보 조회
+            graphql_query = f"""
+            {{
+              putSecs(where: {{tradeNum: "{trade_num}", bidder: "{user_address}"}}) {{
+                security
+              }}
+              refundSecurities(where: {{tradeNum: "{trade_num}", bidder: "{user_address}"}}) {{
+                blockTimestamp
+              }}
+              bidWins(where: {{tradeNum: "{trade_num}"}}) {{
+                winner
+              }}
+            }}
+            """
+            
+            try:
+                headers = {"Content-Type": "application/json"}
+                res = requests.post(GRAPHQL_URL, json={'query': graphql_query}, headers=headers)
+                data = res.json().get("data", {})
+                
+                # 예치금 정보
+                security_data = data.get("putSecs", [])
+                if security_data:
+                    raw_wei = int(security_data[0]["security"])
+                    eth = raw_wei / 1e18
+                    krw = eth * 10_000_000_000
+                    security = round(krw)  
+                else:
+                    security = 0
+
+                # 환불 정보
+                refund_data = data.get("refundSecurities", [])
+                if refund_data:
+                    refund_status = "완료"
+                    refund_date = datetime.fromtimestamp(int(refund_data[0]["blockTimestamp"])).strftime("%Y-%m-%d")
+                else:
+                    refund_status = "처리중"
+                    refund_date = "-"
+
+                # 낙찰 여부
+                win_data = data.get("bidWins", [])
+                is_winner = win_data and win_data[0]["winner"].lower() == user_address
+                
+            except Exception as e:
+                logger.error(f"GraphQL 쿼리 실행 중 오류: {e}")
+                security = 0
+                refund_status = "정보 없음"
+                refund_date = "-"
+                is_winner = False
+
+            bid_rows.append({
+                "case_number": case_number,
+                "bid_amount": f"{bid_amount:,}원" if isinstance(bid_amount, int) else bid_amount,
+                "security": f"{security:,}원",
+                "refund_status": refund_status,
+                "refund_date": refund_date,
+                "is_winner": is_winner
+            })
+
+        # 자동입찰 예약 내역 조회
+        auto_bid_reservations = AutoBidReservation.objects.filter(user=request.user).order_by('-created_at')
+        auto_bid_rows = []
+        
+        for reservation in auto_bid_reservations:
+            # AuctionCase에서 법원 정보 조회 시도
+            try:
+                auction_case = AuctionCase.objects.filter(case_number=reservation.case_number).first()
+                court_name = auction_case.court_name if auction_case else "정보 없음"
+            except:
+                court_name = "정보 없음"
+            
+            auto_bid_rows.append({
+                "id": reservation.id,
+                "case_number": reservation.case_number,
+                "court": court_name,
+                "bid_amount": f"{reservation.bid_amount:,}원",
+                "reserve_time": reservation.reserve_time.strftime("%Y-%m-%d %H:%M"),
+                "is_active": reservation.is_active,
+                "created_at": reservation.created_at.strftime("%Y-%m-%d")            })
+
+        return render(request, "main/pages/bid_history.html", {
+            "bid_rows": bid_rows,
+            "auto_bid_rows": auto_bid_rows
+        })
+        
+    except Exception as e:
+        logger.error(f"bid_history 뷰에서 오류 발생: {e}")
+        return render(request, "main/pages/bid_history.html", {
+            "bid_rows": [],
+            "auto_bid_rows": [],
+            "error_message": "입찰 내역을 불러오는 중 오류가 발생했습니다."
+        })
 
 
 def chat_view(request):
@@ -1031,17 +1129,6 @@ COURT_CODE_MAP = {
 
 
 @login_required(login_url='account_login') 
-def bid_history(request):
-    return render(request, 'main/pages/bid_history.html')
-
-@login_required(login_url='account_login') 
-def favlist(request):
-    favorite_list = FavoriteProperty.objects.filter(user=request.user).select_related('auction_item')
-    return render(request, 'main/pages/favlist.html', {'favorite_list': favorite_list})
-
-@login_required(login_url='account_login') 
-def bidform(request):
-    return render(request, 'main/pages/bidform.html')
 
 @login_required
 def mypage(request):
@@ -1264,10 +1351,49 @@ def check_favorite_status(request, case_number):
 @login_required
 def favlist(request):
     """즐겨찾기 목록 페이지"""
+    # FavoriteProperty에서 AuctionItem을 추출하여 전달 (auto_bid 뷰와 동일한 방식)
     favorite_list = FavoriteProperty.objects.filter(
         user=request.user
     ).select_related('auction_item', 'auction_item__case_number').order_by('-created_at')
     
+    favorite_items = []
+    for fav in favorite_list:
+        if fav.auction_item:
+            item = fav.auction_item
+            item.is_favorite = True  # 즐겨찾기 상태 표시용
+            favorite_items.append(item)
+    
     return render(request, 'main/pages/favlist.html', {
-        'favorite_list': favorite_list
+        'favorite_list': favorite_list,  # 원본 데이터 (필요시 사용)
+        'favorite_items': favorite_items,  # 컴포넌트용 데이터
     })
+
+@login_required(login_url='account_login')
+def delete_auto_bid(request, bid_id):
+    """자동입찰 예약 삭제"""
+    if request.method == 'DELETE':
+        try:
+            # 해당 사용자의 자동입찰 예약만 삭제 가능
+            auto_bid = AutoBidReservation.objects.get(id=bid_id, user=request.user)
+            case_number = auto_bid.case_number
+            auto_bid.delete()
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'{case_number} 자동입찰 예약이 삭제되었습니다.'
+            })
+            
+        except AutoBidReservation.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'message': '해당 예약을 찾을 수 없습니다.'
+            }, status=404)
+            
+        except Exception as e:
+            logger.error(f"자동입찰 삭제 중 오류: {e}")
+            return JsonResponse({
+                'success': False,
+                'message': '삭제 중 오류가 발생했습니다.'
+            }, status=500)
+    
+    return JsonResponse({'success': False, 'message': '잘못된 요청입니다.'}, status=405)

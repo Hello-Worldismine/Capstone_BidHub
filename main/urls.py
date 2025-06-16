@@ -15,6 +15,7 @@ urlpatterns = [
     path('charge/', views.charge, name='charge'),
     path('property/<str:case_number>/', views.property_detail, name='property_detail'),
     path('bid_history/', views.bid_history, name='bid_history'),
+    path('auto_bid/delete/<int:bid_id>/', views.delete_auto_bid, name='delete_auto_bid'),
 
     # 즐겨찾기 관련 URL
     path('favorites/add/', views.add_favorite, name='add_favorite'),
